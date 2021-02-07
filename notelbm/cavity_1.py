@@ -1,7 +1,7 @@
 import math
 import time
 
-from notelbm.lattice import *
+from .lattice import *
 
 ###############################################
 # LBM lid-driven cavity
@@ -63,10 +63,7 @@ while (lattice.compute):
     lattice.macro()
 
     # Output field
-    lattice.output_fields(lattice.it,
-                          output_freq,
-                          u_norm=True,
-                          u_stream=False)
+    lattice.output_fields(lattice.it, output_freq, u_norm=True, u_stream=False)
 
     # Compute equilibrium state
     lattice.equilibrium()
@@ -95,6 +92,4 @@ print("# Loop time = {:f}".format(end_time - start_time))
 lattice.cavity_error(u_lbm)
 
 # Output streamlines
-lattice.output_fields(1, 1,
-                      u_norm=False,
-                      u_stream=True)
+lattice.output_fields(1, 1, u_norm=False, u_stream=True)
