@@ -1,4 +1,3 @@
-
 import math
 import os
 import os.path
@@ -11,22 +10,7 @@ import scipy.special
 
 
 class Shape:
-    """
-    Class defining shape object
-    """
-    # ************************************************
-    # Constructor
-
-    def __init__(self,
-                 name,
-                 position,
-                 control_pts,
-                 n_control_pts,
-                 n_sampling_pts,
-                 radius,
-                 edgy,
-                 output_dir):
-
+    def __init__(self, name, position, control_pts, n_control_pts, n_sampling_pts, radius, edgy, output_dir='output'):
         self.name = name
         self.position = position
         self.control_pts = control_pts
@@ -40,13 +24,10 @@ class Shape:
         self.edgy = edgy
         self.output_dir = output_dir
 
-        if (not os.path.exists(self.output_dir)):
+        if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-    # ************************************************
-    # Reset object
     def reset(self):
-
         # Reset object
         self.name = 'shape'
         self.control_pts = np.array([])
@@ -57,10 +38,7 @@ class Shape:
         self.curve_pts = np.array([])
         self.area = 0.0
 
-    # ************************************************
-    # Build shape
     def build(self):
-
         # Center set of points
         center = np.mean(self.control_pts, axis=0)
         self.control_pts -= center
@@ -78,42 +56,42 @@ class Shape:
         # Compute all informations to generate curves
         for i in range(self.n_control_pts):
             # Collect points
-            prv = (i-1)
+            prv = (i - 1)
             crt = i
-            nxt = (i+1) % self.n_control_pts
+            nxt = (i + 1) % self.n_control_pts
             pt_m = control_pts[prv, :]
             pt_c = control_pts[crt, :]
             pt_p = control_pts[nxt, :]
 
             # Compute delta vector
             diff = pt_p - pt_m
-            diff = diff/np.linalg.norm(diff)
+            diff = diff / np.linalg.norm(diff)
             delta[crt, :] = diff
 
             # Compute edgy vector
-            delta_b[crt, :] = 0.5*(pt_m + pt_p) - pt_c
+            delta_b[crt, :] = 0.5 * (pt_m + pt_p) - pt_c
 
             # Compute radii
             dist = compute_distance(pt_m, pt_c)
-            radii[crt, 0] = 0.5*dist*radius[crt]
+            radii[crt, 0] = 0.5 * dist * radius[crt]
             dist = compute_distance(pt_c, pt_p)
-            radii[crt, 1] = 0.5*dist*radius[crt]
+            radii[crt, 1] = 0.5 * dist * radius[crt]
 
         # Generate curves
         for i in range(self.n_control_pts):
             crt = i
-            nxt = (i+1) % self.n_control_pts
+            nxt = (i + 1) % self.n_control_pts
             pt_c = control_pts[crt, :]
             pt_p = control_pts[nxt, :]
             dist = compute_distance(pt_c, pt_p)
-            smpl = math.ceil(self.n_sampling_pts*math.sqrt(dist))
+            smpl = math.ceil(self.n_sampling_pts * math.sqrt(dist))
 
-            local_curve = generate_bezier_curve(pt_c,           pt_p,
-                                                delta[crt, :],   delta[nxt, :],
+            local_curve = generate_bezier_curve(pt_c, pt_p,
+                                                delta[crt, :], delta[nxt, :],
                                                 delta_b[crt,
                                                         :], delta_b[nxt, :],
-                                                radii[crt, 1],   radii[nxt, 0],
-                                                edgy[crt],      edgy[nxt],
+                                                radii[crt, 1], radii[nxt, 0],
+                                                edgy[crt], edgy[nxt],
                                                 smpl)
             local_curves.append(local_curve)
 
@@ -132,57 +110,42 @@ class Shape:
         self.control_pts[:, 0:2] += self.position[0:2]
         self.curve_pts[:, 0:2] += self.position[0:2]
 
-    # ************************************************
-    # Write image
     def generate_image(self, *args, **kwargs):
-
+        # Write image
         # Handle optional argument
-        plot_pts = kwargs.get('plot_pts',  True)
-        xmin = kwargs.get('xmin',     -1.0)
-        xmax = kwargs.get('xmax',      1.0)
-        ymin = kwargs.get('ymin',     -1.0)
-        ymax = kwargs.get('ymax',      1.0)
+        # plot_pts = kwargs.get('plot_pts', True)
+        xmin = kwargs.get('xmin', -1.0)
+        xmax = kwargs.get('xmax', 1.0)
+        ymin = kwargs.get('ymin', -1.0)
+        ymax = kwargs.get('ymax', 1.0)
 
         # Plot shape
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
         plt.axis('off')
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.fill([xmin, xmax, xmax, xmin],
-                 [ymin, ymin, ymax, ymax],
-                 color=(0.784, 0.773, 0.741),
-                 linewidth=2.5,
+        plt.fill([xmin, xmax, xmax, xmin], [ymin, ymin, ymax, ymax], color=(0.784, 0.773, 0.741), linewidth=2.5,
                  zorder=0)
-        plt.fill(self.curve_pts[:, 0],
-                 self.curve_pts[:, 1],
-                 'black',
-                 linewidth=0,
-                 zorder=1)
+        plt.fill(self.curve_pts[:, 0], self.curve_pts[:,
+                                                      1], 'black', linewidth=0, zorder=1)
 
         # Plot points
         # Each point gets a different color
-        colors = matplotlib.cm.ocean(np.linspace(0, 1,
-                                                 self.n_control_pts))
-        plt.scatter(self.control_pts[:, 0],
-                    self.control_pts[:, 1],
-                    color=colors,
-                    s=16,
-                    zorder=2,
-                    alpha=0.5)
+        colors = matplotlib.cm.ocean(np.linspace(0, 1, self.n_control_pts))
+        plt.scatter(self.control_pts[:, 0], self.control_pts[:,
+                                                             1], color=colors, s=16, zorder=2, alpha=0.5)
 
         # Save image
-        filename = self.output_dir+self.name+'.png'
+        filename = self.output_dir + self.name + '.png'
 
-        plt.savefig(filename,
-                    dpi=200)
+        plt.savefig(filename, dpi=200)
         plt.close(plt.gcf())
         plt.cla()
         trim_white(filename)
 
-    # ************************************************
-    # Write csv
     def write_csv(self):
-        filename = self.output_dir+self.name+'.csv'
+        # Write csv
+        filename = self.output_dir + self.name + '.csv'
         with open(filename, 'w') as file:
             # Write header
             file.write('{} {}\n'.format(self.n_control_pts,
@@ -195,14 +158,13 @@ class Shape:
                                                   self.radius[i],
                                                   self.edgy[i]))
 
-    # ************************************************
-    # Read csv and initialize shape with it
     def read_csv(self, filename, *args, **kwargs):
+        # Read csv and initialize shape with it
         # Handle optional argument
         keep_numbering = kwargs.get('keep_numbering', False)
 
-        if (not os.path.isfile(filename)):
-            print('I could not find csv file: '+filename)
+        if not os.path.isfile(filename):
+            print('I could not find csv file: ' + filename)
             print('Exiting now')
             exit()
 
@@ -212,7 +174,7 @@ class Shape:
         sfile = sfile.split('/')
         name = sfile[-1]
 
-        if (keep_numbering):
+        if keep_numbering:
             sname = name.split('_')
             name = sname[0]
 
@@ -234,17 +196,11 @@ class Shape:
                 edgy.append(float(coords[3]))
                 control_pts = np.column_stack((x, y))
 
-        self.__init__(name,
-                      control_pts,
-                      n_control_pts,
-                      n_sampling_pts,
-                      radius,
-                      edgy)
+        self.__init__(name, control_pts, n_control_pts,
+                      n_sampling_pts, radius, edgy)
 
-    # ************************************************
-    # Modify shape given a deformation field
     def modify_shape_from_field(self, deformation, pts_list):
-
+        # Modify shape given a deformation field
         # Deform shape
         for i in range(len(pts_list)):
             self.control_pts[pts_list[i], 0] = deformation[i, 0]
@@ -253,34 +209,28 @@ class Shape:
 
 
 def compute_distance(p1, p2):
-    """
-    Compute distance between two points
-    """
-    return np.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
+    # Compute distance between two points
+    return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 def generate_cylinder_pts(n_pts):
-    """
-    Generate cylinder points
-    """
-    if (n_pts < 4):
+    # Generate cylinder points
+    if n_pts < 4:
         print('Not enough points to generate cylinder')
         exit()
 
     pts = np.zeros([n_pts, 2])
-    ang = 2.0*math.pi/n_pts
+    ang = 2.0 * math.pi / n_pts
     for i in range(0, n_pts):
-        pts[i, :] = [0.5*math.cos(float(i)*ang),
-                     0.5*math.sin(float(i)*ang)]
+        pts[i, :] = [0.5 * math.cos(float(i) * ang),
+                     0.5 * math.sin(float(i) * ang)]
 
     return pts
 
 
 def generate_square_pts(n_pts):
-    """
-    Generate square points
-    """
-    if (n_pts != 4):
+    # Generate square points
+    if n_pts != 4:
         print('You should have n_pts = 4 for square')
         exit()
 
@@ -296,16 +246,14 @@ def generate_square_pts(n_pts):
 
 
 def remove_duplicate_pts(pts):
-    """
-    Remove duplicate points in input coordinates array
-    WARNING : this routine is highly sub-optimal
-    """
+    # Remove duplicate points in input coordinates array
+    # WARNING : this routine is highly sub-optimal
     to_remove = []
 
     for i in range(len(pts)):
         for j in range(len(pts)):
             # Check that i and j are not identical
-            if (i == j):
+            if i == j:
                 continue
 
             # Check that i and j are not removed points
@@ -318,7 +266,7 @@ def remove_duplicate_pts(pts):
             dist = compute_distance(pi, pj)
 
             # Tag the point to be removed
-            if (dist < 1.0e-8):
+            if dist < 1.0e-8:
                 to_remove.append(j)
 
     # Sort elements to remove in reverse order
@@ -332,13 +280,11 @@ def remove_duplicate_pts(pts):
 
 
 def ccw_sort(pts, rad, edg):
-    """
     # Counter Clock-Wise sort
-    # - Take a cloud of points and compute its geometric center
-    # - Translate points to have their geometric center at origin
-    # - Compute the angle from origin for each point
-    # - Sort angles by ascending order
-    """
+    #  - Take a cloud of points and compute its geometric center
+    #  - Translate points to have their geometric center at origin
+    #  - Compute the angle from origin for each point
+    #  - Sort angles by ascending order
     geometric_center = np.mean(pts, axis=0)
     translated_pts = pts - geometric_center
     angles = np.arctan2(translated_pts[:, 1], translated_pts[:, 0])
@@ -351,48 +297,36 @@ def ccw_sort(pts, rad, edg):
 
 
 def compute_bernstein(n, k, t):
-    """
-    Compute Bernstein polynomial value
-    """
+    # Compute Bernstein polynomial value
     k_choose_n = scipy.special.binom(n, k)
 
-    return k_choose_n * (t**k) * ((1.0-t)**(n-k))
+    return k_choose_n * (t ** k) * ((1.0 - t) ** (n - k))
 
 
 def sample_bezier_curve(control_pts, n_sampling_pts):
-    """
     # Sample Bezier curves given set of control points
     # and the number of sampling points
     # Bezier curves are parameterized with t in [0,1]
     # and are defined with n control points P_i :
     # B(t) = sum_{i=0,n} B_i^n(t) * P_i
-    """
     n_control_pts = len(control_pts)
     t = np.linspace(0, 1, n_sampling_pts)
     curve = np.zeros((n_sampling_pts, 2))
 
     for i in range(n_control_pts):
-        curve += np.outer(compute_bernstein(n_control_pts-1, i, t),
+        curve += np.outer(compute_bernstein(n_control_pts - 1, i, t),
                           control_pts[i])
 
     return curve
 
 
-def generate_bezier_curve(p1, p2,
-                          delta1, delta2,
-                          delta_b1, delta_b2,
-                          radius1, radius2,
-                          edgy1, edgy2,
-                          n_sampling_pts):
-                          """
-                          Generate Bezier curve between two pts
-                          """
-
+def generate_bezier_curve(p1, p2, delta1, delta2, delta_b1, delta_b2, radius1, radius2, edgy1, edgy2, n_sampling_pts):
+    # Generate Bezier curve between two pts
     # Lambda function to wrap angles
     # wrap = lambda angle: (angle >= 0.0)*angle + (angle < 0.0)*(angle+2*np.pi)
 
     # Sample the curve if necessary
-    if (n_sampling_pts != 0):
+    if n_sampling_pts != 0:
         # Create array of control pts for cubic Bezier curve
         # First and last points are given, while the two intermediate
         # points are computed from edge points, angles and radius
@@ -401,14 +335,16 @@ def generate_bezier_curve(p1, p2,
         control_pts[3, :] = p2[:]
 
         # Compute baseline intermediate control pts ctrl_p1 and ctrl_p2
-        ctrl_p1_base = radius1*delta1
-        ctrl_p2_base = -radius2*delta2
+        ctrl_p1_base = radius1 * delta1
+        ctrl_p2_base = -radius2 * delta2
 
-        ctrl_p1_edgy = radius1*delta_b1
-        ctrl_p2_edgy = radius2*delta_b2
+        ctrl_p1_edgy = radius1 * delta_b1
+        ctrl_p2_edgy = radius2 * delta_b2
 
-        control_pts[1, :] = p1 + edgy1*ctrl_p1_base + (1.0-edgy1)*ctrl_p1_edgy
-        control_pts[2, :] = p2 + edgy2*ctrl_p2_base + (1.0-edgy2)*ctrl_p2_edgy
+        control_pts[1, :] = p1 + edgy1 * \
+            ctrl_p1_base + (1.0 - edgy1) * ctrl_p1_edgy
+        control_pts[2, :] = p2 + edgy2 * \
+            ctrl_p2_base + (1.0 - edgy2) * ctrl_p2_edgy
 
         # Compute points on the Bezier curve
         curve = sample_bezier_curve(control_pts, n_sampling_pts)
@@ -422,9 +358,7 @@ def generate_bezier_curve(p1, p2,
 
 
 def trim_white(filename):
-    """
-    Crop white background from image
-    """
+    # Crop white background from image
     im = PIL.Image.open(filename)
     bg = PIL.Image.new(im.mode, im.size, (255, 255, 255))
     diff = PIL.ImageChops.difference(im, bg)
@@ -433,56 +367,42 @@ def trim_white(filename):
     cp.save(filename)
 
 
-def generate_shape(n_pts,
-                   position,
-                   shape_type,
-                   shape_size,
-                   shape_name,
-                   n_sampling_pts,
-                   output_dir):
-                   """
-                   Generate shape
-                   """
+def generate_shape(n_pts, position, shape_type, shape_size, shape_name, n_sampling_pts, output_dir):
+    # Generate shape
     # Check input
-    if (shape_type not in ['cylinder', 'square', 'random']):
+    if shape_type not in ['cylinder', 'square', 'random']:
         print('Error in shape_type')
         print('Authorized values are "cylinder", "square" and "random"')
         exit()
 
     # Select shape type
-    if (shape_type == 'cylinder'):
-        radius = 0.5*np.ones((n_pts))
-        edgy = 1.0*np.ones((n_pts))
+    if shape_type == 'cylinder':
+        radius = 0.5 * np.ones(n_pts)
+        edgy = 1.0 * np.ones(n_pts)
         ctrl_pts = generate_cylinder_pts(n_pts)
         ctrl_pts[:, :] *= shape_size
 
-    if (shape_type == 'square'):
-        radius = np.zeros((n_pts))
-        edgy = np.ones((n_pts))
+    elif shape_type == 'square':
+        radius = np.zeros(n_pts)
+        edgy = np.ones(n_pts)
         ctrl_pts = generate_square_pts(n_pts)
         ctrl_pts[:, :] *= shape_size
 
-    if (shape_type == 'random'):
+    elif shape_type == 'random':
         radius = np.random.uniform(low=0.8, high=1.0, size=n_pts)
         edgy = np.random.uniform(low=0.45, high=0.55, size=n_pts)
         ctrl_pts = np.random.rand(n_pts, 2)
         ctrl_pts[:, :] *= shape_size
+    else:
+        raise Exception("error")
 
     # Initialize and build shape
-    shape = Shape(shape_name,
-                  position,
-                  ctrl_pts,
-                  n_pts,
-                  n_sampling_pts,
-                  radius,
-                  edgy,
-                  output_dir)
+    shape = Shape(shape_name, position, ctrl_pts, n_pts,
+                  n_sampling_pts, radius, edgy, output_dir)
 
     shape.build()
-    shape.generate_image(xmin=-shape_size,
-                         xmax=shape_size,
-                         ymin=-shape_size,
-                         ymax=shape_size)
+    shape.generate_image(xmin=-shape_size, xmax=shape_size,
+                         ymin=-shape_size, ymax=shape_size)
     shape.write_csv()
 
     return shape
