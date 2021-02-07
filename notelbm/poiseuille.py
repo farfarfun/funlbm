@@ -1,7 +1,7 @@
 import math
 import time
 
-from .lattice import *
+from .core.lattice import *
 
 ###############################################
 # LBM poiseuille

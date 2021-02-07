@@ -3,7 +3,7 @@ import datetime
 import math
 import os
 
-from .lattice import *
+from .core.lattice import *
 
 ###############################################
 # LBM solver

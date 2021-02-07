@@ -2,7 +2,7 @@
 import math
 import time
 
-from .lattice import *
+from .core.lattice import *
 from .core.shapes import *
 
 ###############################################
