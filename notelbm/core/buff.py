@@ -4,11 +4,7 @@ import os
 import numpy as np
 
 
-###############################################
-# Class Buff
-# A buffer class
 class Buff:
-
     # Create object
     def __init__(self,
                  name,

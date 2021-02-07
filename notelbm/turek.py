@@ -2,8 +2,8 @@
 import math
 import time
 
+from .core.shapes import *
 from .lattice import *
-from .shapes import *
 
 ###############################################
 # LBM Turek benchmark

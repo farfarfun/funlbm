@@ -1,8 +1,9 @@
 
 import datetime
 import math
+import os
 
-from .lattice_utils import *
+from .lattice import *
 
 ###############################################
 # LBM solver

@@ -3,7 +3,7 @@ import math
 import time
 
 from .lattice import *
-from .shapes import *
+from .core.shapes import *
 
 ###############################################
 # LBM poiseuille with obstacle

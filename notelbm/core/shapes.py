@@ -421,8 +421,6 @@ def generate_bezier_curve(p1, p2,
     return curve
 
 
-
-
 def trim_white(filename):
     """
     Crop white background from image
@@ -433,10 +431,6 @@ def trim_white(filename):
     bbox = diff.getbbox()
     cp = im.crop(bbox)
     cp.save(filename)
-
-
-
-
 
 
 def generate_shape(n_pts,

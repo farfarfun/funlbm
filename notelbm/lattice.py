@@ -8,7 +8,7 @@ import numba as nb
 import numpy as np
 from numba import jit
 
-from .buff import *
+from .core.buff import *
 
 
 # ************************************************
@@ -1045,15 +1045,12 @@ def nb_zou_he_bottom_right_corner_velocity(lx, ly, u, rho, g):
     rho[lx, 0] = rho[lx-1, 0]
 
     g[2, lx, 0] = (g[1, lx, 0] - (2.0/3.0)*rho[lx, 0]*u[0, lx, 0])
-
     g[3, lx, 0] = (g[4, lx, 0] + (2.0/3.0)*rho[lx, 0]*u[1, lx, 0])
-
-    g[7, lx, 0] = (g[8, lx, 0] - (1.0/6.0)*rho[lx, 0]*u[0, lx, 0]
-                   + (1.0/6.0)*rho[lx, 0]*u[1, lx, 0])
+    g[7, lx, 0] = (g[8, lx, 0] - (1.0/6.0)*rho[lx, 0] *
+                   u[0, lx, 0] + (1.0/6.0)*rho[lx, 0]*u[1, lx, 0])
 
     g[5, lx, 0] = 0.0
     g[6, lx, 0] = 0.0
 
-    g[0, lx, 0] = (rho[lx, 0]
-                   - g[1, lx, 0] - g[2, lx, 0] - g[3, lx, 0] - g[4, lx, 0]
-                   - g[5, lx, 0] - g[6, lx, 0] - g[7, lx, 0] - g[8, lx, 0])
+    g[0, lx, 0] = (rho[lx, 0] - g[1, lx, 0] - g[2, lx, 0] - g[3, lx, 0] -
+                   g[4, lx, 0] - g[5, lx, 0] - g[6, lx, 0] - g[7, lx, 0] - g[8, lx, 0])
