@@ -1,47 +1,45 @@
-# Generic imports
 import math
 import time
 
-# Custom imports
-from lattice import *
+from notelbm.lattice import *
 
 ###############################################
-### LBM lid-driven cavity
+# LBM lid-driven cavity
 ###############################################
 
-### Free parameters
-Re_lbm      = 1000.0
-u_lbm       = 0.03
-L_lbm       = 600
-t_max       = 20.0
+# Free parameters
+Re_lbm = 1000.0
+u_lbm = 0.03
+L_lbm = 600
+t_max = 20.0
 
 # Deduce other parameters
-Cs          = 1.0/math.sqrt(3.0)
-nx          = L_lbm
-nu_lbm      = u_lbm*L_lbm/Re_lbm
-tau_lbm     = 0.5 + nu_lbm/(Cs**2)
-rho_lbm     = 1.0
-dt          = Re_lbm*nu_lbm/L_lbm**2
-it_max      = math.floor(t_max/dt)
+Cs = 1.0/math.sqrt(3.0)
+nx = L_lbm
+nu_lbm = u_lbm*L_lbm/Re_lbm
+tau_lbm = 0.5 + nu_lbm/(Cs**2)
+rho_lbm = 1.0
+dt = Re_lbm*nu_lbm/L_lbm**2
+it_max = math.floor(t_max/dt)
 
 # Other parameters
 output_freq = 500
-dpi         = 200
+dpi = 200
 
 # Initialize lattice
-lattice = Lattice(nx      = nx,
-                  ny      = nx,
-                  dx      = 1.0/nx,
-                  dt      = dt,
-                  tau_lbm = tau_lbm,
-                  Re_lbm  = Re_lbm,
-                  u_lbm   = u_lbm,
-                  L_lbm   = L_lbm,
-                  nu_lbm  = nu_lbm,
-                  rho_lbm = rho_lbm,
-                  dpi     = dpi,
-                  t_max   = t_max,
-                  it_max  = it_max)
+lattice = Lattice(nx=nx,
+                  ny=nx,
+                  dx=1.0/nx,
+                  dt=dt,
+                  tau_lbm=tau_lbm,
+                  Re_lbm=Re_lbm,
+                  u_lbm=u_lbm,
+                  L_lbm=L_lbm,
+                  nu_lbm=nu_lbm,
+                  rho_lbm=rho_lbm,
+                  dpi=dpi,
+                  t_max=t_max,
+                  it_max=it_max)
 
 # Initialize fields
 lattice.set_cavity(u_lbm)
@@ -67,8 +65,8 @@ while (lattice.compute):
     # Output field
     lattice.output_fields(lattice.it,
                           output_freq,
-                          u_norm   = True,
-                          u_stream = False)
+                          u_norm=True,
+                          u_stream=False)
 
     # Compute equilibrium state
     lattice.equilibrium()
@@ -98,5 +96,5 @@ lattice.cavity_error(u_lbm)
 
 # Output streamlines
 lattice.output_fields(1, 1,
-                      u_norm   = False,
-                      u_stream = True)
+                      u_norm=False,
+                      u_stream=True)
