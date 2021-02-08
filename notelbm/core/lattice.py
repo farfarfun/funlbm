@@ -1,9 +1,13 @@
+import math
+import os
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numba as nb
-from .buff import *
+import numpy as np
 from numba import jit
+
+from .buff import Buff
 
 
 class Obstacle:
@@ -77,8 +81,15 @@ class Lattice:
         self.om_lbm = 1.0 / self.tau_lbm
 
         # D2Q9 Velocities
-        self.c = np.array([[0, 0], [1, 0], [-1, 0], [0, 1],
-                           [0, -1], [1, 1], [-1, -1], [-1, 1], [1, -1]])
+        self.c = np.array([[0, 0],
+                           [1, 0],
+                           [-1, 0],
+                           [0, 1],
+                           [0, -1],
+                           [1, 1],
+                           [-1, -1],
+                           [-1, 1],
+                           [1, -1]])
 
         # Weights
         # Cardinal values, then extra-cardinal values, then central value
@@ -202,60 +213,43 @@ class Lattice:
                                 self.ns, self.c, self.obstacles[obs].ibb,
                                 self.g_up, self.g, self.u, self.lattice)
 
-    # Zou-He left wall velocity b.c.
     def zou_he_left_wall_velocity(self):
-
+        # Zou-He left wall velocity b.c.
         nb_zou_he_left_wall_velocity(self.lx, self.ly, self.u,
                                      self.u_left, self.rho, self.g)
 
-    # Zou-He right wall velocity b.c.
     def zou_he_right_wall_velocity(self):
+        # Zou-He right wall velocity b.c.
+        nb_zou_he_right_wall_velocity(self.lx, self.ly, self.u, self.u_right, self.rho, self.g)
 
-        nb_zou_he_right_wall_velocity(self.lx, self.ly, self.u,
-                                      self.u_right, self.rho, self.g)
-
-    # Zou-He right wall pressure b.c.
     def zou_he_right_wall_pressure(self):
-
-        nb_zou_he_right_wall_pressure(self.lx, self.ly, self.u,
-                                      self.rho_right, self.u_right,
-                                      self.rho, self.g)
+        # Zou-He right wall pressure b.c.
+        nb_zou_he_right_wall_pressure(self.lx, self.ly, self.u, self.rho_right, self.u_right, self.rho, self.g)
 
     # Zou-He no-slip top wall velocity b.c.
     def zou_he_top_wall_velocity(self):
-
-        nb_zou_he_top_wall_velocity(self.lx, self.ly, self.u,
-                                    self.u_top, self.rho, self.g)
+        nb_zou_he_top_wall_velocity(self.lx, self.ly, self.u, self.u_top, self.rho, self.g)
 
     # Zou-He no-slip bottom wall velocity b.c.
     def zou_he_bottom_wall_velocity(self):
 
-        nb_zou_he_bottom_wall_velocity(self.lx, self.ly, self.u,
-                                       self.u_bot, self.rho, self.g)
+        nb_zou_he_bottom_wall_velocity(self.lx, self.ly, self.u, self.u_bot, self.rho, self.g)
 
-    # Zou-He bottom left corner
     def zou_he_bottom_left_corner(self):
+        # Zou-He bottom left corner
+        nb_zou_he_bottom_left_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
-        nb_zou_he_bottom_left_corner_velocity(self.lx, self.ly, self.u,
-                                              self.rho, self.g)
-
-    # Zou-He top left corner
     def zou_he_top_left_corner(self):
+        # Zou-He top left corner
+        nb_zou_he_top_left_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
-        nb_zou_he_top_left_corner_velocity(self.lx, self.ly, self.u,
-                                           self.rho, self.g)
-
-    # Zou-He top right corner
     def zou_he_top_right_corner(self):
+        # Zou-He top right corner
+        nb_zou_he_top_right_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
-        nb_zou_he_top_right_corner_velocity(self.lx, self.ly, self.u,
-                                            self.rho, self.g)
-
-    # Zou-He bottom right corner
     def zou_he_bottom_right_corner(self):
-
-        nb_zou_he_bottom_right_corner_velocity(self.lx, self.ly, self.u,
-                                               self.rho, self.g)
+        # Zou-He bottom right corner
+        nb_zou_he_bottom_right_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
     # Output 2D flow amplitude
     def output_fields(self, it, freq, *args, **kwargs):
@@ -493,10 +487,7 @@ class Lattice:
         # Plot and save image of lattice
         filename = self.output_dir + self.name + '.png'
 
-        plt.imsave(filename,
-                   np.rot90(lat),
-                   vmin=-1.0,
-                   vmax=1.0)
+        plt.imsave(filename, np.rot90(lat), vmin=-1.0, vmax=1.0)
 
     # Set inlet poiseuille fields
     def set_inlet_poiseuille(self, u_lbm, rho_lbm, it, sigma):
@@ -963,8 +954,7 @@ def nb_zou_he_bottom_right_corner_velocity(lx, ly, u, rho, g):
 
     g[2, lx, 0] = (g[1, lx, 0] - (2.0 / 3.0) * rho[lx, 0] * u[0, lx, 0])
     g[3, lx, 0] = (g[4, lx, 0] + (2.0 / 3.0) * rho[lx, 0] * u[1, lx, 0])
-    g[7, lx, 0] = (g[8, lx, 0] - (1.0 / 6.0) * rho[lx, 0] *
-                   u[0, lx, 0] + (1.0 / 6.0) * rho[lx, 0] * u[1, lx, 0])
+    g[7, lx, 0] = (g[8, lx, 0] - (1.0 / 6.0) * rho[lx, 0] * u[0, lx, 0] + (1.0 / 6.0) * rho[lx, 0] * u[1, lx, 0])
 
     g[5, lx, 0] = 0.0
     g[6, lx, 0] = 0.0
