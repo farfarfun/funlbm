@@ -1,2 +1,2 @@
 from .core.lattice import Lattice
-from .core.shapes import Shape
+from .core.shape import Shape
