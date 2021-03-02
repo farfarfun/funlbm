@@ -1,6 +1,6 @@
 import time
 
-from notelbm.lattice import *
+from notelbm.core.lattice import *
 
 ###############################################
 # LBM lid-driven cavity
