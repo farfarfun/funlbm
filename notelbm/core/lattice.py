@@ -1,16 +1,18 @@
-import math
+# endcoding: utf-8
 import os
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numba as nb
-import numpy as np
+from notelbm.core.buff import *
 from numba import jit
-
-from .buff import Buff
 
 
 class Obstacle:
+    """
+    障碍物
+    """
+
     def __init__(self, polygon, area, boundary, ibb, tag):
         self.polygon = polygon
         self.area = area
@@ -81,15 +83,8 @@ class Lattice:
         self.om_lbm = 1.0 / self.tau_lbm
 
         # D2Q9 Velocities
-        self.c = np.array([[0, 0],
-                           [1, 0],
-                           [-1, 0],
-                           [0, 1],
-                           [0, -1],
-                           [1, 1],
-                           [-1, -1],
-                           [-1, 1],
-                           [1, -1]])
+        self.c = np.array([[0, 0], [1, 0], [-1, 0], [0, 1],
+                           [0, -1], [1, 1], [-1, -1], [-1, 1], [1, -1]])
 
         # Weights
         # Cardinal values, then extra-cardinal values, then central value
@@ -184,8 +179,8 @@ class Lattice:
 
     # Compute drag and lift
     def drag_lift(self, obs, R_ref, U_ref, L_ref):
-        Cx, Cy = nb_drag_lift(self.obstacles[obs].boundary, self.ns,
-                              self.c, self.g_up, self.g, R_ref, U_ref, L_ref)
+        Cx, Cy = nb_drag_lift(
+            self.obstacles[obs].boundary, self.ns, self.c, self.g_up, self.g, R_ref, U_ref, L_ref)
 
         return Cx, Cy
 
@@ -208,48 +203,61 @@ class Lattice:
 
     # Obstacle halfway bounce-back no-slip b.c.
     def bounce_back_obstacle(self, obs):
-
         nb_bounce_back_obstacle(self.IBB, self.obstacles[obs].boundary,
                                 self.ns, self.c, self.obstacles[obs].ibb,
                                 self.g_up, self.g, self.u, self.lattice)
 
+    # Zou-He left wall velocity b.c.
     def zou_he_left_wall_velocity(self):
-        # Zou-He left wall velocity b.c.
-        nb_zou_he_left_wall_velocity(self.lx, self.ly, self.u,
-                                     self.u_left, self.rho, self.g)
+        nb_zou_he_left_wall_velocity(
+            self.lx, self.ly, self.u, self.u_left, self.rho, self.g)
 
+    # Zou-He right wall velocity b.c.
     def zou_he_right_wall_velocity(self):
-        # Zou-He right wall velocity b.c.
-        nb_zou_he_right_wall_velocity(self.lx, self.ly, self.u, self.u_right, self.rho, self.g)
+        nb_zou_he_right_wall_velocity(
+            self.lx, self.ly, self.u, self.u_right, self.rho, self.g)
 
+    # Zou-He right wall pressure b.c.
     def zou_he_right_wall_pressure(self):
-        # Zou-He right wall pressure b.c.
-        nb_zou_he_right_wall_pressure(self.lx, self.ly, self.u, self.rho_right, self.u_right, self.rho, self.g)
+        nb_zou_he_right_wall_pressure(self.lx, self.ly, self.u,
+                                      self.rho_right, self.u_right,
+                                      self.rho, self.g)
 
     # Zou-He no-slip top wall velocity b.c.
     def zou_he_top_wall_velocity(self):
-        nb_zou_he_top_wall_velocity(self.lx, self.ly, self.u, self.u_top, self.rho, self.g)
+
+        nb_zou_he_top_wall_velocity(self.lx, self.ly, self.u,
+                                    self.u_top, self.rho, self.g)
 
     # Zou-He no-slip bottom wall velocity b.c.
     def zou_he_bottom_wall_velocity(self):
 
-        nb_zou_he_bottom_wall_velocity(self.lx, self.ly, self.u, self.u_bot, self.rho, self.g)
+        nb_zou_he_bottom_wall_velocity(self.lx, self.ly, self.u,
+                                       self.u_bot, self.rho, self.g)
 
+    # Zou-He bottom left corner
     def zou_he_bottom_left_corner(self):
-        # Zou-He bottom left corner
-        nb_zou_he_bottom_left_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
+        nb_zou_he_bottom_left_corner_velocity(self.lx, self.ly, self.u,
+                                              self.rho, self.g)
+
+    # Zou-He top left corner
     def zou_he_top_left_corner(self):
-        # Zou-He top left corner
-        nb_zou_he_top_left_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
+        nb_zou_he_top_left_corner_velocity(self.lx, self.ly, self.u,
+                                           self.rho, self.g)
+
+    # Zou-He top right corner
     def zou_he_top_right_corner(self):
-        # Zou-He top right corner
-        nb_zou_he_top_right_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
+        nb_zou_he_top_right_corner_velocity(self.lx, self.ly, self.u,
+                                            self.rho, self.g)
+
+    # Zou-He bottom right corner
     def zou_he_bottom_right_corner(self):
-        # Zou-He bottom right corner
-        nb_zou_he_bottom_right_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
+
+        nb_zou_he_bottom_right_corner_velocity(self.lx, self.ly, self.u,
+                                               self.rho, self.g)
 
     # Output 2D flow amplitude
     def output_fields(self, it, freq, *args, **kwargs):
@@ -377,7 +385,8 @@ class Lattice:
 
                     if self.is_inside(polygon, pt):
                         self.lattice[i, j] = tag
-                        obstacle = np.append(obstacle, np.array([[i, j]]), axis=0)
+                        obstacle = np.append(
+                            obstacle, np.array([[i, j]]), axis=0)
 
         # Printings
         print('# ' + str(obstacle.shape[0]) + ' locations in obstacle')
@@ -395,7 +404,8 @@ class Lattice:
                 jj = j + cy
 
                 if not self.lattice[ii, jj]:
-                    boundary = np.append(boundary, np.array([[ii, jj, qb]]), axis=0)
+                    boundary = np.append(
+                        boundary, np.array([[ii, jj, qb]]), axis=0)
 
         # Some cells were counted multiple times, unique-sort them
         boundary = np.unique(boundary, axis=0)
@@ -487,7 +497,10 @@ class Lattice:
         # Plot and save image of lattice
         filename = self.output_dir + self.name + '.png'
 
-        plt.imsave(filename, np.rot90(lat), vmin=-1.0, vmax=1.0)
+        plt.imsave(filename,
+                   np.rot90(lat),
+                   vmin=-1.0,
+                   vmax=1.0)
 
     # Set inlet poiseuille fields
     def set_inlet_poiseuille(self, u_lbm, rho_lbm, it, sigma):
@@ -634,15 +647,15 @@ class Lattice:
                   ', avg drag =' + str_d + ', avg lift =' + str_l, end='\r')
 
 
-# Compute equilibrium state
+# 计算平衡状态 Compute equilibrium state
 
 
 @jit(nopython=True, parallel=True, cache=True)
 def nb_equilibrium(u, c, w, rho, g_eq):
-    # Compute velocity term
+    # 计算速度项 Compute velocity term
     v = 1.5 * (u[0, :, :] ** 2 + u[1, :, :] ** 2)
 
-    # Compute equilibrium
+    # 计算平衡 Compute equilibrium
     for q in nb.prange(9):
         t = 3.0 * (u[0, :, :] * c[q, 0] + u[1, :, :] * c[q, 1])
         g_eq[q, :, :] = (1.0 + t + 0.5 * t ** 2 - v)
@@ -661,14 +674,8 @@ def nb_col_str(g, g_eq, g_up, om_p, om_m, c, ns, nx, ny, lx, ly):
         qb = ns[q]
 
         g_up[q, :, :] = (g[q, :, :] -
-                         om_p * 0.5 * (g[q, :, :] +
-                                       g[qb, :, :] -
-                                       g_eq[q, :, :] -
-                                       g_eq[qb, :, :]) -
-                         om_m * 0.5 * (g[q, :, :] -
-                                       g[qb, :, :] -
-                                       g_eq[q, :, :] +
-                                       g_eq[qb, :, :]))
+                         om_p * 0.5 * (g[q, :, :] + g[qb, :, :] - g_eq[q, :, :] - g_eq[qb, :, :]) -
+                         om_m * 0.5 * (g[q, :, :] - g[qb, :, :] - g_eq[q, :, :] + g_eq[qb, :, :]))
 
     # Stream
     g[1, 1:nx, :] = g_up[1, 0:lx, :]
@@ -933,8 +940,8 @@ def nb_zou_he_top_right_corner_velocity(lx, ly, u, rho, g):
 
     g[4, lx, ly] = (g[3, lx, ly] - (2.0 / 3.0) * rho[lx, ly] * u[1, lx, ly])
 
-    g[6, lx, ly] = (g[5, lx, ly] - (1.0 / 6.0) * rho[lx, ly] * u[0, lx, ly]
-                    - (1.0 / 6.0) * rho[lx, ly] * u[1, lx, ly])
+    g[6, lx, ly] = (g[5, lx, ly] - (1.0 / 6.0) * rho[lx, ly] *
+                    u[0, lx, ly] - (1.0 / 6.0) * rho[lx, ly] * u[1, lx, ly])
 
     g[7, lx, ly] = 0.0
     g[8, lx, ly] = 0.0
@@ -954,7 +961,8 @@ def nb_zou_he_bottom_right_corner_velocity(lx, ly, u, rho, g):
 
     g[2, lx, 0] = (g[1, lx, 0] - (2.0 / 3.0) * rho[lx, 0] * u[0, lx, 0])
     g[3, lx, 0] = (g[4, lx, 0] + (2.0 / 3.0) * rho[lx, 0] * u[1, lx, 0])
-    g[7, lx, 0] = (g[8, lx, 0] - (1.0 / 6.0) * rho[lx, 0] * u[0, lx, 0] + (1.0 / 6.0) * rho[lx, 0] * u[1, lx, 0])
+    g[7, lx, 0] = (g[8, lx, 0] - (1.0 / 6.0) * rho[lx, 0] *
+                   u[0, lx, 0] + (1.0 / 6.0) * rho[lx, 0] * u[1, lx, 0])
 
     g[5, lx, 0] = 0.0
     g[6, lx, 0] = 0.0
