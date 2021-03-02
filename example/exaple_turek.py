@@ -2,18 +2,18 @@
 import math
 import time
 
-from .core.lattice import *
-from .core.shapes import *
+from notelbm import Lattice, Shape
+from notelbm.core.shape import generate_shape
 
 ###############################################
-# LBM poiseuille with obstacle
+# LBM Turek benchmark
 ###############################################
 
 # Shape1 parameters
 shape1_name = 'main'
-shape1_npts = 6
-shape1_nspts = 200
-shape1_type = 'random'
+shape1_npts = 200
+shape1_nspts = 2
+shape1_type = 'cylinder'
 shape1_size = 0.1
 shape1_position = [0.0, 0.0]
 
@@ -21,14 +21,14 @@ shape1_position = [0.0, 0.0]
 x_min = -0.2
 x_max = 2.0
 y_min = -0.2
-y_max = 0.2
+y_max = 0.21
 
 # Free parameters
 # L_lbm correponds to y length
 # u_lbm corresponds to max velocity
 Re_lbm = 100.0
 u_lbm = 0.03
-L_lbm = 300
+L_lbm = 200
 
 # Deduce other parameters
 Cs = 1.0/math.sqrt(3.0)
@@ -44,7 +44,7 @@ dy = dx
 nx = math.floor(ny*(x_max-x_min)/(y_max-y_min))
 
 # Other parameters
-output_freq = 500
+output_freq = 1000000
 dpi = 300
 IBB = True
 stop = 'obs'
