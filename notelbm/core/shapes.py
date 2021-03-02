@@ -1,6 +1,6 @@
+# endcoding: utf-8
 import math
 import os
-import os.path
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -44,9 +44,8 @@ class Shape:
         self.control_pts -= center
 
         # Sort points counter-clockwise
-        control_pts, radius, edgy = ccw_sort(self.control_pts,
-                                             self.radius,
-                                             self.edgy)
+        control_pts, radius, edgy = ccw_sort(
+            self.control_pts, self.radius, self.edgy)
 
         local_curves = []
         delta = np.zeros([self.n_control_pts, 2])
@@ -111,9 +110,11 @@ class Shape:
         self.curve_pts[:, 0:2] += self.position[0:2]
 
     def generate_image(self, *args, **kwargs):
-        # Write image
-        # Handle optional argument
-        # plot_pts = kwargs.get('plot_pts', True)
+        """
+        Write image
+        Handle optional argument
+        plot_pts = kwargs.get('plot_pts', True)
+        """
         xmin = kwargs.get('xmin', -1.0)
         xmax = kwargs.get('xmax', 1.0)
         ymin = kwargs.get('ymin', -1.0)
@@ -144,23 +145,25 @@ class Shape:
         trim_white(filename)
 
     def write_csv(self):
-        # Write csv
+        """
+        保存为csv文件
+        """
         filename = self.output_dir + self.name + '.csv'
         with open(filename, 'w') as file:
             # Write header
-            file.write('{} {}\n'.format(self.n_control_pts,
-                                        self.n_sampling_pts))
+            file.write('{} {}\n'.format(
+                self.n_control_pts, self.n_sampling_pts))
 
             # Write control points coordinates
             for i in range(0, self.n_control_pts):
-                file.write('{} {} {} {}\n'.format(self.control_pts[i, 0],
-                                                  self.control_pts[i, 1],
-                                                  self.radius[i],
+                file.write('{} {} {} {}\n'.format(self.control_pts[i, 0], self.control_pts[i, 1], self.radius[i],
                                                   self.edgy[i]))
 
     def read_csv(self, filename, *args, **kwargs):
-        # Read csv and initialize shape with it
-        # Handle optional argument
+        """
+        读取csv文件 并且初始化颗粒形状
+        Handle optional argument
+        """
         keep_numbering = kwargs.get('keep_numbering', False)
 
         if not os.path.isfile(filename):
@@ -209,45 +212,18 @@ class Shape:
 
 
 def compute_distance(p1, p2):
-    # Compute distance between two points
+    """
+    计算两个点之间的距离
+    """
     return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-def generate_cylinder_pts(n_pts):
-    # Generate cylinder points
-    if n_pts < 4:
-        print('Not enough points to generate cylinder')
-        exit()
-
-    pts = np.zeros([n_pts, 2])
-    ang = 2.0 * math.pi / n_pts
-    for i in range(0, n_pts):
-        pts[i, :] = [0.5 * math.cos(float(i) * ang),
-                     0.5 * math.sin(float(i) * ang)]
-
-    return pts
-
-
-def generate_square_pts(n_pts):
-    # Generate square points
-    if n_pts != 4:
-        print('You should have n_pts = 4 for square')
-        exit()
-
-    pts = np.zeros([n_pts, 2])
-    pts[0, :] = [1.0, 1.0]
-    pts[1, :] = [-1.0, 1.0]
-    pts[2, :] = [-1.0, -1.0]
-    pts[3, :] = [1.0, -1.0]
-
-    pts[:, :] *= 0.5
-
-    return pts
-
-
 def remove_duplicate_pts(pts):
-    # Remove duplicate points in input coordinates array
-    # WARNING : this routine is highly sub-optimal
+    """#删除输入坐标数组中的重复点
+       #警告：此例程是高度次优的
+       # Remove duplicate points in input coordinates array
+       # WARNING : this routine is highly sub-optimal
+    """
     to_remove = []
 
     for i in range(len(pts)):
@@ -297,7 +273,10 @@ def ccw_sort(pts, rad, edg):
 
 
 def compute_bernstein(n, k, t):
+    """
+    计算 Bernstein 多项式值
     # Compute Bernstein polynomial value
+    """
     k_choose_n = scipy.special.binom(n, k)
 
     return k_choose_n * (t ** k) * ((1.0 - t) ** (n - k))
@@ -320,10 +299,54 @@ def sample_bezier_curve(control_pts, n_sampling_pts):
     return curve
 
 
+def trim_white(filename):
+    # Crop white background from image
+    im = PIL.Image.open(filename)
+    bg = PIL.Image.new(im.mode, im.size, (255, 255, 255))
+    diff = PIL.ImageChops.difference(im, bg)
+    bbox = diff.getbbox()
+    cp = im.crop(bbox)
+    cp.save(filename)
+
+
+def generate_cylinder_pts(n_pts):
+    """生成圆柱体点"""
+    if n_pts < 4:
+        print('Not enough points to generate cylinder')
+        exit()
+
+    pts = np.zeros([n_pts, 2])
+    ang = 2.0 * math.pi / n_pts
+    for i in range(0, n_pts):
+        pts[i, :] = [0.5 * math.cos(float(i) * ang),
+                     0.5 * math.sin(float(i) * ang)]
+
+    return pts
+
+
+def generate_square_pts(n_pts):
+    """生成正方形点"""
+    if n_pts != 4:
+        print('You should have n_pts = 4 for square')
+        exit()
+
+    pts = np.zeros([n_pts, 2])
+    pts[0, :] = [1.0, 1.0]
+    pts[1, :] = [-1.0, 1.0]
+    pts[2, :] = [-1.0, -1.0]
+    pts[3, :] = [1.0, -1.0]
+
+    pts[:, :] *= 0.5
+
+    return pts
+
+
 def generate_bezier_curve(p1, p2, delta1, delta2, delta_b1, delta_b2, radius1, radius2, edgy1, edgy2, n_sampling_pts):
+    """
     # Generate Bezier curve between two pts
     # Lambda function to wrap angles
     # wrap = lambda angle: (angle >= 0.0)*angle + (angle < 0.0)*(angle+2*np.pi)
+    """
 
     # Sample the curve if necessary
     if n_sampling_pts != 0:
@@ -355,16 +378,6 @@ def generate_bezier_curve(p1, p2, delta1, delta2, delta_b1, delta_b2, radius1, r
         curve = np.vstack([curve, p2])
 
     return curve
-
-
-def trim_white(filename):
-    # Crop white background from image
-    im = PIL.Image.open(filename)
-    bg = PIL.Image.new(im.mode, im.size, (255, 255, 255))
-    diff = PIL.ImageChops.difference(im, bg)
-    bbox = diff.getbbox()
-    cp = im.crop(bbox)
-    cp.save(filename)
 
 
 def generate_shape(n_pts, position, shape_type, shape_size, shape_name, n_sampling_pts, output_dir):
