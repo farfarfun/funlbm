@@ -23,7 +23,6 @@ class Obstacle:
 
 class Lattice:
     def __init__(self, *args, **kwargs):
-
         # Input parameters
         self.name = kwargs.get('name', 'lattice')
         self.x_min = kwargs.get('x_min', 0.0)
@@ -153,7 +152,6 @@ class Lattice:
 
     # Compute macroscopic fields
     def macro(self):
-
         # Compute density
         self.rho[:, :] = np.sum(self.g[:, :, :], axis=0)
 
@@ -207,6 +205,24 @@ class Lattice:
                                 self.ns, self.c, self.obstacles[obs].ibb,
                                 self.g_up, self.g, self.u, self.lattice)
 
+    # Zou-He right wall pressure b.c.
+    def zou_he_right_wall_pressure(self):
+        nb_zou_he_right_wall_pressure(self.lx, self.ly, self.u,
+                                      self.rho_right, self.u_right,
+                                      self.rho, self.g)
+
+    def zou_he_wall_velocity(self):
+        self.zou_he_bottom_wall_velocity()
+        self.zou_he_left_wall_velocity()
+        self.zou_he_right_wall_velocity()
+        self.zou_he_top_wall_velocity()
+
+    def zou_he_corner_velocity(self):
+        self.zou_he_bottom_left_corner()
+        self.zou_he_top_left_corner()
+        self.zou_he_top_right_corner()
+        self.zou_he_bottom_right_corner()
+
     # Zou-He left wall velocity b.c.
     def zou_he_left_wall_velocity(self):
         nb_zou_he_left_wall_velocity(
@@ -216,12 +232,6 @@ class Lattice:
     def zou_he_right_wall_velocity(self):
         nb_zou_he_right_wall_velocity(
             self.lx, self.ly, self.u, self.u_right, self.rho, self.g)
-
-    # Zou-He right wall pressure b.c.
-    def zou_he_right_wall_pressure(self):
-        nb_zou_he_right_wall_pressure(self.lx, self.ly, self.u,
-                                      self.rho_right, self.u_right,
-                                      self.rho, self.g)
 
     # Zou-He no-slip top wall velocity b.c.
     def zou_he_top_wall_velocity(self):

@@ -1,0 +1,17 @@
+_build
+build
+_build
+*.pyc
+*~
+dist
+.#*
+#*
+*.egg-info
+*.vtr
+*.pvd
+.ipynb_checkpoints
+generated
+*.xdmf
+version.py
+demo/**/*.h5
+.vscode

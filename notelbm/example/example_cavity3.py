@@ -1,6 +1,7 @@
+import math
 import time
 
-from notelbm.core.lattice import *
+from notelbm import Lattice
 
 ###############################################
 # LBM lid-driven cavity
