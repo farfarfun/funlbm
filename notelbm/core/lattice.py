@@ -1,11 +1,13 @@
 # endcoding: utf-8
+import math
 import os
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numba as nb
-from notelbm.core.buff import *
-from notetool.tool.log import log_tool as  logger
+import numpy as np
+from notelbm.core.buff import Buff
+from notetool.tool.log import log_tool as logger
 from numba import jit
 
 
