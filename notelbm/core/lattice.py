@@ -5,7 +5,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numba as nb
 from notelbm.core.buff import *
-from notetool.tool.log import logger
+from notetool.tool.log import log_tool as  logger
 from numba import jit
 
 
@@ -22,7 +22,7 @@ class Obstacle:
         self.tag = tag
 
 
-class Lattice:
+class BaseDefine:
     def __init__(self, *args, **kwargs):
         self.name = kwargs.get('name', 'lattice')
         self.x_min = kwargs.get('x_min', 0.0)
@@ -126,34 +126,31 @@ class Lattice:
         # Iterating and stopping
         self.it = 0
         self.compute = False
-        self.drag_buff = Buff('drag', self.dt, self.obs_cv_ct,
-                              self.obs_cv_nb, self.output_dir)
-        self.lift_buff = Buff('lift', self.dt, self.obs_cv_ct,
-                              self.obs_cv_nb, self.output_dir)
+        self.drag_buff = Buff('drag', self.dt, self.obs_cv_ct, self.obs_cv_nb, self.output_dir)
+        self.lift_buff = Buff('lift', self.dt, self.obs_cv_ct, self.obs_cv_nb, self.output_dir)
 
         # Printings
         logger.info('')
 
         info = f"""
-        ####################################
-        ### LBM solver ###
-        ####################################
-        ### Computation parameters')
-        # u_lbm      = {self.u_lbm:f}
-        # L_lbm      = {self.L_lbm:f}
-        # nu_lbm     = {self.nu_lbm:f}
-        # Re_lbm     = {self.Re_lbm:f}
-        # tau_p_lbm  = {self.tau_p_lbm:f}
-        # tau_m_lbm  = {self.tau_m_lbm:f}
-        # dt         = {self.dt:f}
-        # dx         = {self.dx:f}
-        # nx         = {self.nx}
-        # ny         = {self.ny}
-        # IBB        = {self.IBB}
-        ####################################
-        """
+    ####################################
+    ### LBM solver ###
+    ####################################
+    ### Computation parameters')
+    # u_lbm      = {self.u_lbm:f}
+    # L_lbm      = {self.L_lbm:f}
+    # nu_lbm     = {self.nu_lbm:f}
+    # Re_lbm     = {self.Re_lbm:f}
+    # tau_p_lbm  = {self.tau_p_lbm:f}
+    # tau_m_lbm  = {self.tau_m_lbm:f}
+    # dt         = {self.dt:f}
+    # dx         = {self.dx:f}
+    # nx         = {self.nx}
+    # ny         = {self.ny}
+    # IBB        = {self.IBB}
+    ####################################
+            """
         logger.info(info)
-        print(info)
 
     def macro(self):
         """
@@ -163,10 +160,8 @@ class Lattice:
         self.rho[:, :] = np.sum(self.g[:, :, :], axis=0)
 
         # Compute velocity
-        self.u[0, :, :] = np.tensordot(
-            self.c[:, 0], self.g[:, :, :], axes=(0, 0)) / self.rho[:, :]
-        self.u[1, :, :] = np.tensordot(
-            self.c[:, 1], self.g[:, :, :], axes=(0, 0)) / self.rho[:, :]
+        self.u[0, :, :] = np.tensordot(self.c[:, 0], self.g[:, :, :], axes=(0, 0)) / self.rho[:, :]
+        self.u[1, :, :] = np.tensordot(self.c[:, 1], self.g[:, :, :], axes=(0, 0)) / self.rho[:, :]
 
     def equilibrium(self):
         """
@@ -180,35 +175,10 @@ class Lattice:
                    self.nx, self.ny,
                    self.lx, self.ly)
 
-    # Compute drag and lift
-    def drag_lift(self, obs, R_ref, U_ref, L_ref):
-        Cx, Cy = nb_drag_lift(
-            self.obstacles[obs].boundary, self.ns, self.c, self.g_up, self.g, R_ref, U_ref, L_ref)
 
-        return Cx, Cy
-
-    # Handle drag/lift buffers
-    def add_buff(self, Cx, Cy, it):
-        """
-        Add to buffer and check for convergence
-        """
-        self.drag_buff.add(Cx)
-        self.lift_buff.add(Cy)
-
-        avg_Cx, dcx = self.drag_buff.mv_avg()
-        avg_Cy, dcy = self.lift_buff.mv_avg()
-
-        # Write to file
-        filename = self.output_dir + 'drag_lift'
-        with open(filename, 'a') as f:
-            f.write('{} {} {} {} {} {} {}\n'.format(
-                it * self.dt, Cx, Cy, avg_Cx, avg_Cy, dcx, dcy))
-
-    # Obstacle halfway bounce-back no-slip b.c.
-    def bounce_back_obstacle(self, obs):
-        nb_bounce_back_obstacle(self.IBB, self.obstacles[obs].boundary,
-                                self.ns, self.c, self.obstacles[obs].ibb,
-                                self.g_up, self.g, self.u, self.lattice)
+class Condition(BaseDefine):
+    def __init__(self, *args, **kwargs):
+        super(Condition, self).__init__(*args, **kwargs)
 
     # Zou-He right wall pressure b.c.
     def zou_he_right_wall_pressure(self):
@@ -230,43 +200,68 @@ class Lattice:
 
     def zou_he_left_wall_velocity(self):
         """Zou-He left wall velocity b.c."""
-        nb_zou_he_left_wall_velocity(
-            self.lx, self.ly, self.u, self.u_left, self.rho, self.g)
+        nb_zou_he_left_wall_velocity(self.lx, self.ly, self.u, self.u_left, self.rho, self.g)
 
     def zou_he_right_wall_velocity(self):
         """Zou-He right wall velocity b.c."""
-        nb_zou_he_right_wall_velocity(
-            self.lx, self.ly, self.u, self.u_right, self.rho, self.g)
+        nb_zou_he_right_wall_velocity(self.lx, self.ly, self.u, self.u_right, self.rho, self.g)
 
     def zou_he_top_wall_velocity(self):
         """Zou-He no-slip top wall velocity b.c."""
-        nb_zou_he_top_wall_velocity(
-            self.lx, self.ly, self.u, self.u_top, self.rho, self.g)
+        nb_zou_he_top_wall_velocity(self.lx, self.ly, self.u, self.u_top, self.rho, self.g)
 
     def zou_he_bottom_wall_velocity(self):
         """Zou-He no-slip bottom wall velocity b.c."""
-        nb_zou_he_bottom_wall_velocity(
-            self.lx, self.ly, self.u, self.u_bot, self.rho, self.g)
+        nb_zou_he_bottom_wall_velocity(self.lx, self.ly, self.u, self.u_bot, self.rho, self.g)
 
     def zou_he_bottom_left_corner(self):
         """Zou-He bottom left corner"""
-        nb_zou_he_bottom_left_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
+        nb_zou_he_bottom_left_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
     def zou_he_top_left_corner(self):
         """Zou-He top left corner"""
-        nb_zou_he_top_left_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
+        nb_zou_he_top_left_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
     def zou_he_top_right_corner(self):
         """Zou-He top right corner"""
-        nb_zou_he_top_right_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
+        nb_zou_he_top_right_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
 
     def zou_he_bottom_right_corner(self):
         """Zou-He bottom right corner"""
-        nb_zou_he_bottom_right_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
+        nb_zou_he_bottom_right_corner_velocity(self.lx, self.ly, self.u, self.rho, self.g)
+
+
+class Lattice(BaseDefine):
+    def __init__(self, *args, **kwargs):
+        super(Lattice, self).__init__(*args, **kwargs)
+
+    # Compute drag and lift
+    def drag_lift(self, obs, R_ref, U_ref, L_ref):
+        Cx, Cy = nb_drag_lift(self.obstacles[obs].boundary, self.ns, self.c, self.g_up, self.g, R_ref, U_ref, L_ref)
+
+        return Cx, Cy
+
+    # Handle drag/lift buffers
+    def add_buff(self, Cx, Cy, it):
+        """
+        Add to buffer and check for convergence
+        """
+        self.drag_buff.add(Cx)
+        self.lift_buff.add(Cy)
+
+        avg_Cx, dcx = self.drag_buff.mv_avg()
+        avg_Cy, dcy = self.lift_buff.mv_avg()
+
+        # Write to file
+        filename = self.output_dir + 'drag_lift'
+        with open(filename, 'a') as f:
+            f.write('{} {} {} {} {} {} {}\n'.format(it * self.dt, Cx, Cy, avg_Cx, avg_Cy, dcx, dcy))
+
+    # Obstacle halfway bounce-back no-slip b.c.
+    def bounce_back_obstacle(self, obs):
+        nb_bounce_back_obstacle(self.IBB, self.obstacles[obs].boundary,
+                                self.ns, self.c, self.obstacles[obs].ibb,
+                                self.g_up, self.g, self.u, self.lattice)
 
     def output_fields(self, it, freq, *args, **kwargs):
         """Output 2D flow amplitude"""
@@ -392,8 +387,7 @@ class Lattice:
 
                     if self.is_inside(polygon, pt):
                         self.lattice[i, j] = tag
-                        obstacle = np.append(
-                            obstacle, np.array([[i, j]]), axis=0)
+                        obstacle = np.append(obstacle, np.array([[i, j]]), axis=0)
 
         # Printings
         print('# ' + str(obstacle.shape[0]) + ' locations in obstacle')
@@ -411,8 +405,7 @@ class Lattice:
                 jj = j + cy
 
                 if not self.lattice[ii, jj]:
-                    boundary = np.append(
-                        boundary, np.array([[ii, jj, qb]]), axis=0)
+                    boundary = np.append(boundary, np.array([[ii, jj, qb]]), axis=0)
 
         # Some cells were counted multiple times, unique-sort them
         boundary = np.unique(boundary, axis=0)
@@ -451,9 +444,8 @@ class Lattice:
         # Last print
         print('')
 
-    # Get lattice coordinates from integers
     def lattice_coords(self, i, j):
-
+        """Get lattice coordinates from integers"""
         # Compute and return the coordinates of the lattice node (i,j)
         dx = (self.x_max - self.x_min) / (self.nx - 1)
         dy = (self.y_max - self.y_min) / (self.ny - 1)
@@ -519,9 +511,8 @@ class Lattice:
             pt = self.lattice_coords(0, j)
             self.u_left[:, j] = u_lbm * self.poiseuille(pt, it, sigma)
 
-    # Set full poiseuille fields
     def set_full_poiseuille(self, u_lbm, rho_lbm):
-
+        """Set full poiseuille fields"""
         self.u_left[:] = 0.0
         self.u_right[:] = 0.0
         self.u_top[:] = 0.0
@@ -535,9 +526,8 @@ class Lattice:
                 self.u_left[:, j] = u
                 self.u[:, i, j] = u
 
-    # Set driven cavity fields
     def set_cavity(self, ut, ub=0.0, ul=0.0, ur=0.0):
-
+        """Set driven cavity fields"""
         lx = self.lx
         ly = self.ly
 
@@ -560,9 +550,8 @@ class Lattice:
         self.u[0, lx, :] = self.u_right[0, :]
         self.u[1, lx, :] = self.u_right[1, :]
 
-    # Poiseuille flow
     def poiseuille(self, pt, it, sigma):
-
+        """Poiseuille flow"""
         x = pt[0]
         y = pt[1]
         H = self.y_max - self.y_min
@@ -575,9 +564,8 @@ class Lattice:
 
         return u
 
-    # Poiseuille error in the middle of the domain
     def poiseuille_error(self, u_lbm):
-
+        """Poiseuille error in the middle of the domain"""
         u_error = np.zeros((2, self.ny))
         nx = math.floor(self.nx / 2)
 
@@ -597,9 +585,8 @@ class Lattice:
                                             u_error[0, j],
                                             u_error[1, j]))
 
-    # Cavity error in the middle of the domain
     def cavity_error(self, u_lbm):
-
+        """Cavity error in the middle of the domain"""
         ux_error = np.zeros(self.nx)
         uy_error = np.zeros(self.ny)
         nx = math.floor(self.nx / 2)
@@ -621,9 +608,8 @@ class Lattice:
             for j in range(self.ny):
                 f.write('{} {}\n'.format(j * self.dx, ux_error[j]))
 
-    # Check stopping criterion
     def check_stop(self):
-
+        """Check stopping criterion"""
         if self.stop == 'it':
             if self.it > self.it_max:
                 self.compute = True
@@ -639,9 +625,8 @@ class Lattice:
         self.it += 1
         return self.compute
 
-    # Iteration printings
     def it_printings(self):
-
+        """Iteration printings"""
         if self.stop == 'it':
             print('# it = ' + str(self.it) + ' / ' + str(self.it_max), end='\r')
         if self.stop == 'obs':
