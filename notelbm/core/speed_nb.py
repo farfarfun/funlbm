@@ -1,4 +1,112 @@
+import numba as nb
 from numba import jit
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def nb_equilibrium(u, c, w, rho, g_eq):
+    """计算速度项 Compute velocity term"""
+    v = 1.5 * (u[0, :, :] ** 2 + u[1, :, :] ** 2)
+
+    # 计算平衡 Compute equilibrium
+    for q in nb.prange(9):
+        t = 3.0 * (u[0, :, :] * c[q, 0] + u[1, :, :] * c[q, 1])
+        g_eq[q, :, :] = (1.0 + t + 0.5 * t ** 2 - v)
+        g_eq[q, :, :] *= rho[:, :] * w[q]
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def nb_col_str(g, g_eq, g_up, om_p, om_m, c, ns, nx, ny, lx, ly):
+    """ Collision and streaming"""
+    # Take care of q=0 first
+    g_up[0, :, :] = g[0, :, :] - om_p * (g[0, :, :] - g_eq[0, :, :])
+    g[0, :, :] = g_up[0, :, :]
+
+    # Collide other indices
+    for q in nb.prange(1, 9):
+        qb = ns[q]
+
+        g_up[q, :, :] = (g[q, :, :] -
+                         om_p * 0.5 * (g[q, :, :] + g[qb, :, :] - g_eq[q, :, :] - g_eq[qb, :, :]) -
+                         om_m * 0.5 * (g[q, :, :] - g[qb, :, :] - g_eq[q, :, :] + g_eq[qb, :, :]))
+
+    # Stream
+    g[1, 1:nx, :] = g_up[1, 0:lx, :]
+    g[2, 0:lx, :] = g_up[2, 1:nx, :]
+    g[3, :, 1:ny] = g_up[3, :, 0:ly]
+    g[4, :, 0:ly] = g_up[4, :, 1:ny]
+    g[5, 1:nx, 1:ny] = g_up[5, 0:lx, 0:ly]
+    g[6, 0:lx, 0:ly] = g_up[6, 1:nx, 1:ny]
+    g[7, 0:lx, 1:ny] = g_up[7, 1:nx, 0:ly]
+    g[8, 1:nx, 0:ly] = g_up[8, 0:lx, 1:ny]
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def nb_drag_lift(boundary, ns, c, g_up, g, R_ref, U_ref, L_ref):
+    """Compute drag and lift"""
+    # Initialize
+    fx = 0.0
+    fy = 0.0
+
+    # Loop over obstacle array
+    for k in nb.prange(len(boundary)):
+        i = boundary[k, 0]
+        j = boundary[k, 1]
+        q = boundary[k, 2]
+        qb = ns[q]
+        cx = c[q, 0]
+        cy = c[q, 1]
+        g0 = g_up[q, i, j] + g[qb, i, j]
+
+        fx += g0 * cx
+        fy += g0 * cy
+
+    # Normalize coefficient
+    Cx = -2.0 * fx / (R_ref * L_ref * U_ref ** 2)
+    Cy = -2.0 * fy / (R_ref * L_ref * U_ref ** 2)
+
+    return Cx, Cy
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def nb_bounce_back_obstacle(IBB, boundary, ns, sc, obs_ibb, g_up, g, u, lattice):
+    """Obstacle halfway bounce-back no-slip b.c."""
+    # Interpolated BB
+    if IBB:
+        for k in nb.prange(len(boundary)):
+            i = boundary[k, 0]
+            j = boundary[k, 1]
+            q = boundary[k, 2]
+            qb = ns[q]
+            c = sc[q, :]
+            cb = sc[qb, :]
+            im = i + cb[0]
+            jm = j + cb[1]
+            imm = i + 2 * cb[0]
+            jmm = j + 2 * cb[1]
+
+            p = obs_ibb[k]
+            pp = 2.0 * p
+            if (p < 0.5):
+                g[qb, i, j] = (p * (pp + 1.0) * g_up[q, i, j]
+                               + (1.0 + pp) * (1.0 - pp) * g_up[q, im, jm]
+                               - p * (1.0 - pp) * g_up[q, imm, jmm])
+            else:
+                g[qb, i, j] = ((1.0 / (p * (pp + 1.0))) * g_up[q, i, j] +
+                               ((pp - 1.0) / p) * g_up[qb, i, j] +
+                               ((1.0 - pp) / (1.0 + pp)) * g_up[qb, im, jm])
+
+    # Regular BB
+    if not IBB:
+        for k in nb.prange(len(boundary)):
+            i = boundary[k, 0]
+            j = boundary[k, 1]
+            q = boundary[k, 2]
+            qb = ns[q]
+            c = sc[q, :]
+            ii = i + c[0]
+            jj = j + c[1]
+
+            g[qb, i, j] = g_up[q, i, j]
 
 
 @jit(nopython=True, cache=True)
