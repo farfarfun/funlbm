@@ -5,7 +5,6 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numba as nb
 from notelbm.core.buff import *
-from notetool.tool.log import logger
 from numba import jit
 
 
@@ -24,6 +23,7 @@ class Obstacle:
 
 class Lattice:
     def __init__(self, *args, **kwargs):
+        # Input parameters
         self.name = kwargs.get('name', 'lattice')
         self.x_min = kwargs.get('x_min', 0.0)
         self.x_max = kwargs.get('x_max', 1.0)
@@ -125,58 +125,53 @@ class Lattice:
 
         # Iterating and stopping
         self.it = 0
-        self.compute = False
+        self.compute = True
         self.drag_buff = Buff('drag', self.dt, self.obs_cv_ct,
                               self.obs_cv_nb, self.output_dir)
         self.lift_buff = Buff('lift', self.dt, self.obs_cv_ct,
                               self.obs_cv_nb, self.output_dir)
 
         # Printings
-        logger.info('')
+        print('##################')
+        print('### LBM solver ###')
+        print('##################')
+        print('')
+        print('### Computation parameters')
+        print('# u_lbm      = ' + '{:f}'.format(self.u_lbm))
+        print('# L_lbm      = ' + '{:f}'.format(self.L_lbm))
+        print('# nu_lbm     = ' + '{:f}'.format(self.nu_lbm))
+        print('# Re_lbm     = ' + '{:f}'.format(self.Re_lbm))
+        print('# tau_p_lbm  = ' + '{:f}'.format(self.tau_p_lbm))
+        print('# tau_m_lbm  = ' + '{:f}'.format(self.tau_m_lbm))
+        print('# dt         = ' + '{:f}'.format(self.dt))
+        print('# dx         = ' + '{:f}'.format(self.dx))
+        print('# nx         = ' + str(self.nx))
+        print('# ny         = ' + str(self.ny))
+        print('# IBB        = ' + str(self.IBB))
+        print('')
 
-        info = f"""
-        ####################################
-        ### LBM solver ###
-        ####################################
-        ### Computation parameters')
-        # u_lbm      = {self.u_lbm:f}
-        # L_lbm      = {self.L_lbm:f}
-        # nu_lbm     = {self.nu_lbm:f}
-        # Re_lbm     = {self.Re_lbm:f}
-        # tau_p_lbm  = {self.tau_p_lbm:f}
-        # tau_m_lbm  = {self.tau_m_lbm:f}
-        # dt         = {self.dt:f}
-        # dx         = {self.dx:f}
-        # nx         = {self.nx}
-        # ny         = {self.ny}
-        # IBB        = {self.IBB}
-        ####################################
-        """
-        logger.info(info)
-        print(info)
-
+    # Compute macroscopic fields
     def macro(self):
-        """
-        Compute macroscopic fields
-        Compute density
-        """
+        # Compute density
         self.rho[:, :] = np.sum(self.g[:, :, :], axis=0)
 
         # Compute velocity
-        self.u[0, :, :] = np.tensordot(
-            self.c[:, 0], self.g[:, :, :], axes=(0, 0)) / self.rho[:, :]
-        self.u[1, :, :] = np.tensordot(
-            self.c[:, 1], self.g[:, :, :], axes=(0, 0)) / self.rho[:, :]
+        self.u[0, :, :] = np.tensordot(self.c[:, 0],
+                                       self.g[:, :, :],
+                                       axes=(0, 0)) / self.rho[:, :]
+        self.u[1, :, :] = np.tensordot(self.c[:, 1],
+                                       self.g[:, :, :],
+                                       axes=(0, 0)) / self.rho[:, :]
 
+    # Compute equilibrium state
     def equilibrium(self):
-        """
-        Compute equilibrium state
-        """
         nb_equilibrium(self.u, self.c, self.w, self.rho, self.g_eq)
 
     # Collision and streaming
     def collision_stream(self):
-        nb_col_str(self.g, self.g_eq, self.g_up, self.om_p_lbm, self.om_m_lbm, self.c, self.ns,
+        nb_col_str(self.g, self.g_eq, self.g_up,
+                   self.om_p_lbm, self.om_m_lbm,
+                   self.c, self.ns,
                    self.nx, self.ny,
                    self.lx, self.ly)
 
@@ -189,9 +184,7 @@ class Lattice:
 
     # Handle drag/lift buffers
     def add_buff(self, Cx, Cy, it):
-        """
-        Add to buffer and check for convergence
-        """
+        # Add to buffer and check for convergence
         self.drag_buff.add(Cx)
         self.lift_buff.add(Cy)
 
@@ -201,8 +194,10 @@ class Lattice:
         # Write to file
         filename = self.output_dir + 'drag_lift'
         with open(filename, 'a') as f:
-            f.write('{} {} {} {} {} {} {}\n'.format(
-                it * self.dt, Cx, Cy, avg_Cx, avg_Cy, dcx, dcy))
+            f.write('{} {} {} {} {} {} {}\n'.format(it * self.dt,
+                                                    Cx, Cy,
+                                                    avg_Cx, avg_Cy,
+                                                    dcx, dcy))
 
     # Obstacle halfway bounce-back no-slip b.c.
     def bounce_back_obstacle(self, obs):
@@ -228,48 +223,55 @@ class Lattice:
         self.zou_he_top_right_corner()
         self.zou_he_bottom_right_corner()
 
+    # Zou-He left wall velocity b.c.
     def zou_he_left_wall_velocity(self):
-        """Zou-He left wall velocity b.c."""
         nb_zou_he_left_wall_velocity(
             self.lx, self.ly, self.u, self.u_left, self.rho, self.g)
 
+    # Zou-He right wall velocity b.c.
     def zou_he_right_wall_velocity(self):
-        """Zou-He right wall velocity b.c."""
         nb_zou_he_right_wall_velocity(
             self.lx, self.ly, self.u, self.u_right, self.rho, self.g)
 
+    # Zou-He no-slip top wall velocity b.c.
     def zou_he_top_wall_velocity(self):
-        """Zou-He no-slip top wall velocity b.c."""
-        nb_zou_he_top_wall_velocity(
-            self.lx, self.ly, self.u, self.u_top, self.rho, self.g)
 
+        nb_zou_he_top_wall_velocity(self.lx, self.ly, self.u,
+                                    self.u_top, self.rho, self.g)
+
+    # Zou-He no-slip bottom wall velocity b.c.
     def zou_he_bottom_wall_velocity(self):
-        """Zou-He no-slip bottom wall velocity b.c."""
-        nb_zou_he_bottom_wall_velocity(
-            self.lx, self.ly, self.u, self.u_bot, self.rho, self.g)
 
+        nb_zou_he_bottom_wall_velocity(self.lx, self.ly, self.u,
+                                       self.u_bot, self.rho, self.g)
+
+    # Zou-He bottom left corner
     def zou_he_bottom_left_corner(self):
-        """Zou-He bottom left corner"""
-        nb_zou_he_bottom_left_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
 
+        nb_zou_he_bottom_left_corner_velocity(self.lx, self.ly, self.u,
+                                              self.rho, self.g)
+
+    # Zou-He top left corner
     def zou_he_top_left_corner(self):
-        """Zou-He top left corner"""
-        nb_zou_he_top_left_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
 
+        nb_zou_he_top_left_corner_velocity(self.lx, self.ly, self.u,
+                                           self.rho, self.g)
+
+    # Zou-He top right corner
     def zou_he_top_right_corner(self):
-        """Zou-He top right corner"""
-        nb_zou_he_top_right_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
 
+        nb_zou_he_top_right_corner_velocity(self.lx, self.ly, self.u,
+                                            self.rho, self.g)
+
+    # Zou-He bottom right corner
     def zou_he_bottom_right_corner(self):
-        """Zou-He bottom right corner"""
-        nb_zou_he_bottom_right_corner_velocity(
-            self.lx, self.ly, self.u, self.rho, self.g)
 
+        nb_zou_he_bottom_right_corner_velocity(self.lx, self.ly, self.u,
+                                               self.rho, self.g)
+
+    # Output 2D flow amplitude
     def output_fields(self, it, freq, *args, **kwargs):
-        """Output 2D flow amplitude"""
+
         # Handle inputs
         u_norm = kwargs.get('u_norm', True)
         u_ctr = kwargs.get('u_ctr', False)
@@ -362,8 +364,9 @@ class Lattice:
         # Update counter
         self.output_it += 1
 
+    # Add obstacle
     def add_obstacle(self, polygon, tag):
-        """Add obstacle"""
+
         # Initial print
         print('### Obstacle ', str(tag))
 
@@ -462,8 +465,9 @@ class Lattice:
 
         return [x, y]
 
+    # Determine if a pt is inside or outside a closed polygon
     def is_inside(self, poly, pt):
-        """Determine if a pt is inside or outside a closed polygon"""
+
         # Initialize
         j = len(poly) - 1
         odd_nodes = False
@@ -487,8 +491,9 @@ class Lattice:
 
         return odd_nodes
 
+    # Generate lattice image
     def generate_image(self):
-        """Generate lattice image"""
+
         # Add obstacle border
         lat = self.lattice.copy()
         lat = lat.astype(float)
@@ -507,8 +512,9 @@ class Lattice:
                    vmin=-1.0,
                    vmax=1.0)
 
+    # Set inlet poiseuille fields
     def set_inlet_poiseuille(self, u_lbm, rho_lbm, it, sigma):
-        """Set inlet poiseuille fields"""
+
         self.u_left[:] = 0.0
         self.u_right[:] = 0.0
         self.u_top[:] = 0.0
@@ -626,18 +632,17 @@ class Lattice:
 
         if self.stop == 'it':
             if self.it > self.it_max:
-                self.compute = True
+                self.compute = False
                 print('\n')
                 print('# Computation ended: it>it_max')
 
         if self.stop == 'obs':
             if self.drag_buff.obs_cv and self.lift_buff.obs_cv:
-                self.compute = True
+                self.compute = False
                 print('\n')
                 print('# Computation ended: converged')
 
         self.it += 1
-        return self.compute
 
     # Iteration printings
     def it_printings(self):
