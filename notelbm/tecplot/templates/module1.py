@@ -1,11 +1,9 @@
 import tecplot as tp
-from tecplot.constant import *
 from notelbm.tecplot.utils.connect import new_layout_connect
+from tecplot.constant import *
 
 new_layout_connect()
 
-# Uncomment the following line to connect to a running instance of Tecplot 360:
-# tp.session.connect()
 
 tp.macro.execute_command("""$!ReadDataSet  '\"/Users/chen/workspace/临时结果/V350000.dat\" '
   ReadDataOption = New
