@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from funlbm.config import Config
 from funlbm.flow.flow3d import Flow3D
-from funlbm.particle.base import Ellipsoid
+from funlbm.particle import Ellipsoid
 
 
 class Solver(object):

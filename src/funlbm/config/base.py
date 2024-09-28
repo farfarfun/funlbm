@@ -4,7 +4,7 @@ from typing import List
 
 import numpy as np
 
-from funlbm.utils.map import deep_get
+from funlbm.utils import deep_get
 
 
 class BoundaryCondition(Enum):

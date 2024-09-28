@@ -3,8 +3,8 @@ import math
 import numpy as np
 
 from funlbm.config import Boundary, BoundaryCondition
-from funlbm.flow.base import Flow
-from funlbm.parameter.base import Par3D
+from funlbm.flow import Flow
+from funlbm.parameter import Par3D
 
 
 class Flow3DStream(Flow):

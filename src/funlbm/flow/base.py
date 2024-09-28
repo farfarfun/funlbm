@@ -1,7 +1,7 @@
 import numpy as np
 
-from funlbm.config.base import FlowConfig
-from funlbm.parameter.base import Par3D
+from funlbm.config import FlowConfig
+from funlbm.parameter import Par3D
 
 
 class Flow(object):
