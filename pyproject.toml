@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "funlbm"
-version = "1.0.6"
+version = "1.0.7"
 description = ""
 authors = [ "farfun <1007530194@qq.com>",]
 readme = "README.md"
@@ -14,5 +14,5 @@ include = "*"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-funvtk = "^1.0.3"
+funvtk = "^1.0.5"
 transforms3d = "^0.4.2"
