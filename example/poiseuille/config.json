@@ -1,0 +1,37 @@
+{
+  "flow": {
+    "size": [
+      50,
+      40,
+      30
+    ],
+    "boundary": {
+      "left": {
+        "code": "PERIODICAL",
+        "uw": 0.001,
+        "poiseuille": "0.0"
+      },
+      "right": {
+        "code": "PERIODICAL",
+        "uw": 0.001
+      }
+    }
+  },
+  "file": {
+    "cache_dir": "./data"
+  },
+  "particles": [
+    {
+      "coord": {
+        "center": [
+          11,
+          13,
+          17
+        ]
+      },
+      "a": 10,
+      "b": 7,
+      "c": 4
+    }
+  ]
+}
