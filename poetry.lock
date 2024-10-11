@@ -82,4 +82,4 @@ numpy = ">=1.15"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "7dd08a3a7929a973c2daa00ec40a124658416084fdd51ace9f05d1b5aefcb0b7"
+content-hash = "33365edd7d92b2aced454e8a85f4bf74c9f3ee327c570894aa0183468314e6b6"
