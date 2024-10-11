@@ -2,13 +2,13 @@
 
 [[package]]
 name = "funvtk"
-version = "1.0.7"
+version = "1.0.8"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "funvtk-1.0.7-py3-none-any.whl", hash = "sha256:edd30d930682e8ce323d4bbdf3f767145e369ca9582c1503291e2e2f90604544"},
-    {file = "funvtk-1.0.7.tar.gz", hash = "sha256:e67089ff98713ce7f71ee948e1e8ccba954c76896ef0da851d141457a2fa3341"},
+    {file = "funvtk-1.0.8-py3-none-any.whl", hash = "sha256:4d261d7626132d80b4b4b60e46996bfb61773a47afd90f11778d7e6db29b384b"},
+    {file = "funvtk-1.0.8.tar.gz", hash = "sha256:be320db336a4b9ff27ff5d7d955ec4debc8981ca607122d4995f4635333eef2b"},
 ]
 
 [[package]]
