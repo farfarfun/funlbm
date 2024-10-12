@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import transforms3d as tfs
 
-from funlbm.config import ParticleConfig, CoordConfig
+from funlbm.config import CoordConfig, ParticleConfig
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("funlbm")
