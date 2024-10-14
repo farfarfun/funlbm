@@ -53,18 +53,12 @@ class Solver(object):
                 tmp = (1 + np.cos(np.abs(tmp / h * np.pi / 2 / h))) / 4 / h
                 tmp = np.prod(tmp, axis=-1, keepdims=True)
 
-                lu[index, :] = np.sum(
-                    self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp
-                )
-                particle.lrou[index, :] = np.sum(
-                    self.flow.rou[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp
-                )
+                lu[index, :] = np.sum(self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
+                particle.lrou[index, :] = np.sum(self.flow.rou[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
                 # print(lar, i1)
             u_theta = 0
 
-            particle.lu[:, :] = (
-                particle.cu + np.cross(particle.cw, particle.lx - particle.cx) + u_theta
-            )
+            particle.lu[:, :] = particle.cu + np.cross(particle.cw, particle.lx - particle.cx) + u_theta
             particle.lF = particle.lrou * (particle.lu - lu)
 
             # TODO 力矩的公式到底是r×F，F×r
@@ -87,24 +81,16 @@ class Solver(object):
     def particle_to_wall(self):
         k0 = 300
         for particle in self.particles:
-            n = np.array(
-                [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]
-            )
+            n = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]])
             xt = np.concatenate(
                 [
                     np.zeros(self.config.flow_config.size.shape),
                     self.config.flow_config.size,
                 ]
             )
-            xi = np.concatenate(
-                [np.argmin(particle.lx, axis=0), np.argmax(particle.lx, axis=0)]
-            )
+            xi = np.concatenate([np.argmin(particle.lx, axis=0), np.argmax(particle.lx, axis=0)])
 
-            d = k0 * (
-                1
-                - abs(particle.lx[xi][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]] - xt)
-                / (2 * self.config.dx)
-            )
+            d = k0 * (1 - abs(particle.lx[xi][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]] - xt) / (2 * self.config.dx))
             d[d < 0] = 0
             if d.max() == 0:
                 continue
@@ -142,7 +128,6 @@ class Solver(object):
             self.save(step)
 
     def save(self, step=10):
-
         shape = self.flow.u.shape
         xf, yf, zf = np.meshgrid(
             range(shape[0]),

@@ -1,18 +1,7 @@
-[build-system]
-requires = [ "poetry-core",]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
+[project]
 name = "funlbm"
-version = "1.0.19"
-description = ""
-authors = [ "farfun <1007530194@qq.com>",]
+version = "1.1.1"
+description = "Add your description here"
 readme = "README.md"
-[[tool.poetry.packages]]
-from = "src"
-include = "*"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-transforms3d = "^0.4.2"
-funvtk = "^1.0.8"
+requires-python = ">=3.11"
+dependencies = [ "funvtk>=1.0.9", "transforms3d>=0.4.2",]
