@@ -8,12 +8,12 @@
     "boundary": {
       "left": {
         "code": "PERIODICAL",
-        "uw": 0.001,
+        "uw": 0.1,
         "poiseuille": "0.0"
       },
       "right": {
         "code": "PERIODICAL",
-        "uw": 0.001
+        "uw": 0.01
       }
     }
   },
@@ -31,7 +31,7 @@
       },
       "a": 10,
       "b": 7,
-      "c": 4
+      "c": 5
     }
   ]
 }
