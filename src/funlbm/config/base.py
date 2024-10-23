@@ -32,6 +32,7 @@ class BaseConfig(object):
 
     def from_json(self, config_json: dict, *args, **kwargs):
         self.expand.update(kwargs)
+        self.expand.update(config_json)
         self._from_json(config_json, *args, **kwargs)
         return self
 
