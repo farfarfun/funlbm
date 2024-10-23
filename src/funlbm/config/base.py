@@ -64,19 +64,12 @@ class BoundaryConfig(BaseConfig):
         self.top = Boundary(BoundaryCondition.WALL)
 
     def _from_json(self, config_json: dict, *args, **kwargs):
-        if "left" in config_json.keys():
-            self.left = Boundary().from_json(config_json["left"])
-        if "right" in config_json.keys():
-            self.right = Boundary().from_json(config_json["right"])
-        if "back" in config_json.keys():
-            self.left = Boundary().from_json(config_json["back"])
-        if "forward" in config_json.keys():
-            self.left = Boundary().from_json(config_json["forward"])
-
-        if "bottom" in config_json.keys():
-            self.left = Boundary().from_json(config_json["bottom"])
-        if "top" in config_json.keys():
-            self.left = Boundary().from_json(config_json["left"])
+        self.left.from_json(deep_get(config_json, "left") or {})
+        self.right.from_json(deep_get(config_json, "right") or {})
+        self.back.from_json(deep_get(config_json, "back") or {})
+        self.forward.from_json(deep_get(config_json, "forward") or {})
+        self.bottom.from_json(deep_get(config_json, "bottom") or {})
+        self.top.from_json(deep_get(config_json, "top") or {})
 
 
 class FileConfig(BaseConfig):
