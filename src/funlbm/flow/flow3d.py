@@ -143,7 +143,7 @@ class Flow3D(Flow3DStream):
 
         if self.config.boundary.left.poiseuille is not None:
             shape = self.u.shape
-            self.u[0, :, :, 0] = init_u(shape[1], shape[2])
+            self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=self.config.boundary.left.get("uw", 0.001))
 
             # for i in range(shape[1]):
             #     for j in range(shape[2]):

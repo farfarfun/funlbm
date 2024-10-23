@@ -3,8 +3,7 @@ from enum import Enum
 from typing import List
 
 import numpy as np
-
-from funlbm.utils import deep_get
+from funutil import deep_get
 
 
 class BoundaryCondition(Enum):
@@ -37,23 +36,14 @@ class BaseConfig(object):
         return self
 
     def get(self, key, default=None):
-        value = deep_get(self.expand, key)
-        if value is None:
-            return default
+        return deep_get(self.expand, key) or default
 
 
 class Boundary(BaseConfig):
-    def __init__(
-        self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs
-    ):
+    def __init__(self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.condition: BoundaryCondition = condition
         self.poiseuille = None
-        self.config = {}
-        self.config.update(kwargs)
-
-    def get(self, key):
-        return self.config[key]
 
     def is_condition(self, condition: BoundaryCondition):
         return self.condition == condition
@@ -61,7 +51,6 @@ class Boundary(BaseConfig):
     def _from_json(self, config_json: dict, *args, **kwargs):
         self.condition = deep_get(config_json, "code") or self.condition
         self.poiseuille = deep_get(config_json, "poiseuille")
-        self.config.update(kwargs)
 
 
 class BoundaryConfig(BaseConfig):
@@ -137,12 +126,8 @@ class FlowConfig(BaseConfig):
         super().__init__(*args, **kwargs)
 
     def _from_json(self, config_json: dict, *args, **kwargs):
-        self.size = np.array(
-            deep_get(config_json, "size") or [100, 100, 100], dtype=int
-        )
-        self.boundary = BoundaryConfig().from_json(
-            deep_get(config_json, "boundary") or {}
-        )
+        self.size = np.array(deep_get(config_json, "size") or [100, 100, 100], dtype=int)
+        self.boundary = BoundaryConfig().from_json(deep_get(config_json, "boundary") or {})
 
 
 class Config(BaseConfig):
