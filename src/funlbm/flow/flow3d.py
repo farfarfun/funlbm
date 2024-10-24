@@ -35,14 +35,14 @@ class Flow3DStream(Flow):
 
     def f_stream_bound(self, fcopy):
         bound_config = self.config.boundary
-        self.f_stream_bound_x_start(fcopy, bound_config.left)
-        self.f_stream_bound_x_end(fcopy, bound_config.right)
+        self.f_stream_bound_input(fcopy, bound_config.input)
+        self.f_stream_bound_output(fcopy, bound_config.output)
         self.f_stream_bound_y_start(fcopy, bound_config.back)
         self.f_stream_bound_y_end(fcopy, bound_config.forward)
         self.f_stream_bound_z_start(fcopy, bound_config.bottom)
         self.f_stream_bound_z_end(fcopy, bound_config.top)
 
-    def f_stream_bound_x_start(self, fcopy, boundary: Boundary):
+    def f_stream_bound_input(self, fcopy, boundary: Boundary):
         index = self.param.bound_index(0, 1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
             self.f[:1, :, :, index] = fcopy[-1:, :, :, index]
@@ -53,7 +53,7 @@ class Flow3DStream(Flow):
             tmp = tmp * np.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.bound_index_map(index)] - tmp
 
-    def f_stream_bound_x_end(self, fcopy, boundary: Boundary):
+    def f_stream_bound_output(self, fcopy, boundary: Boundary):
         # 右边
         index = self.param.bound_index(0, -1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
@@ -141,18 +141,10 @@ class Flow3D(Flow3DStream):
         self.rou = np.sum(self.f, axis=-1, keepdims=True)
         self.u = np.matmul(self.f, self.param.e) / self.rou + self.FOL / 2.0
 
-        if self.config.boundary.left.poiseuille is not None:
+        if self.config.boundary.input.poiseuille is not None:
             shape = self.u.shape
-            self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=self.config.boundary.left.get("uw", 0.001))
+            self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=self.config.boundary.input.get("uw", 0.001))
 
-            # for i in range(shape[1]):
-            #     for j in range(shape[2]):
-            #         y = shape[1] // 2 * math.sqrt(2) - (
-            #             math.sqrt((i - shape[1] // 2) ** 2 + (j - shape[2] // 2) ** 2)
-            #         )
-            #         self.u[0, i, j, 0] = (
-            #             abs(y * (shape[1] * math.sqrt(2) - y)) * 0.00002
-            #         )
         # TODO 计算gama
 
     def cul_equ(self, tau=None):
