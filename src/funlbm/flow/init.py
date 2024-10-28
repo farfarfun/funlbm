@@ -1,5 +1,5 @@
 import numpy as np
-from funutil import cache
+from funutil.cache import cache
 
 
 def cul_u(y, z, a, b, size=100):
