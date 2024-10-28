@@ -20,13 +20,7 @@ class Solver(object):
         pbar = range(total)
         for step in pbar:
             self.step(step)
-            print(f"{step}"
-                  f"\t{np.max(self.flow.f):8f}"
-                  f"\t{np.mean(self.flow.u[1, 1:-1, 1:-1, :]):8f}"
-                  f"\t{np.mean(self.flow.u[10, 1:-1, 1:-1, :]):8f}"
-                  f"\t{np.sum(self.flow.f):8f}"
-                  f"\t{self.particles[0].cx}"
-                  )
+            print(f"{step}" f"\t{np.max(self.flow.f):8f}" f"\t{np.max(self.flow.u):8f}" f"\t{self.particles[0].cx}")
 
     def init(self):
         # 初始化流程
