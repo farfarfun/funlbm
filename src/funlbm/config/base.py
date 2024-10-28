@@ -83,6 +83,7 @@ class FileConfig(BaseConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cache_dir = "./data"
+        self.per_steps = 100
 
     @property
     def vtk_path(self):
@@ -93,6 +94,8 @@ class FileConfig(BaseConfig):
 
     def _from_json(self, config_json: dict, *args, **kwargs):
         self.cache_dir = deep_get(config_json, "cache_dir") or self.cache_dir
+        self.per_steps = deep_get(config_json, "per_steps") or self.per_steps
+
 
 
 class CoordConfig(BaseConfig):

@@ -20,7 +20,10 @@ class Solver(object):
         pbar = range(total)
         for step in pbar:
             self.step(step)
-            print(f"{step}" f"\t{np.max(self.flow.f):8f}" f"\t{np.max(self.flow.u):8f}" f"\t{self.particles[0].cx}")
+            print(
+                f"{step}" f"\tf_max={np.max(self.flow.f):8f}" f"\tu_max={np.max(self.flow.u):8f}"
+                # f"\t{self.particles[0].cx}"
+            )
 
     def init(self):
         # 初始化流程
@@ -122,6 +125,9 @@ class Solver(object):
             self.save(step)
 
     def save(self, step=10):
+        if step % self.config.file_config.per_steps > 0:
+            return
+
         shape = self.flow.u.shape
         xf, yf, zf = np.meshgrid(
             range(shape[0]),
