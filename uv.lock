@@ -3,7 +3,7 @@ requires-python = ">=3.9"
 
 [[package]]
 name = "funlbm"
-version = "1.1.10"
+version = "1.1.11"
 source = { virtual = "." }
 dependencies = [
     { name = "funutil" },
@@ -13,18 +13,18 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "funutil", specifier = ">=1.0.3" },
+    { name = "funutil", specifier = ">=1.0.12" },
     { name = "funvtk", specifier = ">=1.0.9" },
     { name = "transforms3d", specifier = ">=0.4.2" },
 ]
 
 [[package]]
 name = "funutil"
-version = "1.0.3"
+version = "1.0.13"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bc/38/0a1b9b8db5b6183018299d9b3bb990beb4f63263d423285b93a567402ce1/funutil-1.0.3.tar.gz", hash = "sha256:775a32c98de2476eb54bd4ea571d4fe077246ff884f0b5e3a8620c91de33ea61", size = 16082 }
+sdist = { url = "https://files.pythonhosted.org/packages/4c/1a/a266b718efe05dc80e597aba5983fc1d0facd063d10dbee0f95454224cff/funutil-1.0.13.tar.gz", hash = "sha256:6fcebdab6f59e7eab4bbc048b514d91e5927bf9bdb4294bb453ab849e6bc739a", size = 17453 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/1b/abf53b429745ff11b5b67da3e437b97af50e74b047d6563eaafabde65427/funutil-1.0.3-py3-none-any.whl", hash = "sha256:5eadb8f4c1f625d447928fe12e44febc0b0092f8e7e9d0303751972815c3f648", size = 19776 },
+    { url = "https://files.pythonhosted.org/packages/84/63/e92cfb2e17fcfe24033213f1719d7e3e056c3eec30d3f9a6f00fbbd43d88/funutil-1.0.13-py3-none-any.whl", hash = "sha256:1b01493d001edcd4f4a3e1be83805be6532a1b5ce98bd100c9ff84ff6123289f", size = 21543 },
 ]
 
 [[package]]
