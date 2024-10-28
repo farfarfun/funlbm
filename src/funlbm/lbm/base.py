@@ -121,8 +121,7 @@ class Solver(object):
         # 颗粒->拉格朗日点
         [particle.update() for particle in self.particles]
         [print(particle.to_str()) for particle in self.particles]
-        if step % 10 == 0 and step > 10:
-            self.save(step)
+        self.save(step)
 
     def save(self, step=10):
         if step % self.config.file_config.per_steps > 0:
