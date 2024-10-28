@@ -137,8 +137,8 @@ class Solver(object):
                 self.flow.u[:, :, :, 1],
                 self.flow.u[:, :, :, 2],
             ),
-            # "rou": (self.rou[:, :, :, 0], self.rou[:, :, :, 0], self.rou[:, :, :, 0]),
         }
+        cell_data = {"rou": self.flow.rou[:, :, :, 0], "p": self.flow.p[:, :, :, 0]}
 
         gridToVTK(
             f"{self.config.file_config.vtk_path}/flow_" + str(step).zfill(10),
@@ -146,6 +146,7 @@ class Solver(object):
             yf,
             zf,
             pointData=point_data,
+            cellData=cell_data,
         )
 
         for i, particle in enumerate(self.particles):

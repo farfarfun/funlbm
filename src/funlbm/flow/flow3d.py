@@ -139,6 +139,7 @@ class Flow3D(Flow3DStream):
 
     def update_u_rou(self):
         self.rou = np.sum(self.f, axis=-1, keepdims=True)
+        self.p = self.rou / 3.0
         self.u = np.matmul(self.f, self.param.e) / self.rou + self.FOL / 2.0
 
         if self.config.boundary.input.poiseuille is not None:
