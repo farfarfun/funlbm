@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+from funutil import run_timer
 from funvtk.hl import gridToVTK, pointsToVTK
 from tqdm import tqdm
 
@@ -7,23 +9,35 @@ from funlbm.flow.flow3d import Flow3D
 from funlbm.particle import Ellipsoid
 
 
+def choice_device(device=None):
+    if device is not None:
+        return device
+    elif torch.cuda.is_available():
+        return torch.device("cuda")
+    elif torch.mps.is_available():
+        return torch.device("mps")
+    else:
+        return torch.device("cpu")
+
+
 class Solver(object):
-    def __init__(self, config: Config, *args, **kwargs):
+    def __init__(self, config: Config, device=None, *args, **kwargs):
         self.config = config
-        self.flow = Flow3D(config=config.flow_config)
+        self.device = choice_device(device)
+        self.flow = Flow3D(config=config.flow_config, device=self.device)
         self.particles = [Ellipsoid(config=con) for con in config.particles]
 
     def run(self):
         self.init()
         total = int(9000 / self.config.dt)
         pbar = tqdm(range(total))
-        pbar = range(total)
+        # pbar = range(total)
         for step in pbar:
             self.step(step)
-            print(
-                f"{step}" f"\tf_max={np.max(self.flow.f):8f}" f"\tu_max={np.max(self.flow.u):8f}"
-                # f"\t{self.particles[0].cx}"
-            )
+            # print(
+            #     f"{step}" f"\tf_max={np.max(self.flow.f.numpy()):8f}" f"\tu_max={np.max(self.flow.u.numpy()):8f}"
+            #     # f"\t{self.particles[0].cx}"
+            # )
 
     def init(self):
         # 初始化流程
@@ -37,62 +51,69 @@ class Solver(object):
         for particle in self.particles:
             particle.init()
 
+    @run_timer
     def flow_to_lagrange(self, n=2, h=1):
         for particle in self.particles:
-            rl = np.array(np.floor(particle.lx) - (n - 1) * h, dtype=int)
+            rl = np.array(np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int)
             rl[rl < 0] = 0
             rr = rl + (2 * n - 1) * h + 1
 
-            lu = np.zeros(particle.lu.shape)
+            lu = torch.zeros(particle.lu.shape, device=self.device)
             for index, lar in enumerate(particle.lx):
                 i0, i1 = rl[index], rr[index]
                 tmp = self.flow.x[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] - lar
-                tmp = (1 + np.cos(np.abs(tmp / h * np.pi / 2 / h))) / 4 / h
-                tmp = np.prod(tmp, axis=-1, keepdims=True)
+                tmp = (1 + torch.cos(torch.abs(tmp / h * np.pi / 2 / h))) / 4 / h
+                tmp = torch.prod(tmp, dim=-1, keepdims=True)
 
-                lu[index, :] = np.sum(self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
-                particle.lrou[index, :] = np.sum(self.flow.rou[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
-                # print(lar, i1)
+                lu[index, :] = torch.sum(self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
+                particle.lrou[index, :] = torch.sum(self.flow.rou[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
             u_theta = 0
 
-            particle.lu[:, :] = particle.cu + np.cross(particle.cw, particle.lx - particle.cx) + u_theta
+            particle.lu[:, :] = (
+                particle.cu + torch.linalg.cross(particle.cw.unsqueeze(0), particle.lx - particle.cx, dim=-1) + u_theta
+            )
             particle.lF = particle.lrou * (particle.lu - lu)
 
             # TODO 力矩的公式到底是r×F，F×r
             # particle.lT = np.cross(particle.lF, particle.lx - particle.cx)
-            particle.lT = np.cross(particle.lx - particle.cx, particle.lF)
+            particle.lT = torch.cross(particle.lx - particle.cx, particle.lF, dim=-1)
 
+    @run_timer
     def lagrange_to_flow(self, n=2, h=1):
         for particle in self.particles:
-            rl = np.array(np.floor(particle.lx) - (n - 1) * h, dtype=int)
+            rl = np.array(np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int)
             rl[rl < 0] = 0
             rr = rl + (2 * n - 1) * h + 1
             for index, lar in enumerate(particle.lx):
                 i0, i1 = rl[index], rr[index]
                 tmp = self.flow.x[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] - lar
-                tmp = (1 + np.cos(np.abs(tmp / h * np.pi / 2 / h))) / 4 / h
-                tmp = np.prod(tmp, axis=-1, keepdims=True)
+                tmp = (1 + torch.cos(torch.abs(tmp / h * np.pi / 2 / h))) / 4 / h
+                tmp = torch.prod(tmp, dim=-1, keepdims=True)
                 tmp = tmp * particle.lF[index, :] * particle.lm[index]
                 self.flow.FOL[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] = tmp
 
+    @run_timer
     def particle_to_wall(self):
         k0 = 300
         for particle in self.particles:
-            n = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]])
-            xt = np.concatenate(
+            n = torch.tensor(
+                np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]),
+                device=self.device,
+                dtype=torch.float32,
+            )
+            xt = torch.concatenate(
                 [
-                    np.zeros(self.config.flow_config.size.shape),
-                    self.config.flow_config.size,
+                    torch.zeros(self.config.flow_config.size.shape, device=self.device),
+                    torch.tensor(self.config.flow_config.size, device=self.device, dtype=torch.float32),
                 ]
             )
-            xi = np.concatenate([np.argmin(particle.lx, axis=0), np.argmax(particle.lx, axis=0)])
+            xi = torch.concatenate([torch.argmin(particle.lx, dim=0), torch.argmax(particle.lx, dim=0)])
 
             d = k0 * (1 - abs(particle.lx[xi][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]] - xt) / (2 * self.config.dx))
             d[d < 0] = 0
             if d.max() == 0:
                 continue
-            print(xi, d)
-            particle.lF[xi] = particle.lF[xi] + np.multiply(n, np.expand_dims(d, 1))
+            particle.lF[xi] = particle.lF[xi] + torch.multiply(n, d.unsqueeze(1))
 
     def step(self, step):
         # 流场碰撞
@@ -135,15 +156,16 @@ class Solver(object):
             indexing="ij",
             sparse=False,
         )
-
+        flow_u = self.flow.u.to("cpu").numpy()
         point_data = {
             "u": (
-                self.flow.u[:, :, :, 0],
-                self.flow.u[:, :, :, 1],
-                self.flow.u[:, :, :, 2],
+                flow_u[:, :, :, 0],
+                flow_u[:, :, :, 1],
+                flow_u[:, :, :, 2],
             ),
         }
-        cell_data = {"rou": self.flow.rou[:, :, :, 0], "p": self.flow.p[:, :, :, 0]}
+
+        cell_data = {"rou": self.flow.rou.to("cpu").numpy()[:, :, :, 0], "p": self.flow.p.to("cpu").numpy()[:, :, :, 0]}
 
         gridToVTK(
             f"{self.config.file_config.vtk_path}/flow_" + str(step).zfill(10),
@@ -155,11 +177,10 @@ class Solver(object):
         )
 
         for i, particle in enumerate(self.particles):
-            xf, yf, zf = particle.lx[:, 0], particle.lx[:, 1], particle.lx[:, 2]
+            lx = particle.lx.to("cpu").numpy()
+            xf, yf, zf = lx[:, 0], lx[:, 1], lx[:, 2]
             data = {
-                # "u": self.lu
-                "u": particle.lu[:, 0],  # , self.lu[:, 1], self.lu[:, 2])
-                # "u": (self.lu[:, 0], self.lu[:, 1], self.lu[:, 2])
+                "u": particle.lu.to("cpu").numpy()[:, 0],
             }
             fname = f"{self.config.file_config.vtk_path}/particle_{str(i).zfill(3)}_{str(step).zfill(10)}"
             pointsToVTK(fname, xf, yf, zf, data=data)

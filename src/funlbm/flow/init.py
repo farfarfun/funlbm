@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from funutil.cache import cache
 
 
@@ -20,4 +21,4 @@ def init_u(a, b, u_max=0.01, n_max=100):
         for j in range(b):
             zi = j - (b - 1) / 2.0
             res[i, j] = u_max * cul_u(yi, zi, a / 2.0, b / 2.0, size=n_max)
-    return res
+    return torch.from_numpy(res)

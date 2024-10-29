@@ -97,7 +97,6 @@ class FileConfig(BaseConfig):
         self.per_steps = deep_get(config_json, "per_steps") or self.per_steps
 
 
-
 class CoordConfig(BaseConfig):
     def __init__(self, alpha=np.pi / 2, beta=0, gamma=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
