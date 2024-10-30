@@ -24,6 +24,7 @@ class Solver(object):
     def __init__(self, config: Config, device=None, *args, **kwargs):
         self.config = config
         self.device = choice_device(device)
+        print(f"device:={self.device}")
         self.flow = Flow3D(config=config.flow_config, device=self.device)
         self.particles = [Ellipsoid(config=con) for con in config.particles]
 
