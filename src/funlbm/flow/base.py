@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 
 from funlbm.config import FlowConfig
-from funlbm.parameter import Par3D
+from funlbm.parameter import Param
 
 
 class Flow(object):
@@ -26,4 +26,19 @@ class Flow(object):
         self.tau: Tensor = torch.ones([1])
 
         self.config = config or FlowConfig()
-        self.param = Par3D(device=self.device)
+        self.param: Param = None
+
+    def init(self, *args, **kwargs):
+        raise NotImplementedError("not implemented")
+
+    def update_u_rou(self, *args, **kwargs):
+        raise NotImplementedError("not implemented")
+
+    def cul_equ(self, tau=None, *args, **kwargs):
+        raise NotImplementedError("not implemented")
+
+    def cul_equ2(self, *args, **kwargs):
+        raise NotImplementedError("not implemented")
+
+    def f_stream(self, *args, **kwargs):
+        raise NotImplementedError("not implemented")
