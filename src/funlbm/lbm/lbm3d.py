@@ -5,18 +5,17 @@ from funutil import run_timer
 from funvtk.hl import gridToVTK, pointsToVTK
 
 from funlbm.config import Config
-from funlbm.flow import FlowD3Q19
-from funlbm.parameter import ParamD3Q19
+from funlbm.flow import FlowD3
 from funlbm.particle import Ellipsoid
-
-from .base import LBMBase, device_detect
 
 logger = funutil.getLogger("funlbm")
 
 
 class LBMD3(LBMBase):
-    def __init__(self, *args, **kwargs):
-        super(LBMD3, self).__init__(*args, **kwargs)
+    def __init__(self, config: Config, *args, **kwargs):
+        flow = FlowD3(config=config.flow_config, *args, **kwargs)
+        particles = [Ellipsoid(config=con) for con in config.particles]
+        super(LBMD3, self).__init__(flow=flow, config=config, particles=particles, *args, **kwargs)
 
     def init(self):
         # 初始化流程
@@ -136,10 +135,21 @@ class LBMD3(LBMBase):
             pointsToVTK(fname, xf, yf, zf, data=data)
 
 
+class LBMD3Q27(LBMD3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 class LBMD3Q19(LBMD3):
-    def __init__(self, config: Config, device="cpu", *args, **kwargs):
-        device = device_detect(device)
-        param = ParamD3Q19(device=device)
-        flow = FlowD3Q19(config=config.flow_config, param=param, device=device)
-        particles = [Ellipsoid(config=con) for con in config.particles]
-        super().__init__(flow=flow, config=config, param=param, particles=particles, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class LBMD3Q15(LBMD3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class LBMD3Q13(LBMD3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
