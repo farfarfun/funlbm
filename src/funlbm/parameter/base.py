@@ -1,6 +1,7 @@
 import math
 
 import torch
+from funutil.cache import cache
 
 
 class Param:
@@ -11,9 +12,11 @@ class Param:
         self.w = torch.tensor(w, device=self.device, dtype=torch.float32)
         self.cs = torch.tensor(math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32)
 
+    @cache
     def vertex_index(self, axis, value):
         return [i for i, e in enumerate(self.e) if e[axis] == value]
 
+    @cache
     def index_reverse(self, index):
         if isinstance(index, int):
             return self.vertex_reverse[index]
