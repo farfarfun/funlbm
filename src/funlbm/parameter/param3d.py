@@ -202,3 +202,16 @@ class ParamD3Q13(Param):
         map = dict([(",".join([str(i) for i in xyz]), i) for i, xyz in enumerate(e)])
         vertex_reverse = [map[",".join([str(int(-1 * i)) for i in e[index]])] for index in range(len(e))]
         super().__init__(e=e, w=w, vertex_reverse=vertex_reverse, *args, **kwargs)
+
+
+def parse_3d_param(param_type, *args, **kwargs):
+    if param_type == "D3Q27":
+        return ParamD3Q27(*args, **kwargs)
+    elif param_type == "D3Q19":
+        return ParamD3Q19(*args, **kwargs)
+    elif param_type == "D3Q15":
+        return ParamD3Q15(*args, **kwargs)
+    elif param_type == "D3Q13":
+        return ParamD3Q13(*args, **kwargs)
+    else:
+        raise ValueError("Unknown parameter type: {}".format(param_type))
