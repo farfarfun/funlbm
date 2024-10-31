@@ -21,3 +21,7 @@ class Param:
         if isinstance(index, int):
             return self.vertex_reverse[index]
         return [self.vertex_reverse[i] for i in index]
+
+    @property
+    def e_dim(self):
+        return self.e.shape[0]

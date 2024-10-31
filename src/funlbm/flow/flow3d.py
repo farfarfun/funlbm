@@ -57,7 +57,7 @@ class FlowD3(Flow):
         self.tau = torch.ones([m, n, l, 1], device=self.device) * 0.6364
         self.FOL = torch.zeros([m, n, l, 3], device=self.device)
         self.p = torch.zeros([m, n, l, 1], device=self.device)
-        self.f = torch.zeros([m, n, l, 19], device=self.device)
+        self.f = torch.zeros([m, n, l, self.param.e_dim], device=self.device)
 
     @run_timer
     def update_u_rou(self):
@@ -184,12 +184,21 @@ class FlowD3(Flow):
             self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.index_reverse(index)] - tmp
 
 
+class FlowD3Q27(FlowD3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 class FlowD3Q19(FlowD3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def init(self, *args, **kwargs):
-        super().init(*args, **kwargs)
-        m, n, l = self.config.size
-        m, n, l = int(m), int(n), int(l)
-        self.f = torch.zeros([m, n, l, 19], device=self.device)
+
+class FlowD3Q15(FlowD3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class FlowD3Q13(FlowD3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
