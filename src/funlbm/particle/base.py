@@ -1,5 +1,4 @@
-import logging
-
+import funutil
 import numpy as np
 import torch
 import transforms3d as tfs
@@ -8,9 +7,7 @@ from torch import Tensor
 
 from funlbm.config import CoordConfig, ParticleConfig
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("funlbm")
-logger.setLevel(logging.INFO)
+logger = funutil.getLogger("funlbm")
 
 
 def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.1):

@@ -1,4 +1,4 @@
-import logging
+import funutil
 
 import torch
 from tqdm import tqdm
@@ -6,7 +6,7 @@ from tqdm import tqdm
 from funlbm.config import Config
 from funlbm.flow import FlowD3
 
-logger = logging.getLogger("funlbm")
+logger = funutil.getLogger("funlbm")
 
 
 def device_detect(device=None):
