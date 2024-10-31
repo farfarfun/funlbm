@@ -8,6 +8,8 @@ from funlbm.config import Config
 from funlbm.flow import FlowD3
 from funlbm.particle import Ellipsoid
 
+from .base import LBMBase
+
 logger = funutil.getLogger("funlbm")
 
 
