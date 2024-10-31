@@ -6,8 +6,11 @@ from funlbm.parameter import Param
 
 
 class Flow(object):
-    def __init__(self, config=None, device="mps", *args, **kwargs):
+    def __init__(self, param: Param, config: FlowConfig, device="cpu", *args, **kwargs):
         self.device = device
+        self.param: Param = param
+        self.config: FlowConfig = config
+
         # 坐标
         self.x: Tensor = torch.ones([1])
         # 力密度
@@ -24,9 +27,6 @@ class Flow(object):
         self.FOL: Tensor = torch.ones([1])
 
         self.tau: Tensor = torch.ones([1])
-
-        self.config = config or FlowConfig()
-        self.param: Param = None
 
     def init(self, *args, **kwargs):
         raise NotImplementedError("not implemented")
