@@ -4,3 +4,4 @@ dist/*
 example/download/*
 */__pycache__
 *.pyc
+.ruff_cache

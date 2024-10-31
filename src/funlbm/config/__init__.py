@@ -1,8 +1,10 @@
 from .base import (
-    Config,
     Boundary,
     BoundaryCondition,
+    Config,
+    CoordConfig,
     FlowConfig,
     ParticleConfig,
-    CoordConfig,
 )
+
+__all__ = ["Config", "Boundary", "BoundaryCondition", "FlowConfig", "ParticleConfig", "CoordConfig"]
