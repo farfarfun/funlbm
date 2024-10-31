@@ -113,75 +113,75 @@ class FlowD3(Flow):
         self.f_stream_bound_z_end(fcopy, bound_config.top)
 
     def f_stream_bound_input(self, fcopy, boundary: Boundary):
-        index = self.param.bound_index(0, 1)
+        index = self.param.vertex_index(0, 1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
             self.f[:1, :, :, index] = fcopy[-1:, :, :, index]
         elif boundary.is_condition(BoundaryCondition.WALL):
-            self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.bound_index_map(index)]
+            self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:1, :, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
-            self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.bound_index_map(index)] - tmp
+            self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.index_reverse(index)] - tmp
 
     def f_stream_bound_output(self, fcopy, boundary: Boundary):
         # 右边
-        index = self.param.bound_index(0, -1)
+        index = self.param.vertex_index(0, -1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
             self.f[-1:, :, :, index] = fcopy[:1, :, :, index]
         elif boundary.is_condition(BoundaryCondition.WALL):
-            self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.bound_index_map(index)]
+            self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[-1:, :, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
-            self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.bound_index_map(index)] - tmp
+            self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.index_reverse(index)] - tmp
 
     def f_stream_bound_y_start(self, fcopy, boundary: Boundary):
         # 后面
-        index = self.param.bound_index(1, 1)
+        index = self.param.vertex_index(1, 1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
             self.f[:, :1, :, index] = fcopy[:, -1:, :, index]
         elif boundary.is_condition(BoundaryCondition.WALL):
-            self.f[:, :1, :, index] = fcopy[:, :1, :, self.param.bound_index_map(index)]
+            self.f[:, :1, :, index] = fcopy[:, :1, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :1, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
-            self.f[:, :1, :, index] = fcopy[:, :1, :, self.param.bound_index_map(index)] - tmp
+            self.f[:, :1, :, index] = fcopy[:, :1, :, self.param.index_reverse(index)] - tmp
 
     def f_stream_bound_y_end(self, fcopy, boundary: Boundary):
         # 前面
-        index = self.param.bound_index(1, -1)
+        index = self.param.vertex_index(1, -1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
             self.f[:, -1:, :, index] = fcopy[:, :1, :, index]
         elif boundary.is_condition(BoundaryCondition.WALL):
-            self.f[:, -1:, :, index] = fcopy[:, -1:, :, self.param.bound_index_map(index)]
+            self.f[:, -1:, :, index] = fcopy[:, -1:, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, -1:, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
-            self.f[:, -1:, :, index] = fcopy[:, -1:, :, self.param.bound_index_map(index)] - tmp
+            self.f[:, -1:, :, index] = fcopy[:, -1:, :, self.param.index_reverse(index)] - tmp
 
     def f_stream_bound_z_start(self, fcopy, boundary: Boundary):
         # 下面
-        index = self.param.bound_index(2, 1)
+        index = self.param.vertex_index(2, 1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
-            self.f[:, :, :1, index] = fcopy[:, :, -1:, self.param.bound_index_map(index)]
+            self.f[:, :, :1, index] = fcopy[:, :, -1:, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL):
-            self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.bound_index_map(index)]
+            self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :, :1, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
-            self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.bound_index_map(index)] - tmp
+            self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.index_reverse(index)] - tmp
 
     def f_stream_bound_z_end(self, fcopy, boundary: Boundary):
         # 上面
-        index = self.param.bound_index(2, -1)
+        index = self.param.vertex_index(2, -1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
-            self.f[:, :, -1:, index] = fcopy[:, :, :1, self.param.bound_index_map(index)]
+            self.f[:, :, -1:, index] = fcopy[:, :, :1, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL):
-            self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.bound_index_map(index)]
+            self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :, -1:, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
-            self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.bound_index_map(index)] - tmp
+            self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.index_reverse(index)] - tmp
 
 
 class FlowD3Q19(FlowD3):
