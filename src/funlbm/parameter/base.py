@@ -16,7 +16,6 @@ class Param:
     def vertex_index(self, axis, value):
         return [i for i, e in enumerate(self.e) if e[axis] == value]
 
-    @cache
     def index_reverse(self, index):
         if isinstance(index, int):
             return self.vertex_reverse[index]
