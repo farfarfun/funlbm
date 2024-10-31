@@ -1,4 +1,8 @@
+import funutil
+
 from .base import Param
+
+logger = funutil.getLogger("funlbm")
 
 
 class ParamD3Q27(Param):
@@ -205,6 +209,7 @@ class ParamD3Q13(Param):
 
 
 def parse_3d_param(param_type, *args, **kwargs):
+    logger.info(f"param_type={param_type}")
     if param_type == "D3Q27":
         return ParamD3Q27(*args, **kwargs)
     elif param_type == "D3Q19":

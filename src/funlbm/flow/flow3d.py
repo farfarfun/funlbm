@@ -1,10 +1,11 @@
 import numpy as np
 import torch
+from funlbm.config import Boundary, BoundaryCondition
+from funlbm.config import FlowConfig
+from funlbm.flow import Flow
+from funlbm.parameter import Param, parse_3d_param
 from funutil import run_timer
 from funutil.cache import cache
-
-from funlbm.config import Boundary, BoundaryCondition
-from funlbm.flow import Flow
 
 
 def cul_u(y, z, a, b, size=100):
@@ -38,8 +39,9 @@ def tran3d(ii, total):
 
 
 class FlowD3(Flow):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, config: FlowConfig, *args, **kwargs):
+        param: Param = parse_3d_param(config.param_type, *args, **kwargs)
+        super().__init__(param=param, config=config, *args, **kwargs)
 
     def init(self, *args, **kwargs):
         m, n, l = self.config.size

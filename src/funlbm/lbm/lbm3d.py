@@ -1,5 +1,4 @@
-import logging
-
+import funutil
 import numpy as np
 import torch
 from funutil import run_timer
@@ -12,7 +11,7 @@ from funlbm.particle import Ellipsoid
 
 from .base import LBMBase, device_detect
 
-logger = logging.getLogger("funlbm")
+logger = funutil.getLogger("funlbm")
 
 
 class LBMD3(LBMBase):
@@ -143,4 +142,4 @@ class LBMD3Q19(LBMD3):
         param = ParamD3Q19(device=device)
         flow = FlowD3Q19(config=config.flow_config, param=param, device=device)
         particles = [Ellipsoid(config=con) for con in config.particles]
-        super().__init__(flow=flow,config=config, param=param, particles=particles, *args, **kwargs)
+        super().__init__(flow=flow, config=config, param=param, particles=particles, *args, **kwargs)
