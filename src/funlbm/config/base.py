@@ -50,7 +50,7 @@ class Boundary(BaseConfig):
         return self.condition == condition
 
     def _from_json(self, config_json: dict, *args, **kwargs):
-        self.condition = deep_get(config_json, "code") or self.condition
+        self.condition = BoundaryCondition.find(deep_get(config_json, "code") or "WALL")
         self.poiseuille = deep_get(config_json, "poiseuille")
 
 
@@ -124,14 +124,22 @@ class ParticleConfig(BaseConfig):
 class FlowConfig(BaseConfig):
     def __init__(self, *args, **kwargs):
         self.size = np.zeros(3)
-        self.boundary: BoundaryConfig = None
+        self.param = {}
         self.param_type: str = "D3Q19"
+        self.boundary: BoundaryConfig = None
+
+        self.Re = 10
+        self.mu = 10
         super().__init__(*args, **kwargs)
 
     def _from_json(self, config_json: dict, *args, **kwargs):
         self.size = np.array(deep_get(config_json, "size") or [100, 100, 100], dtype=int)
+        self.param = deep_get(config_json, "param") or self.param
         self.boundary = BoundaryConfig().from_json(deep_get(config_json, "boundary") or {})
         self.param_type = deep_get(config_json, "param_type") or self.param_type
+
+        self.Re = float(deep_get(self.param, "Re") or self.Re)
+        self.mu = float(deep_get(self.param, "mu") or self.mu)
 
 
 class Config(BaseConfig):

@@ -12,21 +12,21 @@ class Flow(object):
         self.config: FlowConfig = config
 
         # 坐标
-        self.x: Tensor = torch.ones([1])
+        self.x: Tensor = torch.zeros([1])
         # 力密度
-        self.f: Tensor = torch.ones([1])
+        self.f: Tensor = torch.zeros([1])
         # 速度
-        self.u: Tensor = torch.ones([1])
+        self.u: Tensor = torch.zeros([1])
         # 压强
-        self.p: Tensor = torch.ones([1])
+        self.p: Tensor = torch.zeros([1])
         # 密度
-        self.rou: Tensor = torch.ones([1])
+        self.rou: Tensor = torch.zeros([1])
         # 剪切率相关的变量
-        self.gama: Tensor = torch.ones([1])
+        self.gama: Tensor = torch.zeros([1])
 
-        self.FOL: Tensor = torch.ones([1])
+        self.FOL: Tensor = torch.zeros([1])
 
-        self.tau: Tensor = torch.ones([1])
+        self.tau: Tensor = torch.zeros([1])
 
     def init(self, *args, **kwargs):
         raise NotImplementedError("not implemented")

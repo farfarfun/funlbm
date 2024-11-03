@@ -1,5 +1,4 @@
 import funutil
-
 import torch
 from tqdm import tqdm
 
@@ -50,15 +49,14 @@ class LBMBase(object):
 
     def run_step(self, step, *args, **kwargs):
         # 流场碰撞
-        self.flow.cul_equ()
+        self.flow.cul_equ(step=step)
         # 流场迁移
         self.flow.f_stream()
         # 流场计算-速度&密度
-        self.flow.update_u_rou()
+        self.flow.update_u_rou(step=step)
 
         # 浸没计算-流场->拉格朗日点
         self.flow_to_lagrange()
-
         self.particle_to_wall()
 
         # 浸没计算-拉格朗日点->颗粒

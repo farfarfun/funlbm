@@ -13,6 +13,10 @@ class Param:
         self.cs = torch.tensor(math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32)
 
     @cache
+    def eT(self) -> torch.Tensor:
+        return self.e.t()
+
+    @cache
     def vertex_index(self, axis, value):
         return [i for i, e in enumerate(self.e) if e[axis] == value]
 

@@ -8,6 +8,7 @@ from funlbm.config import Config
 from funlbm.flow import FlowD3
 from funlbm.particle import Ellipsoid
 
+from ..file.tecplot.dump import write_to_tecplot
 from .base import LBMBase
 
 logger = funutil.getLogger("funlbm")
@@ -26,7 +27,7 @@ class LBMD3(LBMBase):
         # 初始化颗粒
 
         # self = self.particles[0]
-        self.flow.cul_equ(tau=1)
+        self.flow.cul_equ()
 
         for particle in self.particles:
             particle.init()
@@ -43,7 +44,7 @@ class LBMD3(LBMBase):
                 i0, i1 = rl[index], rr[index]
                 tmp = self.flow.x[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] - lar
                 tmp = (1 + torch.cos(torch.abs(tmp / h * np.pi / 2 / h))) / 4 / h
-                tmp = torch.prod(tmp, dim=-1, keepdims=True)
+                tmp = torch.prod(tmp, dim=-1, keepdim=True)
 
                 lu[index, :] = torch.sum(self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
                 particle.lrou[index, :] = torch.sum(self.flow.rou[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
@@ -68,7 +69,7 @@ class LBMD3(LBMBase):
                 i0, i1 = rl[index], rr[index]
                 tmp = self.flow.x[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] - lar
                 tmp = (1 + torch.cos(torch.abs(tmp / h * np.pi / 2 / h))) / 4 / h
-                tmp = torch.prod(tmp, dim=-1, keepdims=True)
+                tmp = torch.prod(tmp, dim=-1, keepdim=True)
                 tmp = tmp * particle.lF[index, :] * particle.lm[index]
                 self.flow.FOL[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] = tmp
 
@@ -116,7 +117,11 @@ class LBMD3(LBMBase):
             ),
         }
 
-        cell_data = {"rou": self.flow.rou.to("cpu").numpy()[:, :, :, 0], "p": self.flow.p.to("cpu").numpy()[:, :, :, 0]}
+        cell_data = {"rho": self.flow.rou.to("cpu").numpy()[:, :, :, 0], "p": self.flow.p.to("cpu").numpy()[:, :, :, 0]}
+
+        # t1 = self.flow.rou[10:-10, 10:-10, 10:-10, :]
+        # t1 = cell_data['rho'][5:-5, 5:-5, 5:-5]
+        # print("rho", step, t1.max(), t1.min(), t1.max() - t1.min())
 
         gridToVTK(
             f"{self.config.file_config.vtk_path}/flow_" + str(step).zfill(10),
@@ -135,6 +140,7 @@ class LBMD3(LBMBase):
             }
             fname = f"{self.config.file_config.vtk_path}/particle_{str(i).zfill(3)}_{str(step).zfill(10)}"
             pointsToVTK(fname, xf, yf, zf, data=data)
+        write_to_tecplot(cell_data["rho"], f"{self.config.file_config.vtk_path}/tecplot_{str(step).zfill(10)}.dat")
 
 
 class LBMD3Q27(LBMD3):

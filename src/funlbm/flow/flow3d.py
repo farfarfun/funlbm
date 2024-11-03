@@ -1,11 +1,11 @@
 import numpy as np
 import torch
-from funlbm.config import Boundary, BoundaryCondition
-from funlbm.config import FlowConfig
-from funlbm.flow import Flow
-from funlbm.parameter import Param, parse_3d_param
 from funutil import run_timer
 from funutil.cache import cache
+
+from funlbm.config import Boundary, BoundaryCondition, FlowConfig
+from funlbm.flow import Flow
+from funlbm.parameter import Param, parse_3d_param
 
 
 def cul_u(y, z, a, b, size=100):
@@ -56,16 +56,32 @@ class FlowD3(Flow):
 
         self.u = torch.zeros([m, n, l, 3], device=self.device)
         self.rou = torch.ones([m, n, l, 1], device=self.device) * 1.0
-        self.tau = torch.ones([m, n, l, 1], device=self.device) * 0.6364
+        self.tau = torch.ones([m, n, l, 1], device=self.device) * (3 * self.config.mu + 0.5)
         self.FOL = torch.zeros([m, n, l, 3], device=self.device)
         self.p = torch.zeros([m, n, l, 1], device=self.device)
         self.f = torch.zeros([m, n, l, self.param.e_dim], device=self.device)
 
     @run_timer
-    def update_u_rou(self):
-        self.rou = torch.sum(self.f, axis=-1, keepdims=True)
+    def cul_equ2(self):
+        for alpha in range(len(self.param.e)):
+            t1 = (self.param.e[alpha] - self.u) / (self.param.cs**2)
+            t2 = (self.u * self.param.e[alpha]) * self.param.e[alpha] / (self.param.cs**4)
+            t3 = torch.sum((t1 + t2) * self.FOL, dim=-1, keepdim=True)
+            t4 = (1 - 1 / 2 / self.tau) * self.param.w[0][alpha] * t3
+            self.f[:, :, :, alpha] += t4[:, :, :, 0]
+
+    @run_timer
+    def update_u_rou(self, step=0, *args, **kwargs):
+        self.rou = torch.sum(self.f, dim=-1, keepdim=True)
+
         self.p = self.rou / 3.0
         self.u = torch.matmul(self.f, self.param.e) / self.rou + self.FOL / 2.0
+
+        self.u[0, :, :, :] = 0
+        self.u[:, 0, :, :] = 0
+        self.u[:, -1, :, :] = 0
+        self.u[:, :, 0, :] = 0
+        self.u[:, :, -1, :] = 0
 
         if self.config.boundary.input.poiseuille is not None:
             shape = self.u.shape
@@ -74,26 +90,15 @@ class FlowD3(Flow):
         # TODO 计算gama
 
     @run_timer
-    def cul_equ(self, tau=None):
-        tau = tau or self.tau
-        tmp = torch.matmul(self.u, torch.transpose(self.param.e, 0, 1)) / (self.param.cs**2)
-        u2 = torch.linalg.norm(self.u, axis=-1, keepdims=True) ** 2 / (self.param.cs**2) / 2
-        feq = 1 + tmp + tmp**2 / 2 - u2
-        weight = torch.matmul(self.rou, self.param.w)
-        feq = feq * weight
-        self.f += (feq - self.f) / tau
-
-    @run_timer
-    def cul_equ2(self):
-        for alpha in range(len(self.param.e)):
-            t1 = (self.param.e[alpha] - self.u) / (self.param.cs**2)
-            t2 = (self.u * self.param.e[alpha]) * self.param.e[alpha] / (self.param.cs**4)
-            t3 = (1 - 1 / 2 / self.tau) * torch.sum((t1 + t2) * self.FOL, axis=-1, keepdims=True)
-            self.f[:, :, :, alpha] += t3[:, :, :, 0]
+    def cul_equ(self, step=0, *args, **kwargs):
+        tmp = torch.matmul(self.u, self.param.eT()) / (self.param.cs**2)
+        u2 = torch.linalg.norm(self.u, dim=-1, keepdim=True) ** 2 / (self.param.cs**2) / 2
+        feq = (1 + tmp + tmp**2 / 2 - u2) * torch.matmul(self.rou, self.param.w)
+        self.f = self.f - (self.f - feq) / self.tau
 
     @run_timer
     def f_stream(self):
-        fcopy = 1 * self.f
+        fcopy = 1.0 * self.f
         i2, j2, k2 = self.f.shape[:3]
 
         for k, (e1, e2, e3) in enumerate(self.param.e):
@@ -107,12 +112,14 @@ class FlowD3(Flow):
     @run_timer
     def f_stream_bound(self, fcopy):
         bound_config = self.config.boundary
-        self.f_stream_bound_input(fcopy, bound_config.input)
-        self.f_stream_bound_output(fcopy, bound_config.output)
+
         self.f_stream_bound_y_start(fcopy, bound_config.back)
         self.f_stream_bound_y_end(fcopy, bound_config.forward)
         self.f_stream_bound_z_start(fcopy, bound_config.bottom)
         self.f_stream_bound_z_end(fcopy, bound_config.top)
+
+        self.f_stream_bound_input(fcopy, bound_config.input)
+        self.f_stream_bound_output(fcopy, bound_config.output)
 
     def f_stream_bound_input(self, fcopy, boundary: Boundary):
         index = self.param.vertex_index(0, 1)
@@ -124,6 +131,8 @@ class FlowD3(Flow):
             tmp = 2 * torch.matmul(self.rou[:1, :, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.index_reverse(index)] - tmp
+        else:
+            raise NotImplementedError
 
     def f_stream_bound_output(self, fcopy, boundary: Boundary):
         # 右边
@@ -136,6 +145,8 @@ class FlowD3(Flow):
             tmp = 2 * torch.matmul(self.rou[-1:, :, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.index_reverse(index)] - tmp
+        else:
+            raise NotImplementedError
 
     def f_stream_bound_y_start(self, fcopy, boundary: Boundary):
         # 后面
@@ -148,6 +159,8 @@ class FlowD3(Flow):
             tmp = 2 * torch.matmul(self.rou[:, :1, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[:, :1, :, index] = fcopy[:, :1, :, self.param.index_reverse(index)] - tmp
+        else:
+            raise NotImplementedError
 
     def f_stream_bound_y_end(self, fcopy, boundary: Boundary):
         # 前面
@@ -160,30 +173,36 @@ class FlowD3(Flow):
             tmp = 2 * torch.matmul(self.rou[:, -1:, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[:, -1:, :, index] = fcopy[:, -1:, :, self.param.index_reverse(index)] - tmp
+        else:
+            raise NotImplementedError
 
     def f_stream_bound_z_start(self, fcopy, boundary: Boundary):
         # 下面
         index = self.param.vertex_index(2, 1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
-            self.f[:, :, :1, index] = fcopy[:, :, -1:, self.param.index_reverse(index)]
+            self.f[:, :, :1, index] = fcopy[:, :, -1:, index]
         elif boundary.is_condition(BoundaryCondition.WALL):
             self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :, :1, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.index_reverse(index)] - tmp
+        else:
+            raise NotImplementedError
 
     def f_stream_bound_z_end(self, fcopy, boundary: Boundary):
         # 上面
         index = self.param.vertex_index(2, -1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
-            self.f[:, :, -1:, index] = fcopy[:, :, :1, self.param.index_reverse(index)]
+            self.f[:, :, -1:, index] = fcopy[:, :, :1, index]
         elif boundary.is_condition(BoundaryCondition.WALL):
             self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :, -1:, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.index_reverse(index)] - tmp
+        else:
+            raise NotImplementedError
 
 
 class FlowD3Q27(FlowD3):
