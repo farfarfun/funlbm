@@ -85,7 +85,8 @@ class FlowD3(Flow):
 
         if self.config.boundary.input.poiseuille is not None:
             shape = self.u.shape
-            self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=self.config.boundary.input.get("uw", 0.001))
+            uw = self.config.Re * self.config.mu / self.rou.max() / min(shape[1], shape[2])
+            self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=uw)
 
         # TODO 计算gama
 
