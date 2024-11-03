@@ -32,9 +32,9 @@ class LBMBase(object):
         self.device = device_detect(device)
         logger.info(f"device:={self.device}")
 
-    def run(self, *args, **kwargs):
+    def run(self, max_steps=10000, *args, **kwargs):
         self.init()
-        total = int(100000 / self.config.dt)
+        total = int(max_steps / self.config.dt)
         pbar = tqdm(range(total))
         # pbar = range(total)
         for step in pbar:
