@@ -1,3 +1,4 @@
+import json
 import os
 from enum import Enum
 from typing import List
@@ -29,6 +30,9 @@ class BaseConfig(object):
 
     def _from_json(self, config_json: dict, *args, **kwargs):
         pass
+
+    def from_file(self, path):
+        self.from_json(json.loads(open(path).read()))
 
     def from_json(self, config_json: dict, *args, **kwargs):
         self.expand.update(kwargs)
