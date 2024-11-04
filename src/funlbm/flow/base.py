@@ -15,6 +15,7 @@ class Flow(object):
         self.x: Tensor = torch.zeros([1])
         # 力密度
         self.f: Tensor = torch.zeros([1])
+        self.feq: Tensor = torch.zeros([1])
         # 速度
         self.u: Tensor = torch.zeros([1])
         # 压强

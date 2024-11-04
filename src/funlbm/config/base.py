@@ -65,8 +65,6 @@ class BoundaryConfig(BaseConfig):
         self.input = Boundary(BoundaryCondition.WALL)
         self.output = Boundary(BoundaryCondition.WALL)
 
-        # self.left = Boundary(BoundaryCondition.WALL)
-        # self.right = Boundary(BoundaryCondition.WALL)
         self.back = Boundary(BoundaryCondition.WALL)
         self.forward = Boundary(BoundaryCondition.WALL)
         self.bottom = Boundary(BoundaryCondition.WALL)
@@ -76,8 +74,6 @@ class BoundaryConfig(BaseConfig):
         self.input.from_json(deep_get(config_json, "input") or {})
         self.output.from_json(deep_get(config_json, "output") or {})
 
-        # self.left.from_json(deep_get(config_json, "left") or {})
-        # self.right.from_json(deep_get(config_json, "right") or {})
         self.back.from_json(deep_get(config_json, "back") or {})
         self.forward.from_json(deep_get(config_json, "forward") or {})
         self.bottom.from_json(deep_get(config_json, "bottom") or {})

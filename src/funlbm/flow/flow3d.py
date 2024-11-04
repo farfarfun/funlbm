@@ -77,18 +77,26 @@ class FlowD3(Flow):
         self.p = self.rou / 3.0
         self.u = torch.matmul(self.f, self.param.e) / self.rou + self.FOL / 2.0
 
+        # TODO 计算gama
+
+        self.update_u_rou_boundary()
+
+    @run_timer
+    def update_u_rou_boundary(self, *args, **kwargs):
         self.u[0, :, :, :] = 0
         self.u[:, 0, :, :] = 0
         self.u[:, -1, :, :] = 0
         self.u[:, :, 0, :] = 0
         self.u[:, :, -1, :] = 0
 
-        if self.config.boundary.input.poiseuille is not None:
+        if self.config.boundary.input.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
             shape = self.u.shape
             uw = self.config.Re * self.config.mu / self.rou.max() / min(shape[1], shape[2])
             self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=uw)
+            self.rou[0, :, :, :] = self.rou[1, :, :, :]
 
-        # TODO 计算gama
+        if self.config.boundary.output.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
+            self.rou[-1, :, :, :] = self.rou[-2, :, :, :]
 
     @run_timer
     def cul_equ(self, step=0, *args, **kwargs):
@@ -132,6 +140,8 @@ class FlowD3(Flow):
             tmp = 2 * torch.matmul(self.rou[:1, :, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.index_reverse(index)] - tmp
+        elif boundary.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
+            self.f[:1, :, :, :] = self.feq[:1, :, :, :] + (self.f[1:2, :, :, :] - self.feq[1:2, :, :, :])
         else:
             raise NotImplementedError
 
@@ -146,6 +156,8 @@ class FlowD3(Flow):
             tmp = 2 * torch.matmul(self.rou[-1:, :, :, :], self.param.w[:, index])
             tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
             self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.index_reverse(index)] - tmp
+        elif boundary.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
+            self.f[-1:, :, :, :] = self.feq[-1:, :, :, :] + (self.f[-2:-1, :, :, :] - self.feq[-2:-1, :, :, :])
         else:
             raise NotImplementedError
 
