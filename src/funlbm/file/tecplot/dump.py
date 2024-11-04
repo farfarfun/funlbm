@@ -13,7 +13,7 @@ def write_to_tecplot(dense_matrix, filename):
     shape = dense_matrix.shape
     with open(filename, "w") as f:
         f.write('TITLE = "Sparse Matrix Data"\n')
-        f.write('VARIABLES = "X", "Y", "Z", "Value"\n')
+        f.write('VARIABLES = "Z", "Y", "X", "Value"\n')
         f.write(f"ZONE I={shape[0]}, J={shape[1]}, K={shape[2]}, F=POINT\n")
 
         for row in sparse_matrix:
