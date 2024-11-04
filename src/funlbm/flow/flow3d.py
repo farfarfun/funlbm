@@ -83,7 +83,6 @@ class FlowD3(Flow):
 
     @run_timer
     def update_u_rou_boundary(self, *args, **kwargs):
-        self.u[0, :, :, :] = 0
         self.u[:, 0, :, :] = 0
         self.u[:, -1, :, :] = 0
         self.u[:, :, 0, :] = 0
@@ -92,10 +91,12 @@ class FlowD3(Flow):
         if self.config.boundary.input.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
             shape = self.u.shape
             uw = self.config.Re * self.config.mu / self.rou.max() / min(shape[1], shape[2])
+            self.u[0, :, :, :] = 0
             self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=uw)
             self.rou[0, :, :, :] = self.rou[1, :, :, :]
 
         if self.config.boundary.output.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
+            self.u[-1, :, :, :] = self.u[-2, :, :, :]
             self.rou[-1, :, :, :] = self.rou[-2, :, :, :]
 
     @run_timer
