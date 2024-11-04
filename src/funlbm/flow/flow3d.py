@@ -102,8 +102,8 @@ class FlowD3(Flow):
     def cul_equ(self, step=0, *args, **kwargs):
         tmp = torch.matmul(self.u, self.param.eT()) / (self.param.cs**2)
         u2 = torch.linalg.norm(self.u, dim=-1, keepdim=True) ** 2 / (self.param.cs**2) / 2
-        feq = (1 + tmp + tmp**2 / 2 - u2) * torch.matmul(self.rou, self.param.w)
-        self.f = self.f - (self.f - feq) / self.tau
+        self.feq = (1 + tmp + tmp**2 / 2 - u2) * torch.matmul(self.rou, self.param.w)
+        self.f = self.f - (self.f - self.feq) / self.tau
 
     @run_timer
     def f_stream(self):
