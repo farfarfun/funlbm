@@ -13,7 +13,8 @@ class BoundaryCondition(Enum):
     WALL_WITH_SPEED = 1201
     FAR_FIELD = 1300
     NON_EQUILIBRIUM = 1400
-    FULL_DEVELOPMENT = 1500
+    NON_EQUILIBRIUM_EXREAPOLATION = 1500
+    FULL_DEVELOPMENT = 1600
 
     @staticmethod
     def find(code):

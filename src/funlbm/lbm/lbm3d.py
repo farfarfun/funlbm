@@ -38,12 +38,13 @@ class LBMD3(LBMBase):
             rl = np.array(np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int)
             rl[rl < 0] = 0
             rr = rl + (2 * n - 1) * h + 1
+            # TODO 上限没加
 
             lu = torch.zeros(particle.lu.shape, device=self.device)
             for index, lar in enumerate(particle.lx):
                 i0, i1 = rl[index], rr[index]
                 tmp = self.flow.x[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] - lar
-                tmp = (1 + torch.cos(torch.abs(tmp / h * np.pi / 2 / h))) / 4 / h
+                tmp = (1 + torch.cos(torch.abs(tmp * np.pi / 2 / h))) / 4 / h
                 tmp = torch.prod(tmp, dim=-1, keepdim=True)
 
                 lu[index, :] = torch.sum(self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
@@ -53,7 +54,7 @@ class LBMD3(LBMBase):
             particle.lu[:, :] = (
                 particle.cu + torch.linalg.cross(particle.cw.unsqueeze(0), particle.lx - particle.cx, dim=-1) + u_theta
             )
-            particle.lF = particle.lrou * (particle.lu - lu)
+            particle.lF = 2 * particle.lrou * (particle.lu - lu)
 
             # TODO 力矩的公式到底是r×F，F×r
             # particle.lT = np.cross(particle.lF, particle.lx - particle.cx)
@@ -140,7 +141,7 @@ class LBMD3(LBMBase):
             }
             fname = f"{self.config.file_config.vtk_path}/particle_{str(i).zfill(3)}_{str(step).zfill(10)}"
             pointsToVTK(fname, xf, yf, zf, data=data)
-        write_to_tecplot(cell_data["rho"], f"{self.config.file_config.vtk_path}/tecplot_{str(step).zfill(10)}.dat")
+        # write_to_tecplot(cell_data["rho"], f"{self.config.file_config.vtk_path}/tecplot_{str(step).zfill(10)}.dat")
 
 
 class LBMD3Q27(LBMD3):
