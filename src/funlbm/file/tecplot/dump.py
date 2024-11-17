@@ -4,7 +4,9 @@ import numpy as np
 def to_sparse_matrix(dense_matrix):
     non_zero_indices = np.nonzero(dense_matrix)
     non_zero_values = dense_matrix[non_zero_indices]
-    sparse_matrix = np.vstack((non_zero_indices[0], non_zero_indices[1], non_zero_indices[2], non_zero_values)).T
+    sparse_matrix = np.vstack(
+        (non_zero_indices[0], non_zero_indices[1], non_zero_indices[2], non_zero_values)
+    ).T
     return sparse_matrix
 
 

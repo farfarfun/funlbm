@@ -69,7 +69,10 @@ class ParamD3Q27(Param):
             ]
         ]
         map = dict([(",".join([str(i) for i in xyz]), i) for i, xyz in enumerate(e)])
-        vertex_reverse = [map[",".join([str(int(-1 * i)) for i in e[index]])] for index in range(len(e))]
+        vertex_reverse = [
+            map[",".join([str(int(-1 * i)) for i in e[index]])]
+            for index in range(len(e))
+        ]
         super().__init__(e=e, w=w, vertex_reverse=vertex_reverse, *args, **kwargs)
 
 
@@ -120,7 +123,10 @@ class ParamD3Q19(Param):
             ]
         ]
         map = dict([(",".join([str(i) for i in xyz]), i) for i, xyz in enumerate(e)])
-        vertex_reverse = [map[",".join([str(int(-1 * i)) for i in e[index]])] for index in range(len(e))]
+        vertex_reverse = [
+            map[",".join([str(int(-1 * i)) for i in e[index]])]
+            for index in range(len(e))
+        ]
         super().__init__(e=e, w=w, vertex_reverse=vertex_reverse, *args, **kwargs)
 
 
@@ -164,7 +170,10 @@ class ParamD3Q15(Param):
             ]
         ]
         map = dict([(",".join([str(i) for i in xyz]), i) for i, xyz in enumerate(e)])
-        vertex_reverse = [map[",".join([str(int(-1 * i)) for i in e[index]])] for index in range(len(e))]
+        vertex_reverse = [
+            map[",".join([str(int(-1 * i)) for i in e[index]])]
+            for index in range(len(e))
+        ]
         super().__init__(e=e, w=w, vertex_reverse=vertex_reverse, *args, **kwargs)
 
 
@@ -204,7 +213,10 @@ class ParamD3Q13(Param):
             ]
         ]
         map = dict([(",".join([str(i) for i in xyz]), i) for i, xyz in enumerate(e)])
-        vertex_reverse = [map[",".join([str(int(-1 * i)) for i in e[index]])] for index in range(len(e))]
+        vertex_reverse = [
+            map[",".join([str(int(-1 * i)) for i in e[index]])]
+            for index in range(len(e))
+        ]
         super().__init__(e=e, w=w, vertex_reverse=vertex_reverse, *args, **kwargs)
 
 

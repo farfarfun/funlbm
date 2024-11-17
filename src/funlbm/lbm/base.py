@@ -25,7 +25,9 @@ def device_detect(device=None):
 
 
 class LBMBase(object):
-    def __init__(self, flow: FlowD3, config: Config, device=None, particles=None, *args, **kwargs):
+    def __init__(
+        self, flow: FlowD3, config: Config, device=None, particles=None, *args, **kwargs
+    ):
         self.flow = flow
         self.config = config
         self.particles = particles

@@ -18,7 +18,9 @@ class LBMD3(LBMBase):
     def __init__(self, config: Config, *args, **kwargs):
         flow = FlowD3(config=config.flow_config, *args, **kwargs)
         particles = [Ellipsoid(config=con) for con in config.particles]
-        super(LBMD3, self).__init__(flow=flow, config=config, particles=particles, *args, **kwargs)
+        super(LBMD3, self).__init__(
+            flow=flow, config=config, particles=particles, *args, **kwargs
+        )
 
     def init(self):
         # 初始化流程
@@ -35,7 +37,9 @@ class LBMD3(LBMBase):
     @run_timer
     def flow_to_lagrange(self, n=2, h=1, *args, **kwargs):
         for particle in self.particles:
-            rl = np.array(np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int)
+            rl = np.array(
+                np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int
+            )
             rl[rl < 0] = 0
             rr = rl + (2 * n - 1) * h + 1
             # TODO 上限没加
@@ -47,12 +51,20 @@ class LBMD3(LBMBase):
                 tmp = (1 + torch.cos(torch.abs(tmp * np.pi / 2 / h))) / 4 / h
                 tmp = torch.prod(tmp, dim=-1, keepdim=True)
 
-                lu[index, :] = torch.sum(self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
-                particle.lrou[index, :] = torch.sum(self.flow.rou[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp)
+                lu[index, :] = torch.sum(
+                    self.flow.u[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp
+                )
+                particle.lrou[index, :] = torch.sum(
+                    self.flow.rou[i0[0] : i1[0], i0[1] : i1[1], i0[2] : i1[2], :] * tmp
+                )
             u_theta = 0
 
             particle.lu[:, :] = (
-                particle.cu + torch.linalg.cross(particle.cw.unsqueeze(0), particle.lx - particle.cx, dim=-1) + u_theta
+                particle.cu
+                + torch.linalg.cross(
+                    particle.cw.unsqueeze(0), particle.lx - particle.cx, dim=-1
+                )
+                + u_theta
             )
             particle.lF = 2 * particle.lrou * (particle.lu - lu)
             particle.lT = torch.cross(particle.lx - particle.cx, particle.lF, dim=-1)
@@ -60,7 +72,9 @@ class LBMD3(LBMBase):
     @run_timer
     def lagrange_to_flow(self, n=2, h=1, *args, **kwargs):
         for particle in self.particles:
-            rl = np.array(np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int)
+            rl = np.array(
+                np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int
+            )
             rl[rl < 0] = 0
             rr = rl + (2 * n - 1) * h + 1
             for index, lar in enumerate(particle.lx):
@@ -81,19 +95,38 @@ class LBMD3(LBMBase):
         k0 = 300
         for particle in self.particles:
             n = torch.tensor(
-                np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]),
+                np.array(
+                    [
+                        [1, 0, 0],
+                        [0, 1, 0],
+                        [0, 0, 1],
+                        [-1, 0, 0],
+                        [0, -1, 0],
+                        [0, 0, -1],
+                    ]
+                ),
                 device=self.device,
                 dtype=torch.float32,
             )
             xt = torch.concatenate(
                 [
                     torch.zeros(self.config.flow_config.size.shape, device=self.device),
-                    torch.tensor(self.config.flow_config.size, device=self.device, dtype=torch.float32),
+                    torch.tensor(
+                        self.config.flow_config.size,
+                        device=self.device,
+                        dtype=torch.float32,
+                    ),
                 ]
             )
-            xi = torch.concatenate([torch.argmin(particle.lx, dim=0), torch.argmax(particle.lx, dim=0)])
+            xi = torch.concatenate(
+                [torch.argmin(particle.lx, dim=0), torch.argmax(particle.lx, dim=0)]
+            )
 
-            d = k0 * (1 - abs(particle.lx[xi][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]] - xt) / (2 * self.config.dx))
+            d = k0 * (
+                1
+                - abs(particle.lx[xi][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]] - xt)
+                / (2 * self.config.dx)
+            )
             d[d < 0] = 0
             if d.max() == 0:
                 continue
@@ -120,7 +153,10 @@ class LBMD3(LBMBase):
             ),
         }
 
-        cell_data = {"rho": self.flow.rou.to("cpu").numpy()[:, :, :, 0], "p": self.flow.p.to("cpu").numpy()[:, :, :, 0]}
+        cell_data = {
+            "rho": self.flow.rou.to("cpu").numpy()[:, :, :, 0],
+            "p": self.flow.p.to("cpu").numpy()[:, :, :, 0],
+        }
 
         # t1 = self.flow.rou[10:-10, 10:-10, 10:-10, :]
         # t1 = cell_data['rho'][5:-5, 5:-5, 5:-5]

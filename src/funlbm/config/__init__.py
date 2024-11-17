@@ -7,4 +7,11 @@ from .base import (
     ParticleConfig,
 )
 
-__all__ = ["Config", "Boundary", "BoundaryCondition", "FlowConfig", "ParticleConfig", "CoordConfig"]
+__all__ = [
+    "Config",
+    "Boundary",
+    "BoundaryCondition",
+    "FlowConfig",
+    "ParticleConfig",
+    "CoordConfig",
+]
