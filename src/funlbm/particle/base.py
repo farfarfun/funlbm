@@ -62,7 +62,7 @@ class Coordinate:
     def cul_point(self, points):
         return torch.matmul(points, self.r) + self.center
 
-    def update(self, dw=None, dt=None):
+    def update(self, dw=0):
         """
         https://www.cnblogs.com/QiQi-Robotics/p/14562475.html
         :param dw:
@@ -123,6 +123,8 @@ class Particle:
         # 拉格朗日点速度[m,i,3]
         self.lrou: Tensor = torch.zeros([0])
 
+        self.dw:Tensor= torch.zeros([0])
+
     def _init(self, dx=0.2, *args, **kwargs):
         raise NotImplementedError("还没实现")
 
@@ -140,17 +142,19 @@ class Particle:
     @run_timer
     def update_from_lar(self, dt=0.1):
         self.cF = torch.sum(-self.lF * self.lm, dim=0)
-        self.CT = torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1)*self.lm,dim=0)
-        self.cu = self.cu + self.cF / self.mass
+        self.cT = torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1)*self.lm,dim=0)
+        self.cu = self.cu + self.cF / self.mass*self.dt
         self.cx = self.cx + self.cu * dt
-        self.cw = self.cw + self.cT * dt / self.I
-        # self.cw = self.cw * 0  # TODO 暂时去掉角速度，方便排查
+        self.dw = self.cT * dt / self.I
+        self.cw = self.cw + self.dw
+  
 
     @run_timer
-    def update(self, dw=None, dt=None):
-        self.coord.update(dw, dt)
+    def update(self,  dt=None):
+        self.coord.update(dw=self.dw, dt=dt)
         self.lx = self.coord.cul_point(self._lagrange)
         self.lu = self.cu + torch.cross(self.cw.unsqueeze(0), self.lx - self.cx, dim=-1)
+
 
     def from_json(self):
         pass

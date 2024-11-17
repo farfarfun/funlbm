@@ -73,6 +73,11 @@ class LBMD3(LBMBase):
 
     @run_timer
     def particle_to_wall(self, *args, **kwargs):
+        """
+        颗粒与边界的碰撞
+        https://darkchat.yuque.com/org-wiki-darkchat-gfaase/uvmi28/hd3zagc47n89n5c0
+        """
+
         k0 = 300
         for particle in self.particles:
             n = torch.tensor(

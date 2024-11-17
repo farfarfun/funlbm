@@ -71,7 +71,7 @@ class LBMBase(object):
         self.flow.update_u_rou()
 
         # 颗粒->拉格朗日点
-        [particle.update() for particle in self.particles]
+        [particle.update(dt=self.config.dt) for particle in self.particles]
         [print(particle.to_str()) for particle in self.particles]
         self.save(step)
 
