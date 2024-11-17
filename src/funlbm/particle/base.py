@@ -140,7 +140,7 @@ class Particle:
     @run_timer
     def update_from_lar(self, dt=0.1):
         self.cF = torch.sum(-self.lF * self.lm, dim=0)
-        self.cT = torch.sum(-self.lT * self.lm, dim=0)
+        self.CT = torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1)*self.lm,dim=0)
         self.cu = self.cu + self.cF / self.mass
         self.cx = self.cx + self.cu * dt
         self.cw = self.cw + self.cT * dt / self.I

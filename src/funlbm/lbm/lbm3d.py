@@ -55,9 +55,6 @@ class LBMD3(LBMBase):
                 particle.cu + torch.linalg.cross(particle.cw.unsqueeze(0), particle.lx - particle.cx, dim=-1) + u_theta
             )
             particle.lF = 2 * particle.lrou * (particle.lu - lu)
-
-            # TODO 力矩的公式到底是r×F，F×r
-            # particle.lT = np.cross(particle.lF, particle.lx - particle.cx)
             particle.lT = torch.cross(particle.lx - particle.cx, particle.lF, dim=-1)
 
     @run_timer
