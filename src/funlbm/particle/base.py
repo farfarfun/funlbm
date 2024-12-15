@@ -159,7 +159,7 @@ class Particle:
         self.cT = torch.sum(
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
         )
-        self.cu = self.cu + self.cF / self.mass * self.dt
+        self.cu = self.cu + self.cF / self.mass * dt
         self.cx = self.cx + self.cu * dt
         self.dw = self.cT * dt / self.I
         self.cw = self.cw + self.dw
