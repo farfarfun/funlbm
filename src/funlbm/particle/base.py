@@ -66,7 +66,7 @@ class Coordinate:
     def cul_point(self, points):
         return torch.matmul(points, self.r) + self.center
 
-    def update(self, dw=0):
+    def update(self, dw=0, dt=0):
         """
         https://www.cnblogs.com/QiQi-Robotics/p/14562475.html
         :param dw:
@@ -88,7 +88,7 @@ class Coordinate:
 
 
 class Particle:
-    def __init__(self, config: ParticleConfig = None, device="mps", *args, **kwargs):
+    def __init__(self, config: ParticleConfig = None, device="cpu", *args, **kwargs):
         self.device = device
         self.config: ParticleConfig = config or ParticleConfig()
         self.coord: Coordinate = Coordinate(
