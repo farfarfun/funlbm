@@ -66,7 +66,7 @@ class Coordinate:
     def cul_point(self, points):
         return torch.matmul(points, self.r) + self.center
 
-    def update(self, dw=0, dt=0):
+    def update(self, dw=0, dt=1):
         """
         https://www.cnblogs.com/QiQi-Robotics/p/14562475.html
         :param dw:
@@ -154,7 +154,7 @@ class Particle:
         self.lrou = torch.zeros((shape[0], 1), device=self.device, dtype=torch.float32)
 
     @run_timer
-    def update_from_lar(self, dt=0.1):
+    def update_from_lar(self, dt=1):
         self.cF = torch.sum(-self.lF * self.lm, dim=0)
         self.cT = torch.sum(
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
