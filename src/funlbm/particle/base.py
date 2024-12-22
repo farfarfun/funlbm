@@ -98,6 +98,8 @@ class Particle:
 
         # 颗粒质量[1]
         self.mass = None
+        # 颗粒面积[1]
+        self.area = None
         # 惯性矩
         self.I = None
         # 颗粒密度[1]
@@ -149,7 +151,7 @@ class Particle:
         self.lu = torch.zeros(shape, device=self.device, dtype=torch.float32)
         self.lm = (
             torch.ones((shape[0], 1), device=self.device, dtype=torch.float32)
-            * self.mass
+            * self.area
             / shape[0]
         )
         self.lrou = torch.zeros((shape[0], 1), device=self.device, dtype=torch.float32)
@@ -157,7 +159,6 @@ class Particle:
     @run_timer
     def update_from_lar(self, dt, gl=9.8, rouf=1.0):
         tmp = (1 - self.rou / rouf) * self.mass * torch.Tensor([gl, 0, 0])
-        print(tmp)
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
         self.cF[1] = 0
         self.cF[2] = 0
@@ -214,7 +215,12 @@ class Ellipsoid(Particle):
             dtype=torch.float32,
         )
         self.mass = torch.tensor(
-            4.0 / 3 * self.ra * self.rb * self.rc,
+            4.0 / 3.0 * math.pi * self.ra * self.rb * self.rc,
+            device=self.device,
+            dtype=torch.float32,
+        )
+        self.area = torch.tensor(
+            4.0 / 3.0 * math.pi * math.pow(self.ra * self.rb * self.rc, 2.0 / 3.0),
             device=self.device,
             dtype=torch.float32,
         )
@@ -250,10 +256,16 @@ class Sphere(Particle):
             dtype=torch.float32,
         )
         self.mass = torch.tensor(
+            4.0 / 3.0 * math.pi * self.r * self.r * self.r,
+            device=self.device,
+            dtype=torch.float32,
+        )
+        self.area = torch.tensor(
             4.0 * math.pi * self.r * self.r,
             device=self.device,
             dtype=torch.float32,
         )
+
         self.I = torch.tensor(
             np.array([self.r * self.r, self.r * self.r, self.r * self.r])
             * self.mass.to("cpu").numpy()
