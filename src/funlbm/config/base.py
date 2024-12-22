@@ -158,8 +158,8 @@ class FlowConfig(BaseConfig):
 class Config(BaseConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dt = 0.1
-        self.dx = 0.1
+        self.dt = 1
+        self.dx = 1
         self.file_config = FileConfig()
         self.flow_config = FlowConfig()
         self.particles: List[ParticleConfig] = []

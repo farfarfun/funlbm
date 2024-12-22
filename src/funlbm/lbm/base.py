@@ -63,7 +63,7 @@ class LBMBase(object):
 
         # 浸没计算-拉格朗日点->颗粒
         [
-            particle.update_from_lar(dt=self.config.dt, gl=self.config.gl)
+            particle.update_from_lar(dt=self.config.dt, gl=self.config.flow_config.gl)
             for particle in self.particles
         ]
 
