@@ -111,7 +111,7 @@ class Particle:
         # 质心半径[a,b,b]
         self.cr = 5 * torch.ones(5, device=self.device, dtype=torch.float32)
         # 质心速度[i,j,k]
-        self.cu = torch.zeros(3, device=self.device, dtype=torch.float32) + 0.01
+        self.cu = torch.zeros(3, device=self.device, dtype=torch.float32)
         # 质心角速度[i,j,k]
         self.cw = torch.zeros(3, device=self.device, dtype=torch.float32)
         # 质心合外力
@@ -158,8 +158,8 @@ class Particle:
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + (
             1 - self.rou / rouf
         ) * self.mass * torch.Tensor([gl, 0, 0])
-        self.cF[1] = 0
-        self.cF[2] = 0
+        # self.cF[1] = 0
+        # self.cF[2] = 0
         self.cT = torch.sum(
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
         )
