@@ -1,16 +1,17 @@
+import math
+
 import funutil
 import numpy as np
 import torch
 import transforms3d as tfs
+from funlbm.config import CoordConfig, ParticleConfig
 from funutil import run_timer
 from torch import Tensor
-
-from funlbm.config import CoordConfig, ParticleConfig
 
 logger = funutil.getLogger("funlbm")
 
 
-def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.1):
+def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5):
     x = np.linspace(xl, xr, int((xr - xl) / dx))
     y = np.linspace(yl, yr, int((yr - yl) / dx))
     z = np.linspace(zl, zr, int((zr - zl) / dx))
@@ -155,11 +156,11 @@ class Particle:
 
     @run_timer
     def update_from_lar(self, dt, gl=9.8, rouf=1.0):
-        self.cF = torch.sum(-self.lF * self.lm, dim=0) + (
-            1 - self.rou / rouf
-        ) * self.mass * torch.Tensor([gl, 0, 0])
-        # self.cF[1] = 0
-        # self.cF[2] = 0
+        tmp = (1 - self.rou / rouf) * self.mass * torch.Tensor([gl, 0, 0])
+        print(tmp)
+        self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
+        self.cF[1] = 0
+        self.cF[2] = 0
         self.cT = torch.sum(
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
         )
@@ -195,7 +196,7 @@ class Ellipsoid(Particle):
             self.config.get("c") or 10,
         )
 
-    def _init(self, dx=0.2, *args, **kwargs):
+    def _init(self, dx=0.5, *args, **kwargs):
         xl, yl, zl = -self.ra - 2 * dx, -self.rb - 2 * dx, -self.rc - 2 * dx
         xr, yr, zr = self.ra + 2 * dx, self.rb + 2 * dx, self.rc + 2 * dx
         self._lagrange = torch.tensor(
@@ -219,6 +220,42 @@ class Ellipsoid(Particle):
         )
         self.I = torch.tensor(
             np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb])
+            * self.mass.to("cpu").numpy()
+            / 5.0,
+            device=self.device,
+            dtype=torch.float32,
+        )
+
+
+class Sphere(Particle):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.r = self.config.get("r") or 10
+
+    def _init(self, dx=0.5, *args, **kwargs):
+        xl, yl, zl = -self.r - 2 * dx, -self.r - 2 * dx, -self.r - 2 * dx
+        xr, yr, zr = self.r + 2 * dx, self.r + 2 * dx, self.r + 2 * dx
+        self._lagrange = torch.tensor(
+            cul_point(
+                xl,
+                yl,
+                zl,
+                xr,
+                yr,
+                zr,
+                cul_value=lambda X, Y, Z: X**2 / 5 + Y**2 / 5 + Z**2 / 5 - 1,
+                dx=dx,
+            ),
+            device=self.device,
+            dtype=torch.float32,
+        )
+        self.mass = torch.tensor(
+            4.0 * math.pi * self.r * self.r,
+            device=self.device,
+            dtype=torch.float32,
+        )
+        self.I = torch.tensor(
+            np.array([self.r * self.r, self.r * self.r, self.r * self.r])
             * self.mass.to("cpu").numpy()
             / 5.0,
             device=self.device,

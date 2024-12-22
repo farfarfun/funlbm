@@ -6,7 +6,7 @@ from funvtk.hl import gridToVTK, pointsToVTK
 
 from funlbm.config import Config
 from funlbm.flow import FlowD3
-from funlbm.particle import Ellipsoid
+from funlbm.particle import Sphere
 
 from ..file.tecplot.dump import write_to_tecplot
 from .base import LBMBase
@@ -17,7 +17,7 @@ logger = funutil.getLogger("funlbm")
 class LBMD3(LBMBase):
     def __init__(self, config: Config, *args, **kwargs):
         flow = FlowD3(config=config.flow_config, *args, **kwargs)
-        particles = [Ellipsoid(config=con) for con in config.particles]
+        particles = [Sphere(config=con) for con in config.particles]
         super(LBMD3, self).__init__(
             flow=flow, config=config, particles=particles, *args, **kwargs
         )
@@ -130,6 +130,7 @@ class LBMD3(LBMBase):
             d[d < 0] = 0
             if d.max() == 0:
                 continue
+            logger.info(f"distinct of particle to wall={d}")
             particle.lF[xi] = particle.lF[xi] + torch.multiply(n, d.unsqueeze(1))
 
     def save(self, step=10, *args, **kwargs):
