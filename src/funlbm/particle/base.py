@@ -158,6 +158,8 @@ class Particle:
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + (
             1 - self.rou / rouf
         ) * self.mass * torch.Tensor([gl, 0, 0])
+        self.cF[1] = 0
+        self.cF[2] = 0
         self.cT = torch.sum(
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
         )
