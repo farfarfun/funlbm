@@ -62,7 +62,10 @@ class LBMBase(object):
         self.particle_to_wall()
 
         # 浸没计算-拉格朗日点->颗粒
-        [particle.update_from_lar(dt=self.config.dt) for particle in self.particles]
+        [
+            particle.update_from_lar(dt=self.config.dt, gl=self.config.gl)
+            for particle in self.particles
+        ]
 
         # 浸没计算-拉格朗日点->流场
         self.lagrange_to_flow()

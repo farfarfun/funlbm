@@ -45,6 +45,9 @@ class BaseConfig(object):
     def get(self, key, default=None):
         return deep_get(self.expand, key) or default
 
+    def to_json(self):
+        return self.expand
+
 
 class Boundary(BaseConfig):
     def __init__(
@@ -132,6 +135,7 @@ class FlowConfig(BaseConfig):
         self.param_type: str = "D3Q19"
         self.boundary: BoundaryConfig = None
 
+        self.gl = 0.98
         self.Re = 10
         self.mu = 10
         super().__init__(*args, **kwargs)
@@ -148,6 +152,7 @@ class FlowConfig(BaseConfig):
 
         self.Re = float(deep_get(self.param, "Re") or self.Re)
         self.mu = float(deep_get(self.param, "mu") or self.mu)
+        self.gl = float(deep_get(self.param, "gl") or self.gl)
 
 
 class Config(BaseConfig):

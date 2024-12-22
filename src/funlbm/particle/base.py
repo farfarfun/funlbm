@@ -154,9 +154,9 @@ class Particle:
         self.lrou = torch.zeros((shape[0], 1), device=self.device, dtype=torch.float32)
 
     @run_timer
-    def update_from_lar(self, dt=1):
+    def update_from_lar(self, dt=1, gl=9.8):
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + self.mass * torch.Tensor(
-            [0, 0, 9.8]
+            [gl, 0, 0]
         )
         self.cT = torch.sum(
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
