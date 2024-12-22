@@ -1,6 +1,6 @@
 [project]
 name = "funlbm"
-version = "1.1.59"
+version = "1.1.60"
 description = "funlbm"
 readme = "README.md"
 requires-python = ">=3.9"

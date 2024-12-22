@@ -49,7 +49,7 @@ class FlowD3(Flow):
 
     def init(self, *args, **kwargs):
         m, n, l = self.config.size
-        m, n, l = int(m), int(n), int(l)
+        m, n, l = int(m + 1), int(n + 1), int(l + 1)
         self.x = torch.zeros([m, n, l, 3], device=self.device)
         for i in range(m):
             self.x[i, :, :, 0] = i
