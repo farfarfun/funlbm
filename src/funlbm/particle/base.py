@@ -79,7 +79,7 @@ class Coordinate:
         wx, wy, wz = self.w
         tmp = torch.tensor(
             np.array(
-                [[1, -wz * dt, wy * dt], [wz * dt, 1, -wx * dt, -wy * dt, wx * dt, 1]]
+                [[1, -wz * dt, wy * dt], [wz * dt, 1, -wx * dt], [-wy * dt, wx * dt, 1]]
             ),
             device=self.device,
             dtype=torch.float32,
@@ -155,7 +155,9 @@ class Particle:
 
     @run_timer
     def update_from_lar(self, dt=1):
-        self.cF = torch.sum(-self.lF * self.lm, dim=0)
+        self.cF = torch.sum(-self.lF * self.lm, dim=0) + self.mass * torch.Tensor(
+            [0, 0, 9.8]
+        )
         self.cT = torch.sum(
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
         )
