@@ -180,7 +180,7 @@ class Particle:
         res += "\tu=" + ",".join([f"{i:6f}" for i in self.cu])
         res += "\tx=" + ",".join([f"{i:6f}" for i in self.cx])
         res += "\tf=" + ",".join([f"{i:6f}" for i in self.cF])
-        res += "\tw=" + ",".join([f"{i:6f}" for i in self.cw])
+        # res += "\tw=" + ",".join([f"{i:6f}" for i in self.cw])
         return res
 
 

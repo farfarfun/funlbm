@@ -1,7 +1,5 @@
 import funutil
 import torch
-from tqdm import tqdm
-
 from funlbm.config import Config
 from funlbm.flow import FlowD3
 
@@ -37,8 +35,8 @@ class LBMBase(object):
     def run(self, max_steps=10000, *args, **kwargs):
         self.init()
         total = int(max_steps / self.config.dt)
-        pbar = tqdm(range(total))
-        # pbar = range(total)
+        # pbar = tqdm(range(total))
+        pbar = range(total)
         for step in pbar:
             self.run_step(step=step)
             # print(
@@ -77,7 +75,7 @@ class LBMBase(object):
 
         # 颗粒->拉格朗日点
         [particle.update(dt=self.config.dt) for particle in self.particles]
-        [print(particle.to_str()) for particle in self.particles]
+        [logger.info(particle.to_str()) for particle in self.particles]
         self.save(step)
 
     def flow_to_lagrange(self, n=2, h=1, *args, **kwargs):
