@@ -48,7 +48,9 @@ class BaseConfig(object):
 
 
 class Boundary(BaseConfig):
-    def __init__(self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs):
+    def __init__(
+        self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.condition: BoundaryCondition = condition
         self.poiseuille = None

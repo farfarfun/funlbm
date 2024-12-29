@@ -33,12 +33,16 @@ class Coordinate(Worker):
     def __init__(self, config: CoordConfig = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         config = config or CoordConfig()
-        self.center = torch.tensor(config.center, device=self.device, dtype=torch.float32)
+        self.center = torch.tensor(
+            config.center, device=self.device, dtype=torch.float32
+        )
         self.w = torch.Tensor([config.alpha, config.beta, config.gamma])
         self.rotation = R.from_euler("xyz", self.w)
 
     def cul_point(self, points):
-        return torch.Tensor(self.rotation.apply(points), device=self.device) + self.center
+        return (
+            torch.Tensor(self.rotation.apply(points), device=self.device) + self.center
+        )
 
     def update(self, cw, *args, **kwargs):
         """
@@ -56,7 +60,9 @@ class Coordinate(Worker):
 
 
 def example():
-    print(Coordinate(CoordConfig(alpha=np.pi / 2.0, beta=0, gamma=0)).cul_point([1, 0, 1]))
+    print(
+        Coordinate(CoordConfig(alpha=np.pi / 2.0, beta=0, gamma=0)).cul_point([1, 0, 1])
+    )
 
 
 # example()

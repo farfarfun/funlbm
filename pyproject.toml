@@ -1,6 +1,6 @@
 [project]
 name = "funlbm"
-version = "1.1.69"
+version = "1.1.70"
 description = "funlbm"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -8,6 +8,9 @@ dependencies = [ "funutil>=1.0.14", "funvtk>=1.0.9", "torch>=2.2.0", "transforms
 [[project.authors]]
 name = "niuliangtao"
 email = "farfarfun@qq.com"
+
+[project.scripts]
+funlbm = "funlbm.server.script:funlbm"
 
 [tool.setuptools]
 license-files = []

@@ -21,9 +21,13 @@ class FlowConfig(BaseConfig):
         super().__init__(*args, **kwargs)
 
     def _from_json(self, config_json: dict, *args, **kwargs):
-        self.size = np.array(deep_get(config_json, "size") or [100, 100, 100], dtype=int)
+        self.size = np.array(
+            deep_get(config_json, "size") or [100, 100, 100], dtype=int
+        )
         self.param = deep_get(config_json, "param") or self.param
-        self.boundary = BoundaryConfig().from_json(deep_get(config_json, "boundary") or {})
+        self.boundary = BoundaryConfig().from_json(
+            deep_get(config_json, "boundary") or {}
+        )
         self.param_type = deep_get(config_json, "param_type") or self.param_type
 
         self.Re = float(deep_get(self.param, "Re") or self.Re)

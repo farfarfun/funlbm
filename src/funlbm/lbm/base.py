@@ -4,8 +4,8 @@ import numpy as np
 from funutil import deep_get
 
 from funlbm.base import Worker
-from funlbm.config.base import FileConfig, BaseConfig
-from funlbm.flow import FlowD3, FlowConfig
+from funlbm.config.base import BaseConfig, FileConfig
+from funlbm.flow import FlowConfig, FlowD3
 from funlbm.particle import ParticleConfig
 from funlbm.util import logger
 
@@ -15,6 +15,7 @@ class Config(BaseConfig):
         super().__init__(*args, **kwargs)
         self.dt = 1
         self.dx = 1
+        self.device = "cpu"
         self.file_config = FileConfig()
         self.flow_config = FlowConfig()
         self.particles: List[ParticleConfig] = []
@@ -22,6 +23,7 @@ class Config(BaseConfig):
     def _from_json(self, config_json: dict, *args, **kwargs):
         self.dt = deep_get(config_json, "dt") or self.dt
         self.dx = deep_get(config_json, "dx") or self.dx
+        self.device = deep_get(config_json, "device") or self.device
         self.file_config = FileConfig().from_json(deep_get(config_json, "file") or {})
         self.flow_config = FlowConfig().from_json(deep_get(config_json, "flow") or {})
         for config in deep_get(config_json, "particles") or []:
@@ -69,7 +71,10 @@ class LBMBase(Worker):
         self.particle_to_wall()
 
         # 浸没计算-拉格朗日点->颗粒
-        [particle.update_from_lar(dt=self.config.dt, gl=self.config.flow_config.gl) for particle in self.particles]
+        [
+            particle.update_from_lar(dt=self.config.dt, gl=self.config.flow_config.gl)
+            for particle in self.particles
+        ]
 
         # 浸没计算-拉格朗日点->流场
         self.lagrange_to_flow()

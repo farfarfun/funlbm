@@ -63,7 +63,9 @@ class Particle(Worker):
         super().__init__(*args, **kwargs)
 
         self.config: ParticleConfig = config or ParticleConfig()
-        self.coord: Coordinate = Coordinate(config=self.config.coord_config, *args, **kwargs)
+        self.coord: Coordinate = Coordinate(
+            config=self.config.coord_config, *args, **kwargs
+        )
 
         # 颗粒质量[1]
         self.mass = None
@@ -77,7 +79,9 @@ class Particle(Worker):
         self.angle = None
 
         # 质心坐标[i,j,k]
-        self.cx = torch.tensor(self.config.coord_config.center, device=self.device, dtype=torch.float32)
+        self.cx = torch.tensor(
+            self.config.coord_config.center, device=self.device, dtype=torch.float32
+        )
         # 质心半径[a,b,b]
         self.cr = 5 * torch.ones(5, device=self.device, dtype=torch.float32)
         # 质心速度[i,j,k]
@@ -113,7 +117,11 @@ class Particle(Worker):
         self.lF = torch.zeros(shape, device=self.device, dtype=torch.float32)
 
         self.lu = torch.zeros(shape, device=self.device, dtype=torch.float32)
-        self.lm = torch.ones((shape[0], 1), device=self.device, dtype=torch.float32) * self.area / shape[0]
+        self.lm = (
+            torch.ones((shape[0], 1), device=self.device, dtype=torch.float32)
+            * self.area
+            / shape[0]
+        )
         self.lrou = torch.zeros((shape[0], 1), device=self.device, dtype=torch.float32)
 
     @run_timer
@@ -123,7 +131,9 @@ class Particle(Worker):
         self.cu = self.cu + self.cF / self.mass * dt
         self.cx = self.cx + self.cu * dt
 
-        self.cT = -torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0)
+        self.cT = -torch.sum(
+            torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
+        )
         self.cw = self.cw + self.cT * dt / self.I
 
     @run_timer
@@ -163,7 +173,10 @@ class Ellipsoid(Particle):
                 xr,
                 yr,
                 zr,
-                cul_value=lambda X, Y, Z: X**2 / self.ra**2 + Y**2 / self.rb**2 + Z**2 / self.rc**2 - 1,
+                cul_value=lambda X, Y, Z: X**2 / self.ra**2
+                + Y**2 / self.rb**2
+                + Z**2 / self.rc**2
+                - 1,
                 dx=dx,
             ),
             device=self.device,
@@ -180,7 +193,9 @@ class Ellipsoid(Particle):
             dtype=torch.float32,
         )
         self.I = torch.tensor(
-            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb]) * self.mass.to("cpu").numpy() / 5.0,
+            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb])
+            * self.mass.to("cpu").numpy()
+            / 5.0,
             device=self.device,
             dtype=torch.float32,
         )
@@ -202,7 +217,10 @@ class Sphere(Particle):
                 xr,
                 yr,
                 zr,
-                cul_value=lambda X, Y, Z: X**2 / self.r**2 + Y**2 / self.r**2 + Z**2 / self.r**2 - 1,
+                cul_value=lambda X, Y, Z: X**2 / self.r**2
+                + Y**2 / self.r**2
+                + Z**2 / self.r**2
+                - 1,
                 dx=dx,
             ),
             device=self.device,
@@ -220,7 +238,9 @@ class Sphere(Particle):
         )
 
         self.I = torch.tensor(
-            np.array([self.r * self.r, self.r * self.r, self.r * self.r]) * self.mass.to("cpu").numpy() / 5.0,
+            np.array([self.r * self.r, self.r * self.r, self.r * self.r])
+            * self.mass.to("cpu").numpy()
+            / 5.0,
             device=self.device,
             dtype=torch.float32,
         )

@@ -12,7 +12,9 @@ class Param(Worker):
         self.vertex_reverse = vertex_reverse
         self.e = torch.tensor(e, device=self.device, dtype=torch.float32)
         self.w = torch.tensor(w, device=self.device, dtype=torch.float32)
-        self.cs = torch.tensor(math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32)
+        self.cs = torch.tensor(
+            math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32
+        )
 
     @cache
     def eT(self) -> torch.Tensor:
