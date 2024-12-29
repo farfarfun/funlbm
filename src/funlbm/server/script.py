@@ -20,7 +20,7 @@ def funlbm():
     parser = argparse.ArgumentParser(prog="PROG")
 
     # 添加子命令
-    parser.add_argument("url", help="下载链接")
+
     parser.add_argument(
         "--config",
         default="./config.json",
