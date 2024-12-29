@@ -6,13 +6,13 @@ from funlbm.lbm import LBMD3, Config
 document_url = "https://darkchat.yuque.com/org-wiki-darkchat-gfaase/ul41go"
 
 
-def work(config_file="./config.json"):
-    if not os.path.exists(config_file):
+def work(config="./config.json"):
+    if not os.path.exists(config):
         info = f"""配置文件不存在，访问{document_url}去配置参数吧"""
         print(info)
-        raise FileExistsError(config_file)
-    config = Config().from_file(config_file)
-    lbm = LBMD3(config=config, device=config.device)
+        raise FileExistsError(config)
+    _config = Config().from_file(config)
+    lbm = LBMD3(config=_config, device=_config.device)
     lbm.run()
 
 
