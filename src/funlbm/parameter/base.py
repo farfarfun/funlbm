@@ -3,16 +3,16 @@ import math
 import torch
 from funutil.cache import cache
 
+from funlbm.base import Worker
 
-class Param:
-    def __init__(self, e, w, vertex_reverse, device="cpu"):
-        self.device = device
+
+class Param(Worker):
+    def __init__(self, e, w, vertex_reverse, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.vertex_reverse = vertex_reverse
         self.e = torch.tensor(e, device=self.device, dtype=torch.float32)
         self.w = torch.tensor(w, device=self.device, dtype=torch.float32)
-        self.cs = torch.tensor(
-            math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32
-        )
+        self.cs = torch.tensor(math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32)
 
     @cache
     def eT(self) -> torch.Tensor:

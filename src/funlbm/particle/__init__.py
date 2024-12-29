@@ -1,3 +1,3 @@
-from .base import Particle, Ellipsoid, Sphere
+from .base import Particle, Ellipsoid, Sphere, ParticleConfig
 
-__all__ = ["Particle", "Ellipsoid", "Sphere"]
+__all__ = ["Particle", "Ellipsoid", "Sphere", "ParticleConfig"]

@@ -1,48 +1,57 @@
-import funutil
-import torch
-from funlbm.config import Config
-from funlbm.flow import FlowD3
+from typing import List
 
-logger = funutil.getLogger("funlbm")
+import numpy as np
+from funutil import deep_get
 
-
-def device_detect(device=None):
-    if device is not None:
-        return device
-    try:
-        if torch.cuda.is_available():
-            return torch.device("cuda")
-    except AttributeError:
-        logger.error("No cuda available")
-    try:
-        if torch.mps.is_available():
-            return torch.device("mps")
-    except AttributeError:
-        logger.error("No mps available")
-    return torch.device("cpu")
+from funlbm.base import Worker
+from funlbm.config.base import FileConfig, BaseConfig
+from funlbm.flow import FlowD3, FlowConfig
+from funlbm.particle import ParticleConfig
+from funlbm.util import logger
 
 
-class LBMBase(object):
-    def __init__(
-        self, flow: FlowD3, config: Config, device=None, particles=None, *args, **kwargs
-    ):
+class Config(BaseConfig):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dt = 1
+        self.dx = 1
+        self.file_config = FileConfig()
+        self.flow_config = FlowConfig()
+        self.particles: List[ParticleConfig] = []
+
+    def _from_json(self, config_json: dict, *args, **kwargs):
+        self.dt = deep_get(config_json, "dt") or self.dt
+        self.dx = deep_get(config_json, "dx") or self.dx
+        self.file_config = FileConfig().from_json(deep_get(config_json, "file") or {})
+        self.flow_config = FlowConfig().from_json(deep_get(config_json, "flow") or {})
+        for config in deep_get(config_json, "particles") or []:
+            self.particles.append(ParticleConfig().from_json(config_json=config))
+
+
+class LBMBase(Worker):
+    def __init__(self, flow: FlowD3, config: Config, particles=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.flow = flow
         self.config = config
         self.particles = particles
-        self.device = device_detect(device)
+
         logger.info(f"device:={self.device}")
 
-    def run(self, max_steps=10000, *args, **kwargs):
+    def run(self, max_steps=1000000, *args, **kwargs):
         self.init()
         total = int(max_steps / self.config.dt)
         # pbar = tqdm(range(total))
         pbar = range(total)
         for step in pbar:
             self.run_step(step=step)
-            # print(
-            #     f"{step}" f"\tf_max={np.max(self.flow.f.numpy()):8f}" f"\tu_max={np.max(self.flow.u.numpy()):8f}"
-            #     # f"\t{self.particles[0].cx}"
-            # )
+
+            res = f"step={step}"
+            res += f"\tf_max={np.max(self.flow.f.numpy()):8f}"
+            res += f"\tu_max={np.max(self.flow.u.numpy()):8f}"
+            for particle in self.particles:
+                res += "\t"
+                res += particle.to_str(step)
+            logger.info(res)
 
     def init(self, *args, **kwargs):
         raise NotImplementedError()
@@ -60,10 +69,7 @@ class LBMBase(object):
         self.particle_to_wall()
 
         # 浸没计算-拉格朗日点->颗粒
-        [
-            particle.update_from_lar(dt=self.config.dt, gl=self.config.flow_config.gl)
-            for particle in self.particles
-        ]
+        [particle.update_from_lar(dt=self.config.dt, gl=self.config.flow_config.gl) for particle in self.particles]
 
         # 浸没计算-拉格朗日点->流场
         self.lagrange_to_flow()
@@ -75,7 +81,7 @@ class LBMBase(object):
 
         # 颗粒->拉格朗日点
         [particle.update(dt=self.config.dt) for particle in self.particles]
-        [logger.info(particle.to_str()) for particle in self.particles]
+
         self.save(step)
 
     def flow_to_lagrange(self, n=2, h=1, *args, **kwargs):

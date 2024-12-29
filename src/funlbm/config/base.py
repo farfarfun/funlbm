@@ -1,9 +1,7 @@
 import json
 import os
 from enum import Enum
-from typing import List
 
-import numpy as np
 from funutil import deep_get
 
 
@@ -50,9 +48,7 @@ class BaseConfig(object):
 
 
 class Boundary(BaseConfig):
-    def __init__(
-        self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs
-    ):
+    def __init__(self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.condition: BoundaryCondition = condition
         self.poiseuille = None
@@ -102,72 +98,3 @@ class FileConfig(BaseConfig):
     def _from_json(self, config_json: dict, *args, **kwargs):
         self.cache_dir = deep_get(config_json, "cache_dir") or self.cache_dir
         self.per_steps = deep_get(config_json, "per_steps") or self.per_steps
-
-
-class CoordConfig(BaseConfig):
-    def __init__(self, alpha=np.pi / 2, beta=0, gamma=0, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.center = [0, 0, 0]
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
-
-    def _from_json(self, config_json: dict, *args, **kwargs):
-        self.center = deep_get(config_json, "center") or self.center
-        self.alpha = deep_get(config_json, "alpha") or self.alpha
-        self.beta = deep_get(config_json, "beta") or self.beta
-        self.gamma = deep_get(config_json, "gamma") or self.gamma
-
-
-class ParticleConfig(BaseConfig):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.coord_config: CoordConfig = CoordConfig()
-
-    def _from_json(self, config_json: dict, *args, **kwargs):
-        self.coord_config.from_json(deep_get(config_json, "coord"))
-
-
-class FlowConfig(BaseConfig):
-    def __init__(self, *args, **kwargs):
-        self.size = np.zeros(3)
-        self.param = {}
-        self.param_type: str = "D3Q19"
-        self.boundary: BoundaryConfig = None
-
-        self.gl = 0.98
-        self.Re = 10
-        self.mu = 10
-        super().__init__(*args, **kwargs)
-
-    def _from_json(self, config_json: dict, *args, **kwargs):
-        self.size = np.array(
-            deep_get(config_json, "size") or [100, 100, 100], dtype=int
-        )
-        self.param = deep_get(config_json, "param") or self.param
-        self.boundary = BoundaryConfig().from_json(
-            deep_get(config_json, "boundary") or {}
-        )
-        self.param_type = deep_get(config_json, "param_type") or self.param_type
-
-        self.Re = float(deep_get(self.param, "Re") or self.Re)
-        self.mu = float(deep_get(self.param, "mu") or self.mu)
-        self.gl = float(deep_get(self.param, "gl") or self.gl)
-
-
-class Config(BaseConfig):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dt = 1
-        self.dx = 1
-        self.file_config = FileConfig()
-        self.flow_config = FlowConfig()
-        self.particles: List[ParticleConfig] = []
-
-    def _from_json(self, config_json: dict, *args, **kwargs):
-        self.dt = deep_get(config_json, "dt") or self.dt
-        self.dx = deep_get(config_json, "dx") or self.dx
-        self.file_config = FileConfig().from_json(deep_get(config_json, "file") or {})
-        self.flow_config = FlowConfig().from_json(deep_get(config_json, "flow") or {})
-        for config in deep_get(config_json, "particles") or []:
-            self.particles.append(ParticleConfig().from_json(config_json=config))

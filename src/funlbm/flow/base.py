@@ -1,13 +1,39 @@
+import numpy as np
 import torch
+from funutil import deep_get
 from torch import Tensor
 
-from funlbm.config import FlowConfig
+from funlbm.base import Worker
+from funlbm.config.base import BoundaryConfig, BaseConfig
 from funlbm.parameter import Param
 
 
-class Flow(object):
-    def __init__(self, param: Param, config: FlowConfig, device="cpu", *args, **kwargs):
-        self.device = device
+class FlowConfig(BaseConfig):
+    def __init__(self, *args, **kwargs):
+        self.size = np.zeros(3)
+        self.param = {}
+        self.param_type: str = "D3Q19"
+        self.boundary: BoundaryConfig = None
+
+        self.gl = 0.0
+        self.Re = 10
+        self.mu = 10
+        super().__init__(*args, **kwargs)
+
+    def _from_json(self, config_json: dict, *args, **kwargs):
+        self.size = np.array(deep_get(config_json, "size") or [100, 100, 100], dtype=int)
+        self.param = deep_get(config_json, "param") or self.param
+        self.boundary = BoundaryConfig().from_json(deep_get(config_json, "boundary") or {})
+        self.param_type = deep_get(config_json, "param_type") or self.param_type
+
+        self.Re = float(deep_get(self.param, "Re") or self.Re)
+        self.mu = float(deep_get(self.param, "mu") or self.mu)
+        self.gl = float(deep_get(self.param, "gl") or self.gl)
+
+
+class Flow(Worker):
+    def __init__(self, param: Param, config: FlowConfig, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.param: Param = param
         self.config: FlowConfig = config
 

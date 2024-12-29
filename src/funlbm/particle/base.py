@@ -1,14 +1,23 @@
 import math
 
-import funutil
 import numpy as np
 import torch
-import transforms3d as tfs
-from funlbm.config import CoordConfig, ParticleConfig
-from funutil import run_timer
+from funutil import run_timer, deep_get
 from torch import Tensor
 
-logger = funutil.getLogger("funlbm")
+from funlbm.base import Worker
+from funlbm.config.base import BaseConfig
+from funlbm.particle.coord import Coordinate, CoordConfig
+from funlbm.util import logger
+
+
+class ParticleConfig(BaseConfig):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.coord_config: CoordConfig = CoordConfig()
+
+    def _from_json(self, config_json: dict, *args, **kwargs):
+        self.coord_config.from_json(deep_get(config_json, "coord"))
 
 
 def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5):
@@ -49,52 +58,12 @@ def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5):
     return np.array(result, dtype=np.float32)
 
 
-class Coordinate:
-    def __init__(self, config: CoordConfig = None, device="cpu", *args, **kwargs):
-        self.device = device
-        config = config or CoordConfig()
-        self.center = torch.tensor(
-            config.center, device=self.device, dtype=torch.float32
-        )
-        # alpha,beta,gamma是旋转角度
-        self.r = torch.tensor(
-            tfs.euler.euler2mat(config.alpha, config.beta, config.gamma),
-            device=self.device,
-            dtype=torch.float32,
-        )
-        self.w = torch.zeros([3])
+class Particle(Worker):
+    def __init__(self, config: ParticleConfig = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def cul_point(self, points):
-        return torch.matmul(points, self.r) + self.center
-
-    def update(self, dw, dt):
-        """
-        https://www.cnblogs.com/QiQi-Robotics/p/14562475.html
-        :param dw:
-        :param dt:
-        :return:
-        """
-        if dw is None or dt is None:
-            return
-        self.w += dw
-        wx, wy, wz = self.w
-        tmp = torch.tensor(
-            np.array(
-                [[1, -wz * dt, wy * dt], [wz * dt, 1, -wx * dt], [-wy * dt, wx * dt, 1]]
-            ),
-            device=self.device,
-            dtype=torch.float32,
-        )
-        self.r = torch.matmul(tmp, self.r)
-
-
-class Particle:
-    def __init__(self, config: ParticleConfig = None, device="cpu", *args, **kwargs):
-        self.device = device
         self.config: ParticleConfig = config or ParticleConfig()
-        self.coord: Coordinate = Coordinate(
-            config=self.config.coord_config, device=self.device, *args, **kwargs
-        )
+        self.coord: Coordinate = Coordinate(config=self.config.coord_config, *args, **kwargs)
 
         # 颗粒质量[1]
         self.mass = None
@@ -108,9 +77,7 @@ class Particle:
         self.angle = None
 
         # 质心坐标[i,j,k]
-        self.cx = torch.tensor(
-            self.config.coord_config.center, device=self.device, dtype=torch.float32
-        )
+        self.cx = torch.tensor(self.config.coord_config.center, device=self.device, dtype=torch.float32)
         # 质心半径[a,b,b]
         self.cr = 5 * torch.ones(5, device=self.device, dtype=torch.float32)
         # 质心速度[i,j,k]
@@ -127,8 +94,7 @@ class Particle:
         self.lx: Tensor = torch.zeros([0])
         # 拉格朗日点上的力[m,i,3]
         self.lF: Tensor = torch.zeros([0])
-        # 拉格朗日点上的力矩[m,i,3]
-        self.lT: Tensor = torch.zeros([0])
+
         # 拉格朗日点的质量
         self.lm: Tensor = torch.zeros([0])
         # 拉格朗日点速度[m,i,3]
@@ -136,9 +102,7 @@ class Particle:
         # 拉格朗日点速度[m,i,3]
         self.lrou: Tensor = torch.zeros([0])
 
-        self.dw: Tensor = torch.zeros([0])
-
-    def _init(self, dx=0.2, *args, **kwargs):
+    def _init(self, dx=1, *args, **kwargs):
         raise NotImplementedError("还没实现")
 
     def init(self, *args, **kwargs):
@@ -147,44 +111,35 @@ class Particle:
         shape = self._lagrange.shape
         self.lx = torch.zeros(shape, device=self.device, dtype=torch.float32)
         self.lF = torch.zeros(shape, device=self.device, dtype=torch.float32)
-        self.lT = torch.zeros(shape, device=self.device, dtype=torch.float32)
+
         self.lu = torch.zeros(shape, device=self.device, dtype=torch.float32)
-        self.lm = (
-            torch.ones((shape[0], 1), device=self.device, dtype=torch.float32)
-            * self.area
-            / shape[0]
-        )
+        self.lm = torch.ones((shape[0], 1), device=self.device, dtype=torch.float32) * self.area / shape[0]
         self.lrou = torch.zeros((shape[0], 1), device=self.device, dtype=torch.float32)
 
     @run_timer
     def update_from_lar(self, dt, gl=9.8, rouf=1.0):
         tmp = (1 - self.rou / rouf) * self.mass * torch.Tensor([gl, 0, 0])
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
-        self.cF[1] = 0
-        self.cF[2] = 0
-        self.cT = torch.sum(
-            torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
-        )
         self.cu = self.cu + self.cF / self.mass * dt
         self.cx = self.cx + self.cu * dt
-        self.dw = self.cT * dt / self.I
-        self.cw = self.cw + self.dw
+
+        self.cT = -torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0)
+        self.cw = self.cw + self.cT * dt / self.I
 
     @run_timer
     def update(self, dt):
-        self.coord.update(dw=self.dw, dt=dt)
+        self.coord.update(cw=self.cw, dt=dt)
         self.lx = self.coord.cul_point(self._lagrange)
-        self.lu = self.cu + torch.cross(self.cw.unsqueeze(0), self.lx - self.cx, dim=-1)
 
     def from_json(self):
         pass
 
-    def to_str(self):
-        res = f"m={self.mass:2f}"
-        res += "\tu=" + ",".join([f"{i:6f}" for i in self.cu])
-        res += "\tx=" + ",".join([f"{i:6f}" for i in self.cx])
-        res += "\tf=" + ",".join([f"{i:6f}" for i in self.cF])
-        # res += "\tw=" + ",".join([f"{i:6f}" for i in self.cw])
+    def to_str(self, step=0, *args, **kwargs):
+        res = f"m={self.mass:.2f}"
+        res += "\tu=" + ",".join([f"{i:.6f}" for i in self.cu])
+        res += "\tx=" + ",".join([f"{i:.6f}" for i in self.cx])
+        res += "\tf=" + ",".join([f"{i:.6f}" for i in self.cF])
+        res += "\tw=" + ",".join([f"{i:.6f}" for i in self.cw])
         return res
 
 
@@ -208,7 +163,7 @@ class Ellipsoid(Particle):
                 xr,
                 yr,
                 zr,
-                cul_value=lambda X, Y, Z: X**2 / 5 + Y**2 / 5 + Z**2 / 5 - 1,
+                cul_value=lambda X, Y, Z: X**2 / self.ra**2 + Y**2 / self.rb**2 + Z**2 / self.rc**2 - 1,
                 dx=dx,
             ),
             device=self.device,
@@ -225,9 +180,7 @@ class Ellipsoid(Particle):
             dtype=torch.float32,
         )
         self.I = torch.tensor(
-            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb])
-            * self.mass.to("cpu").numpy()
-            / 5.0,
+            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb]) * self.mass.to("cpu").numpy() / 5.0,
             device=self.device,
             dtype=torch.float32,
         )
@@ -238,7 +191,7 @@ class Sphere(Particle):
         super().__init__(*args, **kwargs)
         self.r = self.config.get("r") or 10
 
-    def _init(self, dx=0.5, *args, **kwargs):
+    def _init(self, dx=1, *args, **kwargs):
         xl, yl, zl = -self.r - 2 * dx, -self.r - 2 * dx, -self.r - 2 * dx
         xr, yr, zr = self.r + 2 * dx, self.r + 2 * dx, self.r + 2 * dx
         self._lagrange = torch.tensor(
@@ -249,7 +202,7 @@ class Sphere(Particle):
                 xr,
                 yr,
                 zr,
-                cul_value=lambda X, Y, Z: X**2 / 5 + Y**2 / 5 + Z**2 / 5 - 1,
+                cul_value=lambda X, Y, Z: X**2 / self.r**2 + Y**2 / self.r**2 + Z**2 / self.r**2 - 1,
                 dx=dx,
             ),
             device=self.device,
@@ -267,9 +220,7 @@ class Sphere(Particle):
         )
 
         self.I = torch.tensor(
-            np.array([self.r * self.r, self.r * self.r, self.r * self.r])
-            * self.mass.to("cpu").numpy()
-            / 5.0,
+            np.array([self.r * self.r, self.r * self.r, self.r * self.r]) * self.mass.to("cpu").numpy() / 5.0,
             device=self.device,
             dtype=torch.float32,
         )
