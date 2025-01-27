@@ -6,10 +6,19 @@ from funvtk.hl import gridToVTK, pointsToVTK
 from funlbm.flow import FlowD3
 from funlbm.particle import Sphere
 from funlbm.util import logger
-from .base import LBMBase, Config
+
+from .base import Config, LBMBase
 
 
 class LBMD3(LBMBase):
+    """3D格子玻尔兹曼方法实现类
+
+    实现了3D流场的基本功能,包括初始化、边界处理等
+
+    Args:
+        config: LBM配置对象
+    """
+
     def __init__(self, config: Config, *args, **kwargs):
         flow = FlowD3(config=config.flow_config, *args, **kwargs)
         particles = [Sphere(config=con) for con in config.particles]
@@ -18,25 +27,49 @@ class LBMD3(LBMBase):
         )
 
     def init(self):
+        """初始化流场和颗粒"""
         # 初始化流程
         # 初始化边界条件
         self.flow.init()
         # 初始化颗粒
-
-        # self = self.particles[0]
         self.flow.cul_equ()
 
         for particle in self.particles:
             particle.init()
 
+    def _calculate_region_bounds(self, particle, n, h):
+        """Calculate region bounds for particle interaction."""
+        # 保持在GPU上计算
+        rl = torch.floor(particle.lx) - (n - 1) * h
+        # 限制下界
+        rl = torch.clamp(rl, min=0)
+        rr = rl + (2 * n - 1) * h + 1
+        # 限制上界
+        domain_size = torch.tensor(
+            self.config.flow_config.size, device=self.device, dtype=torch.float32
+        )
+        rr = torch.clamp(rr, max=domain_size)
+        return rl.to(dtype=torch.int32), rr.to(dtype=torch.int32)
+
+    def _calculate_weight_function(self, flow_x, lar, h):
+        """Calculate weight function for particle-fluid interaction."""
+        tmp = flow_x - lar
+        # 限制权重函数的作用范围
+        mask = torch.all(torch.abs(tmp) <= 2 * h, dim=-1, keepdim=True)
+        tmp = torch.where(
+            mask, (1 + torch.cos(torch.abs(tmp * np.pi / 2 / h))) / 4 / h, 0.0
+        )
+        w = torch.prod(tmp, dim=-1, keepdim=True).to(dtype=torch.float32)
+        # 归一化权重
+        w_sum = torch.sum(w)
+        if w_sum > 0:
+            w = w / w_sum
+        return w
+
     @run_timer
     def flow_to_lagrange(self, n=2, h=1, *args, **kwargs):
         for particle in self.particles:
-            rl = np.array(
-                np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int
-            )
-            rl[rl < 0] = 0
-            rr = rl + (2 * n - 1) * h + 1
+            rl, rr = self._calculate_region_bounds(particle, n, h=h)
             # TODO 上限没加
 
             lu = torch.zeros(particle.lu.shape, device=self.device)
@@ -44,9 +77,8 @@ class LBMD3(LBMBase):
 
             for index, lar in enumerate(particle.lx):
                 il, ir = rl[index], rr[index]
-                tmp = self.flow.x[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] - lar
-                tmp = (1 + torch.cos(torch.abs(tmp * np.pi / 2 / h))) / 4 / h
-                tmp = torch.prod(tmp, dim=-1, keepdim=True)
+                region_x = self.flow.x[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :]
+                tmp = self._calculate_weight_function(region_x, lar, h)
 
                 lu[index, :] = torch.sum(
                     self.flow.u[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] * tmp
@@ -69,66 +101,63 @@ class LBMD3(LBMBase):
     @run_timer
     def lagrange_to_flow(self, n=2, h=1, *args, **kwargs):
         for particle in self.particles:
-            rl = np.array(
-                np.floor(particle.lx.to("cpu").numpy()) - (n - 1) * h, dtype=int
-            )
-            rl[rl < 0] = 0
-            rr = rl + (2 * n - 1) * h + 1
+            rl, rr = self._calculate_region_bounds(particle, n, h)
+
             for index, lar in enumerate(particle.lx):
                 il, ir = rl[index], rr[index]
-                tmp = self.flow.x[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] - lar
-                tmp = (1 + torch.cos(torch.abs(tmp / h * np.pi / 2 / h))) / 4 / h
-                tmp = torch.prod(tmp, dim=-1, keepdim=True)
-                tmp = tmp * particle.lF[index, :] * particle.lm[index]
-                self.flow.FOL[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] = tmp
+                region_x = self.flow.x[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :]
+                tmp = self._calculate_weight_function(region_x, lar, h)
+
+                force = tmp * particle.lF[index, :] * particle.lm[index]
+                self.flow.FOL[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] = force
 
     @run_timer
     def particle_to_wall(self, *args, **kwargs):
         """
-        颗粒与边界的碰撞
-        https://darkchat.yuque.com/org-wiki-darkchat-gfaase/uvmi28/hd3zagc47n89n5c0
+        Handle particle-wall collisions using a spring force model.
         """
+        k0 = 300  # Spring constant
+        wall_normals = torch.tensor(
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]],
+            device=self.device,
+            dtype=torch.float32,
+        )
 
-        k0 = 300
-        for particle in self.particles:
-            n = torch.tensor(
-                np.array(
-                    [
-                        [1, 0, 0],
-                        [0, 1, 0],
-                        [0, 0, 1],
-                        [-1, 0, 0],
-                        [0, -1, 0],
-                        [0, 0, -1],
-                    ]
+        domain_bounds = torch.concatenate(
+            [
+                torch.zeros(self.config.flow_config.size.shape, device=self.device),
+                torch.tensor(
+                    self.config.flow_config.size,
+                    device=self.device,
+                    dtype=torch.float32,
                 ),
-                device=self.device,
-                dtype=torch.float32,
-            )
-            xt = torch.concatenate(
-                [
-                    torch.zeros(self.config.flow_config.size.shape, device=self.device),
-                    torch.tensor(
-                        self.config.flow_config.size,
-                        device=self.device,
-                        dtype=torch.float32,
-                    ),
-                ]
-            )
-            xi = torch.concatenate(
+            ]
+        )
+
+        for particle in self.particles:
+            # Find extreme points of particle
+            extreme_indices = torch.concatenate(
                 [torch.argmin(particle.lx, dim=0), torch.argmax(particle.lx, dim=0)]
             )
 
-            d = k0 * (
+            # Calculate wall distances
+            distances = k0 * (
                 1
-                - abs(particle.lx[xi][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]] - xt)
+                - abs(
+                    particle.lx[extreme_indices][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]]
+                    - domain_bounds
+                )
                 / (2 * self.config.dx)
             )
-            d[d < 0] = 0
-            if d.max() == 0:
+            distances = torch.clamp(distances, min=0)
+
+            if distances.max() == 0:
                 continue
-            logger.info(f"distinct of particle to wall={d}")
-            particle.lF[xi] = particle.lF[xi] + torch.multiply(n, d.unsqueeze(1))
+
+            logger.info(f"Distance of particle to wall = {distances}")
+            particle.lF[extreme_indices] += torch.multiply(
+                wall_normals, distances.unsqueeze(1)
+            )
 
     def save(self, step=10, *args, **kwargs):
         if step % self.config.file_config.per_steps > 0:

@@ -4,20 +4,32 @@ from funutil import deep_get
 from torch import Tensor
 
 from funlbm.base import Worker
-from funlbm.config.base import BoundaryConfig, BaseConfig
+from funlbm.config.base import BaseConfig, BoundaryConfig
 from funlbm.parameter import Param
 
 
 class FlowConfig(BaseConfig):
-    def __init__(self, *args, **kwargs):
-        self.size = np.zeros(3)
-        self.param = {}
-        self.param_type: str = "D3Q19"
-        self.boundary: BoundaryConfig = None
+    """流体配置类
 
-        self.gl = 0.0
-        self.Re = 10
-        self.mu = 10
+    Attributes:
+        size: 计算域大小,形状为(3,)的数组
+        param: 参数字典
+        param_type: 参数类型,默认为"D3Q19"
+        boundary: 边界配置
+        gl: 重力加速度
+        Re: 雷诺数
+        mu: 动力粘度
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.size: np.ndarray = np.zeros(3)  # 计算域大小
+        self.param: dict = {}  # 参数字典
+        self.param_type: str = "D3Q19"  # 参数类型
+        self.boundary: BoundaryConfig = None  # 边界配置
+
+        self.gl: float = 0.0  # 重力加速度
+        self.Re: float = 10  # 雷诺数
+        self.mu: float = 10  # 动力粘度
         super().__init__(*args, **kwargs)
 
     def _from_json(self, config_json: dict, *args, **kwargs):
@@ -36,6 +48,24 @@ class FlowConfig(BaseConfig):
 
 
 class Flow(Worker):
+    """流场基类
+
+    实现了流场计算的基本功能
+
+    属性:
+        param (Param): 参数对象
+        config (FlowConfig): 配置对象
+        x (Tensor): 坐标张量
+        f (Tensor): 力密度分布函数
+        feq (Tensor): 平衡态分布函数
+        u (Tensor): 速度场
+        p (Tensor): 压力场
+        rou (Tensor): 密度场
+        gama (Tensor): 剪切率
+        FOL (Tensor): 力项
+        tau (Tensor): 松弛时间
+    """
+
     def __init__(self, param: Param, config: FlowConfig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.param: Param = param
@@ -59,17 +89,31 @@ class Flow(Worker):
 
         self.tau: Tensor = torch.zeros([1])
 
-    def init(self, *args, **kwargs):
+    def init(self, *args, **kwargs) -> None:
+        """初始化流场"""
         raise NotImplementedError("not implemented")
 
-    def update_u_rou(self, *args, **kwargs):
+    def update_u_rou(self, *args, **kwargs) -> None:
+        """更新速度和密度场"""
         raise NotImplementedError("not implemented")
 
-    def cul_equ(self, tau=None, *args, **kwargs):
+    def cul_equ(self, tau: Tensor = None, *args, **kwargs) -> None:
+        """计算平衡态分布函数"""
         raise NotImplementedError("not implemented")
 
-    def cul_equ2(self, *args, **kwargs):
+    def cul_equ2(self, *args, **kwargs) -> None:
+        """计算第二种平衡态分布函数"""
         raise NotImplementedError("not implemented")
 
-    def f_stream(self, *args, **kwargs):
+    def f_stream(self, *args, **kwargs) -> None:
+        """执行流动计算"""
         raise NotImplementedError("not implemented")
+
+    def __repr__(self) -> str:
+        """返回流场对象的字符串表示"""
+        return (
+            f"{self.__class__.__name__}("
+            f"size={tuple(self.config.size)}, "
+            f"Re={self.config.Re}, "
+            f"mu={self.config.mu})"
+        )

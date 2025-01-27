@@ -1,3 +1,5 @@
+from typing import List, Optional, Union
+
 import numpy as np
 import torch
 from funutil import deep_get
@@ -5,16 +7,35 @@ from scipy.spatial.transform import Rotation as R
 
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig
-from funlbm.util import logger
 
 
 class CoordConfig(BaseConfig):
-    def __init__(self, alpha=np.pi / 2, beta=0, gamma=0, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.center = [0, 0, 0]
-        self.alpha, self.beta, self.gamma = alpha, beta, gamma
+    """坐标系统配置类
 
-    def _from_json(self, config_json: dict, *args, **kwargs):
+    Args:
+        alpha: 绕x轴旋转角度,默认π/2
+        beta: 绕y轴旋转角度,默认0
+        gamma: 绕z轴旋转角度,默认0
+    """
+
+    def __init__(
+        self,
+        alpha: float = np.pi / 2,
+        beta: float = 0,
+        gamma: float = 0,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.center: List[float] = [0, 0, 0]  # 坐标系中心点
+        self.alpha, self.beta, self.gamma = alpha, beta, gamma  # 三个旋转角度
+
+    def _from_json(self, config_json: dict, *args, **kwargs) -> None:
+        """从JSON加载配置
+
+        Args:
+            config_json: JSON配置字典
+        """
         self.center = deep_get(config_json, "center") or self.center
         self.alpha = deep_get(config_json, "alpha") or self.alpha
         self.beta = deep_get(config_json, "beta") or self.beta
@@ -22,47 +43,90 @@ class CoordConfig(BaseConfig):
 
 
 class Coordinate(Worker):
-    """
-    坐标系
-    center: 中心点
-    alpha,beta,gamma,三维初始旋转角度
-    w: 旋转角
+    """3D坐标系统类
 
+    支持坐标系的旋转和平移操作
+
+    属性:
+        center (Tensor): 坐标系原点位置
+        w (Tensor): 旋转角度[alpha, beta, gamma]
+        rotation (R): 旋转矩阵对象
+
+    Args:
+        config (CoordConfig): 坐标系配置对象
     """
 
-    def __init__(self, config: CoordConfig = None, *args, **kwargs):
+    def __init__(self, config: Optional[CoordConfig] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         config = config or CoordConfig()
         self.center = torch.tensor(
             config.center, device=self.device, dtype=torch.float32
         )
-        self.w = torch.Tensor([config.alpha, config.beta, config.gamma])
-        self.rotation = R.from_euler("xyz", self.w)
+        self.w = torch.tensor(
+            [config.alpha, config.beta, config.gamma],
+            device=self.device,
+            dtype=torch.float32,
+        )
+        self.rotation = R.from_euler("xyz", self.w.cpu().numpy())
 
-    def cul_point(self, points):
+    def cul_point(
+        self, points: Union[List[float], np.ndarray, torch.Tensor]
+    ) -> torch.Tensor:
+        """计算点在旋转和平移后的新位置
+
+        Args:
+            points: 输入点坐标,可以是单个点[x,y,z]或点集[N,3]
+
+        Returns:
+            Tensor: 变换后的点坐标
+        """
+        if isinstance(points, (list, tuple)):
+            points = np.array(points)
+        elif isinstance(points, torch.Tensor):
+            points = points.cpu().numpy()
+
+        rotated_points = self.rotation.apply(points)
         return (
-            torch.Tensor(self.rotation.apply(points), device=self.device) + self.center
+            torch.tensor(rotated_points, device=self.device, dtype=torch.float32)
+            + self.center
         )
 
-    def update(self, cw, *args, **kwargs):
-        """
-        https://www.cnblogs.com/QiQi-Robotics/p/14562475.html
-        :param dw:增量旋转角度
-        :param dt:
-        :return:
-        """
+    def update(self, cw: Union[List[float], np.ndarray, torch.Tensor]) -> None:
+        """更新旋转角度并重新计算旋转矩阵
 
+        Args:
+            cw: 旋转角度的变化量[d_alpha, d_beta, d_gamma]
+
+        Raises:
+            ValueError: 当cw为None或形状不正确时
+            TypeError: 当cw类型不支持时
+        """
         if cw is None:
-            logger.error("dw cannot be None")
-            return
-        self.w += cw
-        self.rotation = R.from_euler("xyz", self.w)
+            raise ValueError("Rotation angle update (cw) cannot be None")
+
+        if isinstance(cw, torch.Tensor):
+            if cw.dim() != 1 or cw.size(0) != 3:
+                raise ValueError(f"Expected cw tensor of shape (3,), got {cw.shape}")
+            cw = cw.cpu().numpy()
+        elif isinstance(cw, (list, tuple)):
+            if len(cw) != 3:
+                raise ValueError(f"Expected cw list of length 3, got {len(cw)}")
+            cw = np.array(cw)
+        elif isinstance(cw, np.ndarray):
+            if cw.shape != (3,):
+                raise ValueError(f"Expected cw array of shape (3,), got {cw.shape}")
+        else:
+            raise TypeError(f"Unsupported type for cw: {type(cw)}")
+
+        self.w += torch.tensor(cw, device=self.device, dtype=torch.float32)
+        self.rotation = R.from_euler("xyz", self.w.cpu().numpy())
 
 
 def example():
-    print(
-        Coordinate(CoordConfig(alpha=np.pi / 2.0, beta=0, gamma=0)).cul_point([1, 0, 1])
-    )
+    """Example usage of the Coordinate class."""
+    coord = Coordinate(CoordConfig(alpha=np.pi / 2.0, beta=0, gamma=0))
+    result = coord.cul_point([1, 0, 1])
+    print(f"Transformed point: {result}")
 
 
 # example()

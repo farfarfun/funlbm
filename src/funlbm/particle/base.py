@@ -2,12 +2,11 @@ import math
 
 import numpy as np
 import torch
-from funutil import run_timer, deep_get
-from torch import Tensor
+from funutil import deep_get, run_timer
 
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig
-from funlbm.particle.coord import Coordinate, CoordConfig
+from funlbm.particle.coord import CoordConfig, Coordinate
 from funlbm.util import logger
 
 
@@ -20,15 +19,18 @@ class ParticleConfig(BaseConfig):
         self.coord_config.from_json(deep_get(config_json, "coord"))
 
 
-def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5):
-    x = np.linspace(xl, xr, int((xr - xl) / dx))
-    y = np.linspace(yl, yr, int((yr - yl) / dx))
-    z = np.linspace(zl, zr, int((zr - zl) / dx))
+def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5, device="cuda"):
+    # 直接使用torch计算并在GPU上运行
+    x = torch.linspace(xl, xr, int((xr - xl) / dx), device=device)
+    y = torch.linspace(yl, yr, int((yr - yl) / dx), device=device)
+    z = torch.linspace(zl, zr, int((zr - zl) / dx), device=device)
 
-    X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
+    X, Y, Z = torch.meshgrid(x, y, z, indexing="ij")
     value = cul_value(X, Y, Z)
-    inner = (value < 0) * 1
-    outer = (value > 0) * 2
+
+    # 确保使用浮点类型进行计算
+    inner = (value < 0).to(dtype=torch.float32)
+    outer = (value > 0).to(dtype=torch.float32) * 2
     S = inner + outer
 
     T = S[:-1, :-1, :-1]
@@ -36,9 +38,11 @@ def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5):
     T = T + S[:-1, 1:, 1:] + S[1:, :-1, 1:] + S[1:, 1:, :-1]
     T = T + S[1:, 1:, 1:]
 
-    xm = T.mean(axis=2).mean(axis=1)
-    ym = T.mean(axis=2).mean(axis=0)
-    zm = T.mean(axis=0).mean(axis=0)
+    # 计算平均值
+    xm = T.mean(dim=2).mean(dim=1)  # 使用dim替代axis
+    ym = T.mean(dim=2).mean(dim=0)
+    zm = T.mean(dim=0).mean(dim=0)
+
     result = []
     for i in range(T.shape[0]):
         if xm[i] == 16:
@@ -47,18 +51,42 @@ def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5):
             if ym[j] == 16:
                 continue
             for k in range(T.shape[2]):
-                if zm[j] == 16:
+                if zm[k] == 16:
                     continue
                 if T[i, j, k] == 16:
                     continue
 
-                # print(k, T[i, j, k], X[i][j][k], Y[i][j][k], Z[i][j][k])
-                result.append([X[i][j][k], Y[i][j][k], Z[i][j][k]])
+                result.append([X[i][j][k].item(), Y[i][j][k].item(), Z[i][j][k].item()])
+
     logger.info(f"lagrange size:{len(result)}")
     return np.array(result, dtype=np.float32)
 
 
 class Particle(Worker):
+    """
+    粒子基类
+
+    属性:
+        config (ParticleConfig): 粒子配置
+        coord (Coordinate): 坐标系对象
+        mass (float): 粒子质量
+        area (float): 粒子表面积
+        I (Tensor): 惯性矩
+        rou (float): 粒子密度
+        angle (Tensor): 粒子方向
+        cx (Tensor): 质心坐标 [x,y,z]
+        cr (Tensor): 质心半径 [a,b,b]
+        cu (Tensor): 质心速度 [vx,vy,vz]
+        cw (Tensor): 质心角速度 [wx,wy,wz]
+        cF (Tensor): 质心合外力
+        cT (Tensor): 质心合外力矩
+        lx (Tensor): 拉格朗日点坐标 [m,i,3]
+        lF (Tensor): 拉格朗日点受力 [m,i,3]
+        lm (Tensor): 拉格朗日点质量
+        lu (Tensor): 拉格朗日点速度 [m,i,3]
+        lrou (Tensor): 拉格朗日点密度
+    """
+
     def __init__(self, config: ParticleConfig = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -93,18 +121,29 @@ class Particle(Worker):
         # 质心合外力
         self.cT = torch.zeros(3, device=self.device, dtype=torch.float32)
 
-        self._lagrange: Tensor = torch.zeros([0])
+        self._lagrange: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点的坐标[m,i,3]
-        self.lx: Tensor = torch.zeros([0])
+        self.lx: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点上的力[m,i,3]
-        self.lF: Tensor = torch.zeros([0])
-
+        self.lF: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点的质量
-        self.lm: Tensor = torch.zeros([0])
+        self.lm: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点速度[m,i,3]
-        self.lu: Tensor = torch.zeros([0])
+        self.lu: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点速度[m,i,3]
-        self.lrou: Tensor = torch.zeros([0])
+        self.lrou: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
 
     def _init(self, dx=1, *args, **kwargs):
         raise NotImplementedError("还没实现")
@@ -113,19 +152,32 @@ class Particle(Worker):
         self.rou = float(self.config.get("rou", 1.0))
         self._init(*args, **kwargs)
         shape = self._lagrange.shape
-        self.lx = torch.zeros(shape, device=self.device, dtype=torch.float32)
-        self.lF = torch.zeros(shape, device=self.device, dtype=torch.float32)
-
-        self.lu = torch.zeros(shape, device=self.device, dtype=torch.float32)
-        self.lm = (
-            torch.ones((shape[0], 1), device=self.device, dtype=torch.float32)
-            * self.area
-            / shape[0]
+        self.lx = torch.empty(shape, device=self.device, dtype=torch.float32)
+        self.lF = torch.empty(shape, device=self.device, dtype=torch.float32)
+        self.lu = torch.empty(shape, device=self.device, dtype=torch.float32)
+        self.lm = torch.full(
+            (shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32
         )
-        self.lrou = torch.zeros((shape[0], 1), device=self.device, dtype=torch.float32)
+        self.lrou = torch.empty((shape[0], 1), device=self.device, dtype=torch.float32)
 
     @run_timer
-    def update_from_lar(self, dt, gl=9.8, rouf=1.0):
+    def update_from_lar(self, dt: float, gl: float = 9.8, rouf: float = 1.0) -> None:
+        """
+        从拉格朗日坐标更新粒子状态。
+
+        参数:
+            dt: 时间步长
+            gl: 重力加速度
+            rouf: 流体密度
+
+        异常:
+            ValueError: 当输入参数无效时抛出
+        """
+        if dt <= 0:
+            raise ValueError("Time step must be positive")
+        if rouf <= 0:
+            raise ValueError("Fluid density must be positive")
+
         tmp = (1 - self.rou / rouf) * self.mass * torch.Tensor([gl, 0, 0])
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
         self.cu = self.cu + self.cF / self.mass * dt
@@ -138,7 +190,7 @@ class Particle(Worker):
 
     @run_timer
     def update(self, dt):
-        self.coord.update(cw=self.cw, dt=dt)
+        self.coord.update(cw=self.cw)
         self.lx = self.coord.cul_point(self._lagrange)
 
     def from_json(self):
@@ -222,6 +274,7 @@ class Sphere(Particle):
                 + Z**2 / self.r**2
                 - 1,
                 dx=dx,
+                device=self.device,
             ),
             device=self.device,
             dtype=torch.float32,

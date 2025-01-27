@@ -4,6 +4,16 @@ from funlbm.util import logger
 
 
 def device_detect(device=None):
+    """检测并返回可用的计算设备
+
+    按优先级顺序检测:CUDA > MPS > CPU
+
+    Args:
+        device: 指定的设备名称,如果为None则自动检测
+
+    Returns:
+        torch.device: 返回可用的计算设备(cuda/mps/cpu)
+    """
     if device is not None:
         return device
     try:
@@ -20,6 +30,13 @@ def device_detect(device=None):
 
 
 class Worker:
+    """基础工作类
+
+    提供设备检测和管理功能
+
+    Args:
+        device: 计算设备名称,默认为"cpu"
+    """
+
     def __init__(self, device="cpu", *args, **kwargs):
         self.device = device_detect(device)
-        self.device = device

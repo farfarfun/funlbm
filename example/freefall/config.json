@@ -1,0 +1,55 @@
+{
+  "dx": 1,
+  "dt": 1,
+  "flow": {
+    "param_type": "D3Q19",
+    "param": {
+      "Re": 0.45,
+      "rho": 1.0,
+      "mu": 0.0385,
+      "gl": -0.0098
+    },
+    "size": [
+      160,
+      100,
+      100
+    ],
+    "boundary": {
+      "input": {
+        "code": "PERIODICAL"
+      },
+      "output": {
+        "code": "PERIODICAL"
+      },
+      "back": {
+        "code": "PERIODICAL"
+      },
+      "forward": {
+        "code": "PERIODICAL"
+      },
+      "top": {
+        "code": "PERIODICAL"
+      },
+      "bottom": {
+        "code": "PERIODICAL"
+      }
+    }
+  },
+  "file": {
+    "cache_dir": "./data",
+    "per_steps": 100
+  },
+  "particles": [
+    {
+      "rou": 1.155,
+      "coord": {
+        "center": [
+          40,
+          50,
+          50
+        ]
+      },
+      "r": 7.5
+    }
+  ]
+}
