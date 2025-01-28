@@ -178,8 +178,9 @@ class Particle(Worker):
         if rouf <= 0:
             raise ValueError("Fluid density must be positive")
 
-        tmp = (1 - self.rou / rouf) * self.mass * torch.Tensor([gl, 0, 0])
+        tmp = (1 - self.rou / rouf) * self.mass * torch.tensor([gl, 0, 0],device=self.device)
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
+
         self.cu = self.cu + self.cF / self.mass * dt
         self.cx = self.cx + self.cu * dt
 
@@ -214,7 +215,7 @@ class Ellipsoid(Particle):
             self.config.get("c") or 10,
         )
 
-    def _init(self, dx=0.5, *args, **kwargs):
+    def _init(self, dx=1, *args, **kwargs):
         xl, yl, zl = -self.ra - 2 * dx, -self.rb - 2 * dx, -self.rc - 2 * dx
         xr, yr, zr = self.ra + 2 * dx, self.rb + 2 * dx, self.rc + 2 * dx
         self._lagrange = torch.tensor(

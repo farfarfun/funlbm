@@ -14,7 +14,7 @@ def device_detect(device=None):
     Returns:
         torch.device: 返回可用的计算设备(cuda/mps/cpu)
     """
-    if device is not None:
+    if device is not None and device != "auto":
         return device
     try:
         if torch.cuda.is_available():
@@ -39,4 +39,6 @@ class Worker:
     """
 
     def __init__(self, device="cpu", *args, **kwargs):
+
         self.device = device_detect(device)
+        logger.info(f"init {type(self).__name__} with device={self.device}")

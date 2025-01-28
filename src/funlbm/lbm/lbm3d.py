@@ -20,11 +20,12 @@ class LBMD3(LBMBase):
     """
 
     def __init__(self, config: Config, *args, **kwargs):
-        flow = FlowD3(config=config.flow_config, *args, **kwargs)
-        particles = [Sphere(config=con) for con in config.particles]
+        flow = FlowD3(config=config.flow_config,device=config.device, *args, **kwargs)
+        particles = [Sphere(config=con,device=config.device) for con in config.particles]
         super(LBMD3, self).__init__(
-            flow=flow, config=config, particles=particles, *args, **kwargs
+            flow=flow, config=config,device=config.device, particles=particles, *args, **kwargs
         )
+
 
     def init(self):
         """初始化流场和颗粒"""
@@ -72,8 +73,8 @@ class LBMD3(LBMBase):
             rl, rr = self._calculate_region_bounds(particle, n, h=h)
             # TODO 上限没加
 
-            lu = torch.zeros(particle.lu.shape, device=self.device)
-            lrou = torch.zeros((particle.lu.shape[0], 1), device=self.device)
+            lu = torch.zeros_like(particle.lu, device=self.device)
+            lrou = torch.zeros_like(particle.lrou, device=self.device)
 
             for index, lar in enumerate(particle.lx):
                 il, ir = rl[index], rr[index]
@@ -100,9 +101,10 @@ class LBMD3(LBMBase):
 
     @run_timer
     def lagrange_to_flow(self, n=2, h=1, *args, **kwargs):
+        self.flow.FOL[:,:,:,:]=0
+
         for particle in self.particles:
             rl, rr = self._calculate_region_bounds(particle, n, h)
-
             for index, lar in enumerate(particle.lx):
                 il, ir = rl[index], rr[index]
                 region_x = self.flow.x[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :]

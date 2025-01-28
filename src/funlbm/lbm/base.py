@@ -15,7 +15,7 @@ class Config(BaseConfig):
         super().__init__(*args, **kwargs)
         self.dt: float = 1.0
         self.dx: float = 1.0
-        self.device: str = "cpu"
+        self.device: str = "auto"
         self.file_config = FileConfig()
         self.flow_config = FlowConfig()
         self.particles: List[ParticleConfig] = []
@@ -65,8 +65,8 @@ class LBMBase(Worker):
 
     def _log_step_info(self, step: int) -> None:
         """记录每一步的信息"""
-        flow_data = self.flow.f.numpy()
-        velocity_data = self.flow.u.numpy()
+        flow_data = self.flow.f.to('cpu').numpy()
+        velocity_data = self.flow.u.to('cpu').numpy()
 
         info = [
             f"step={step:6d}",
