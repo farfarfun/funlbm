@@ -1,6 +1,7 @@
 import os
 
 import click
+
 from funlbm.lbm import LBMD3, Config
 
 document_url = "https://darkchat.yuque.com/org-wiki-darkchat-gfaase/ul41go"
@@ -19,5 +20,5 @@ def run(config: str = "./config.json"):
         print(info)
         raise FileExistsError(config)
     _config = Config().from_file(config)
-    lbm = LBMD3(config=_config, device=_config.device)
+    lbm = LBMD3(config=_config)
     lbm.run()
