@@ -1,6 +1,5 @@
 from typing import List
 
-import numpy as np
 from funutil import deep_get
 
 from funlbm.base import Worker
