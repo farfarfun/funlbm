@@ -1,6 +1,7 @@
 {
   "dx": 1,
   "dt": 1,
+  "device": "cpu",
   "flow": {
     "param_type": "D3Q19",
     "param": {
