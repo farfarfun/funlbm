@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from funtecplot.dump import PointData
 from funutil import run_timer
 from funvtk.hl import gridToVTK, pointsToVTK
 
@@ -208,6 +209,33 @@ class LBMD3(LBMBase):
         # t1 = self.flow.rou[10:-10, 10:-10, 10:-10, :]
         # t1 = cell_data['rho'][5:-5, 5:-5, 5:-5]
         # print("rho", step, t1.max(), t1.min(), t1.max() - t1.min())
+        PointData(
+            data=flow_u,
+            variables=["x", "y", "z", "ux", "uy", "uz"],
+            axis_dim=3,
+            data_dim=3,
+            title="flow_u",
+        ).dump(
+            filepath=f"{self.config.file_config.tecplot_path}/tecplot_flow_u_{str(step).zfill(10)}.dat"
+        )
+        PointData(
+            data=cell_data["rho"],
+            variables=["x", "y", "z", "rho"],
+            axis_dim=3,
+            data_dim=1,
+            title="flow_u",
+        ).dump(
+            filepath=f"{self.config.file_config.tecplot_path}/tecplot_flow_rho_{str(step).zfill(10)}.dat"
+        )
+        PointData(
+            data=cell_data["p"],
+            variables=["x", "y", "z", "p"],
+            axis_dim=3,
+            data_dim=1,
+            title="flow_u",
+        ).dump(
+            filepath=f"{self.config.file_config.tecplot_path}/tecplot_flow_p_{str(step).zfill(10)}.dat"
+        )
 
         gridToVTK(
             f"{self.config.file_config.vtk_path}/flow_" + str(step).zfill(10),
@@ -226,6 +254,7 @@ class LBMD3(LBMBase):
             }
             fname = f"{self.config.file_config.vtk_path}/particle_{str(i).zfill(3)}_{str(step).zfill(10)}"
             pointsToVTK(fname, xf, yf, zf, data=data)
+
         # write_to_tecplot(cell_data["rho"], f"{self.config.file_config.vtk_path}/tecplot_{str(step).zfill(10)}.dat")
 
 

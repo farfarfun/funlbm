@@ -14,6 +14,7 @@ class Config(BaseConfig):
         super().__init__(*args, **kwargs)
         self.dt: float = 1.0
         self.dx: float = 1.0
+        self.max_step = 10000
         self.device: str = "auto"
         self.file_config = FileConfig()
         self.flow_config = FlowConfig()
@@ -22,6 +23,7 @@ class Config(BaseConfig):
     def _from_json(self, config_json: dict, *args, **kwargs) -> "Config":
         self.dt = deep_get(config_json, "dt") or self.dt
         self.dx = deep_get(config_json, "dx") or self.dx
+        self.max_step = deep_get(config_json, "max_step") or self.max_step
         self.device = deep_get(config_json, "device") or self.device
         self.file_config = FileConfig().from_json(deep_get(config_json, "file") or {})
         self.flow_config = FlowConfig().from_json(deep_get(config_json, "flow") or {})
@@ -56,7 +58,7 @@ class LBMBase(Worker):
             max_steps: 最大步数
         """
         self.init()
-        total_steps = int(max_steps / self.config.dt)
+        total_steps = min(max_steps, self.config.max_step)
 
         for step in range(total_steps):
             self.run_step(step=step)

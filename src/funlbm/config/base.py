@@ -176,6 +176,13 @@ class FileConfig(BaseConfig):
         os.makedirs(path, exist_ok=True)
         return path
 
+    @property
+    def tecplot_path(self) -> str:
+        """获取VTK输出目录路径"""
+        path = os.path.join(self.cache_dir, "tecplot")
+        os.makedirs(path, exist_ok=True)
+        return path
+
     def _from_json(self, config_json: Dict[str, Any], **kwargs) -> None:
         self.cache_dir = deep_get(config_json, "cache_dir") or self.cache_dir
         self.per_steps = deep_get(config_json, "per_steps") or self.per_steps
