@@ -39,6 +39,5 @@ class Worker:
     """
 
     def __init__(self, device="cpu", *args, **kwargs):
-
         self.device = device_detect(device)
         logger.info(f"init {type(self).__name__} with device={self.device}")

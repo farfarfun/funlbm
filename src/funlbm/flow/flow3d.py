@@ -143,11 +143,9 @@ class FlowD3(Flow):
             )
             self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=uw)
             self.rou[0, :, :, :] = self.rou[1, :, :, :]
-            # self.rou[0, :, :, :] = 1
 
         if self.config.boundary.output.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
             self.rou[-1, :, :, :] = self.rou[-2, :, :, :]
-            # self.rou[-1, :, :, :] = 1
             self.u[-1, :, :, :] = self.u[-2, :, :, :]
 
     @run_timer

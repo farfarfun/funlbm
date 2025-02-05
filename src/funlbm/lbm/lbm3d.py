@@ -20,12 +20,18 @@ class LBMD3(LBMBase):
     """
 
     def __init__(self, config: Config, *args, **kwargs):
-        flow = FlowD3(config=config.flow_config,device=config.device, *args, **kwargs)
-        particles = [Sphere(config=con,device=config.device) for con in config.particles]
+        flow = FlowD3(config=config.flow_config, device=config.device, *args, **kwargs)
+        particles = [
+            Sphere(config=con, device=config.device) for con in config.particles
+        ]
         super(LBMD3, self).__init__(
-            flow=flow, config=config,device=config.device, particles=particles, *args, **kwargs
+            flow=flow,
+            config=config,
+            device=config.device,
+            particles=particles,
+            *args,
+            **kwargs,
         )
-
 
     def init(self):
         """初始化流场和颗粒"""
@@ -38,7 +44,7 @@ class LBMD3(LBMBase):
         for particle in self.particles:
             particle.init()
 
-    def _calculate_region_bounds(self, particle, n, h):
+    def _calculate_region_bounds(self, particle, n=2, h=1):
         """Calculate region bounds for particle interaction."""
         # 保持在GPU上计算
         rl = torch.floor(particle.lx) - (n - 1) * h
@@ -52,13 +58,18 @@ class LBMD3(LBMBase):
         rr = torch.clamp(rr, max=domain_size)
         return rl.to(dtype=torch.int32), rr.to(dtype=torch.int32)
 
-    def _calculate_weight_function(self, flow_x, lar, h):
+    def _calculate_weight_function(
+        self,
+        r,
+        n=2,
+        h=1,
+    ):
         """Calculate weight function for particle-fluid interaction."""
-        tmp = flow_x - lar
+
         # 限制权重函数的作用范围
-        mask = torch.all(torch.abs(tmp) <= 2 * h, dim=-1, keepdim=True)
+        mask = torch.all(torch.abs(r) <= n * h, dim=-1, keepdim=True)
         tmp = torch.where(
-            mask, (1 + torch.cos(torch.abs(tmp * np.pi / 2 / h))) / 4 / h, 0.0
+            mask, (1 + torch.cos(torch.abs(r * np.pi / 2 / h))) / 4 / h, 0.0
         )
         w = torch.prod(tmp, dim=-1, keepdim=True).to(dtype=torch.float32)
         # 归一化权重
@@ -68,25 +79,27 @@ class LBMD3(LBMBase):
         return w
 
     @run_timer
-    def flow_to_lagrange(self, n=2, h=1, *args, **kwargs):
+    def flow_to_lagrange(self, *args, **kwargs):
         for particle in self.particles:
-            rl, rr = self._calculate_region_bounds(particle, n, h=h)
-            # TODO 上限没加
-
+            rl, rr = self._calculate_region_bounds(particle)
             lu = torch.zeros_like(particle.lu, device=self.device)
             lrou = torch.zeros_like(particle.lrou, device=self.device)
 
             for index, lar in enumerate(particle.lx):
                 il, ir = rl[index], rr[index]
-                region_x = self.flow.x[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :]
-                tmp = self._calculate_weight_function(region_x, lar, h)
+                index_range = (
+                    slice(il[0], ir[0]),
+                    slice(il[1], ir[1]),
+                    slice(il[2], ir[2]),
+                    slice(None),
+                )
 
-                lu[index, :] = torch.sum(
-                    self.flow.u[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] * tmp
-                )
-                lrou[index, :] = torch.sum(
-                    self.flow.rou[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] * tmp
-                )
+                region_x = self.flow.x[index_range]
+                tmp = self._calculate_weight_function(region_x - lar)
+                if torch.abs(torch.sum(tmp) - 1) > 1e-3:
+                    logger.error(f"sum={torch.sum(tmp)}")
+                lu[index, :] = torch.sum(self.flow.u[index_range] * tmp)
+                lrou[index, :] = torch.sum(self.flow.rou[index_range] * tmp)
             u_theta = 0
 
             particle.lu[:, :] = (
@@ -100,18 +113,23 @@ class LBMD3(LBMBase):
             particle.lF = 2 * lrou * (particle.lu - lu) / self.config.dt
 
     @run_timer
-    def lagrange_to_flow(self, n=2, h=1, *args, **kwargs):
-        self.flow.FOL[:,:,:,:]=0
+    def lagrange_to_flow(self, *args, **kwargs):
+        self.flow.FOL[:, :, :, :] = 0
 
         for particle in self.particles:
-            rl, rr = self._calculate_region_bounds(particle, n, h)
+            rl, rr = self._calculate_region_bounds(particle)
             for index, lar in enumerate(particle.lx):
                 il, ir = rl[index], rr[index]
-                region_x = self.flow.x[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :]
-                tmp = self._calculate_weight_function(region_x, lar, h)
-
-                force = tmp * particle.lF[index, :] * particle.lm[index]
-                self.flow.FOL[il[0] : ir[0], il[1] : ir[1], il[2] : ir[2], :] = force
+                index_range = (
+                    slice(il[0], ir[0]),
+                    slice(il[1], ir[1]),
+                    slice(il[2], ir[2]),
+                    slice(None),
+                )
+                tmp = self._calculate_weight_function(self.flow.x[index_range] - lar)
+                self.flow.FOL[index_range] = (
+                    tmp * particle.lF[index, :] * particle.lm[index]
+                )
 
     @run_timer
     def particle_to_wall(self, *args, **kwargs):

@@ -62,12 +62,12 @@ class Coordinate(Worker):
         self.center = torch.tensor(
             config.center, device=self.device, dtype=torch.float32
         )
-        self.w = torch.tensor(
+        self.angle = torch.tensor(
             [config.alpha, config.beta, config.gamma],
             device=self.device,
             dtype=torch.float32,
         )
-        self.rotation = R.from_euler("xyz", self.w.cpu().numpy())
+        self.rotation = R.from_rotvec(self.angle.cpu().numpy())
 
     def cul_point(
         self, points: Union[List[float], np.ndarray, torch.Tensor]
@@ -85,13 +85,14 @@ class Coordinate(Worker):
         elif isinstance(points, torch.Tensor):
             points = points.cpu().numpy()
 
-        rotated_points = self.rotation.apply(points)
         return (
-            torch.tensor(rotated_points, device=self.device, dtype=torch.float32)
+            torch.tensor(
+                self.rotation.apply(points), device=self.device, dtype=torch.float32
+            )
             + self.center
         )
 
-    def update(self, cw: Union[List[float], np.ndarray, torch.Tensor]) -> None:
+    def update(self, center: torch.Tensor, w: torch.Tensor) -> None:
         """更新旋转角度并重新计算旋转矩阵
 
         Args:
@@ -101,25 +102,17 @@ class Coordinate(Worker):
             ValueError: 当cw为None或形状不正确时
             TypeError: 当cw类型不支持时
         """
-        if cw is None:
-            raise ValueError("Rotation angle update (cw) cannot be None")
+        self.center = center
+        self.angle += w
+        self.rotation = R.from_rotvec(self.angle.cpu().numpy())
 
-        if isinstance(cw, torch.Tensor):
-            if cw.dim() != 1 or cw.size(0) != 3:
-                raise ValueError(f"Expected cw tensor of shape (3,), got {cw.shape}")
-            cw = cw.cpu().numpy()
-        elif isinstance(cw, (list, tuple)):
-            if len(cw) != 3:
-                raise ValueError(f"Expected cw list of length 3, got {len(cw)}")
-            cw = np.array(cw)
-        elif isinstance(cw, np.ndarray):
-            if cw.shape != (3,):
-                raise ValueError(f"Expected cw array of shape (3,), got {cw.shape}")
-        else:
-            raise TypeError(f"Unsupported type for cw: {type(cw)}")
-
-        self.w += torch.tensor(cw, device=self.device, dtype=torch.float32)
-        self.rotation = R.from_euler("xyz", self.w.cpu().numpy())
+    def to_str(self):
+        return (
+            "center="
+            + ",".join([f"{i:.6f}" for i in self.center])
+            + "\tangle="
+            + ",".join([f"{i:.6f}" for i in self.angle])
+        )
 
 
 def example():

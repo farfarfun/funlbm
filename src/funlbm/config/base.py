@@ -51,7 +51,7 @@ class BaseConfig:
     提供配置的基本读写功能
     """
 
-    def __init__(self,*args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         self.expand: Dict[str, Any] = kwargs.copy()
 
     def _from_json(self, config_json: Dict[str, Any], **kwargs) -> None:
@@ -115,9 +115,9 @@ class Boundary(BaseConfig):
     """
 
     def __init__(
-        self, condition: BoundaryCondition = BoundaryCondition.WALL,*args, **kwargs
+        self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs
     ) -> None:
-        super().__init__(*args,**kwargs)
+        super().__init__(*args, **kwargs)
         self.condition: BoundaryCondition = condition
         self.poiseuille: Optional[Any] = None
 
@@ -142,8 +142,8 @@ class BoundaryConfig(BaseConfig):
     - top: 顶边界
     """
 
-    def __init__(self,*args, **kwargs) -> None:
-        super().__init__(*args,**kwargs)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.input = Boundary(BoundaryCondition.WALL)
         self.output = Boundary(BoundaryCondition.WALL)
         self.back = Boundary(BoundaryCondition.WALL)
@@ -164,8 +164,8 @@ class FileConfig(BaseConfig):
         per_steps: 每隔多少步保存一次
     """
 
-    def __init__(self,*args, **kwargs) -> None:
-        super().__init__(*args,**kwargs)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.cache_dir: str = "./data"
         self.per_steps: int = 100
 

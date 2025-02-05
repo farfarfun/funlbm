@@ -65,13 +65,22 @@ class LBMBase(Worker):
 
     def _log_step_info(self, step: int) -> None:
         """记录每一步的信息"""
-        flow_data = self.flow.f.to('cpu').numpy()
-        velocity_data = self.flow.u.to('cpu').numpy()
-
         info = [
             f"step={step:6d}",
-            f"f_max={np.max(flow_data):10.6f}",
-            f"u_max={np.max(velocity_data):10.6f}",
+            "f="
+            + ",".join(
+                [
+                    f"{i:.6f}"
+                    for i in [self.flow.f.min(), self.flow.f.mean(), self.flow.f.max()]
+                ]
+            ),
+            "u="
+            + ",".join(
+                [
+                    f"{i:.6f}"
+                    for i in [self.flow.u.min(), self.flow.u.mean(), self.flow.u.max()]
+                ]
+            ),
         ]
 
         for particle in self.particles:

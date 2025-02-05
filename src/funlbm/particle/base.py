@@ -152,9 +152,9 @@ class Particle(Worker):
         self.rou = float(self.config.get("rou", 1.0))
         self._init(*args, **kwargs)
         shape = self._lagrange.shape
-        self.lx = torch.empty(shape, device=self.device, dtype=torch.float32)
-        self.lF = torch.empty(shape, device=self.device, dtype=torch.float32)
-        self.lu = torch.empty(shape, device=self.device, dtype=torch.float32)
+        self.lx = torch.zeros_like(self._lagrange, dtype=torch.float32)
+        self.lF = torch.zeros_like(self._lagrange, dtype=torch.float32)
+        self.lu = torch.zeros_like(self._lagrange, dtype=torch.float32)
         self.lm = torch.full(
             (shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32
         )
@@ -178,7 +178,11 @@ class Particle(Worker):
         if rouf <= 0:
             raise ValueError("Fluid density must be positive")
 
-        tmp = (1 - self.rou / rouf) * self.mass * torch.tensor([gl, 0, 0],device=self.device)
+        tmp = (
+            (1 - self.rou / rouf)
+            * self.mass
+            * torch.tensor([gl, 0, 0], device=self.device)
+        )
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
 
         self.cu = self.cu + self.cF / self.mass * dt
@@ -191,7 +195,7 @@ class Particle(Worker):
 
     @run_timer
     def update(self, dt):
-        self.coord.update(cw=self.cw)
+        self.coord.update(center=self.cx, w=self.cw)
         self.lx = self.coord.cul_point(self._lagrange)
 
     def from_json(self):
@@ -199,10 +203,14 @@ class Particle(Worker):
 
     def to_str(self, step=0, *args, **kwargs):
         res = f"m={self.mass:.2f}"
-        res += "\tu=" + ",".join([f"{i:.6f}" for i in self.cu])
-        res += "\tx=" + ",".join([f"{i:.6f}" for i in self.cx])
-        res += "\tf=" + ",".join([f"{i:.6f}" for i in self.cF])
-        res += "\tw=" + ",".join([f"{i:.6f}" for i in self.cw])
+        res += "\tcu=" + ",".join([f"{i:.6f}" for i in self.cu])
+        res += "\tcx=" + ",".join([f"{i:.6f}" for i in self.cx])
+        res += "\tcf=" + ",".join([f"{i:.6f}" for i in self.cF])
+        res += "\tlF=" + ",".join(
+            [f"{i:.6f}" for i in [self.lF.min(), self.lF.mean(), self.lF.max()]]
+        )
+        res += "\tcw=" + ",".join([f"{i:.6f}" for i in self.cw])
+        res += "\tr=" + self.coord.to_str()
         return res
 
 
