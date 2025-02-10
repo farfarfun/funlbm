@@ -82,6 +82,17 @@ class LBMBase(Worker):
                     for i in [self.flow.u.min(), self.flow.u.mean(), self.flow.u.max()]
                 ]
             ),
+            "rho="
+            + ",".join(
+                [
+                    f"{i:.6f}"
+                    for i in [
+                        self.flow.rou.min(),
+                        self.flow.rou.mean(),
+                        self.flow.rou.max(),
+                    ]
+                ]
+            ),
         ]
 
         for particle in self.particles:

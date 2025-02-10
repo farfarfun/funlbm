@@ -99,6 +99,8 @@ class FlowD3(Flow):
         self.FOL = torch.zeros_like(self.u)
         self.p = torch.zeros_like(self.rou)
         self.f = torch.zeros([*shape, self.param.e_dim], device=self.device)
+        self.f = torch.matmul(self.rou, self.param.w)
+        self.update_u_rou()
 
     @run_timer
     def cul_equ2(self):
