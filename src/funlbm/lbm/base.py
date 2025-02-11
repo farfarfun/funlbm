@@ -49,6 +49,7 @@ class LBMBase(Worker):
         self.config = config
         self.particles = particles or []
 
+        self.run_status = True
         logger.info(f"Running on device: {self.device}")
 
     def run(self, max_steps: int = 1000000, *args, **kwargs) -> None:
@@ -63,6 +64,8 @@ class LBMBase(Worker):
         for step in range(total_steps):
             self.run_step(step=step)
             self._log_step_info(step)
+            if self.run_status is False:
+                break
 
     def _log_step_info(self, step: int) -> None:
         """记录每一步的信息"""
