@@ -50,7 +50,7 @@ class LBMBase(Worker):
         self.flow = flow
         self.config = config
         self.particles = particles or []
-        self.db_store = SQLiteStore()
+        self.db_store = SQLiteStore("data.db")
         self.db_store.create_kv_table("flow")
         self.db_store.create_kkv_table("particle")
         self.table_flow = self.db_store.get_table("flow")
