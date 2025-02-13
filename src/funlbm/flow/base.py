@@ -6,6 +6,7 @@ from torch import Tensor
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig, BoundaryConfig
 from funlbm.parameter import Param
+from funlbm.util import tensor_format
 
 
 class FlowConfig(BaseConfig):
@@ -111,9 +112,29 @@ class Flow(Worker):
 
     def __repr__(self) -> str:
         """返回流场对象的字符串表示"""
-        return (
-            f"{self.__class__.__name__}("
-            f"size={tuple(self.config.size)}, "
-            f"Re={self.config.Re}, "
-            f"mu={self.config.mu})"
-        )
+        return f"{self.__class__.__name__}(size={tuple(self.config.size)}, Re={self.config.Re}, mu={self.config.mu})"
+
+    def to_json(self):
+        return {
+            "f": tensor_format(
+                [
+                    self.f.min(),
+                    self.f.mean(),
+                    self.f.max(),
+                ]
+            ),
+            "u": tensor_format(
+                [
+                    self.u.min(),
+                    self.u.mean(),
+                    self.u.max(),
+                ]
+            ),
+            "rho": tensor_format(
+                [
+                    self.rou.min(),
+                    self.rou.mean(),
+                    self.rou.max(),
+                ]
+            ),
+        }

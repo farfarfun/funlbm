@@ -7,6 +7,7 @@ from scipy.spatial.transform import Rotation as R
 
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig
+from funlbm.util import tensor_format
 
 
 class CoordConfig(BaseConfig):
@@ -116,8 +117,8 @@ class Coordinate(Worker):
 
     def to_json(self):
         return {
-            "center": [i for i in self.center.cpu().numpy()],
-            "angle": [i for i in self.angle.cpu().numpy()],
+            "center": tensor_format(self.center),
+            "angle": tensor_format(self.angle),
         }
 
 

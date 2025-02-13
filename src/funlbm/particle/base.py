@@ -7,7 +7,7 @@ from funutil import deep_get, run_timer
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig
 from funlbm.particle.coord import CoordConfig, Coordinate
-from funlbm.util import logger
+from funlbm.util import logger, tensor_format
 
 
 class ParticleConfig(BaseConfig):
@@ -215,16 +215,18 @@ class Particle(Worker):
 
     def to_json(self, step=0, *args, **kwargs):
         return {
-            "m": self.mass.cpu().numpy(),
-            "cu": [i for i in self.cu.cpu().numpy()],
-            "cx": [i for i in self.cx.cpu().numpy()],
-            "cf": [i for i in self.cF.cpu().numpy()],
-            "lF": [
-                self.lF.cpu().numpy().min(),
-                self.lF.cpu().numpy().mean(),
-                self.lF.cpu().numpy().max(),
-            ],
-            "cw": [i for i in self.cw.cpu().numpy()],
+            "m": float(self.mass.cpu().numpy()),
+            "cu": tensor_format(self.cu),
+            "cx": tensor_format(self.cx),
+            "cf": tensor_format(self.cF),
+            "lF": tensor_format(
+                [
+                    self.lF.min(),
+                    self.lF.mean(),
+                    self.lF.max(),
+                ]
+            ),
+            "cw": tensor_format(self.cw),
             "coord": self.coord.to_json(),
         }
 
