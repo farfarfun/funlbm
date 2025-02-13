@@ -76,12 +76,20 @@ class LBMBase(Worker):
     def _log_step_info(self, step: int) -> None:
         """记录每一步的信息"""
         data = {
-            "f": [self.flow.f.min(), self.flow.f.mean(), self.flow.f.max()],
-            "u": [self.flow.u.min(), self.flow.u.mean(), self.flow.u.max()],
+            "f": [
+                self.flow.f.cpu().numpy().min(),
+                self.flow.f.cpu().numpy().mean(),
+                self.flow.f.cpu().numpy().max(),
+            ],
+            "u": [
+                self.flow.u.cpu().numpy().min(),
+                self.flow.u.cpu().numpy().mean(),
+                self.flow.u.cpu().numpy().max(),
+            ],
             "rho": [
-                self.flow.rou.min(),
-                self.flow.rou.mean(),
-                self.flow.rou.max(),
+                self.flow.rou.cpu().numpy().min(),
+                self.flow.rou.cpu().numpy().mean(),
+                self.flow.rou.cpu().numpy().max(),
             ],
         }
         self.table_flow.set(str(step), data)

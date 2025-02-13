@@ -115,7 +115,10 @@ class Coordinate(Worker):
         )
 
     def to_json(self):
-        return {"center": [i for i in self.center], "angle": [i for i in self.angle]}
+        return {
+            "center": [i for i in self.center.cpu().numpy()],
+            "angle": [i for i in self.angle.cpu().numpy()],
+        }
 
 
 def example():
