@@ -75,24 +75,8 @@ class LBMBase(Worker):
 
     def _log_step_info(self, step: int) -> None:
         """记录每一步的信息"""
-        data = {
-            "f": [
-                self.flow.f.cpu().numpy().min(),
-                self.flow.f.cpu().numpy().mean(),
-                self.flow.f.cpu().numpy().max(),
-            ],
-            "u": [
-                self.flow.u.cpu().numpy().min(),
-                self.flow.u.cpu().numpy().mean(),
-                self.flow.u.cpu().numpy().max(),
-            ],
-            "rho": [
-                self.flow.rou.cpu().numpy().min(),
-                self.flow.rou.cpu().numpy().mean(),
-                self.flow.rou.cpu().numpy().max(),
-            ],
-        }
-        self.table_flow.set(str(step), data)
+
+        self.table_flow.set(str(step), self.flow.to_json())
         for i, particle in enumerate(self.particles):
             self.table_particle.set(str(step), str(i + 1), particle.to_json())
 
