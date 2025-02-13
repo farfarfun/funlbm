@@ -216,11 +216,11 @@ class Particle(Worker):
     def to_json(self, step=0, *args, **kwargs):
         return {
             "m": self.mass,
-            "cu": self.cu,
-            "cx": self.cx,
-            "cf": self.cF,
+            "cu": [i for i in self.cu],
+            "cx": [i for i in self.cx],
+            "cf": [i for i in self.cF],
             "lF": [self.lF.min(), self.lF.mean(), self.lF.max()],
-            "cw": self.cw,
+            "cw": [i for i in self.cw],
             "coord": self.coord.to_json(),
         }
 
