@@ -213,6 +213,17 @@ class Particle(Worker):
         res += "\tr=" + self.coord.to_str()
         return res
 
+    def to_json(self, step=0, *args, **kwargs):
+        return {
+            "m": self.mass,
+            "cu": self.cu,
+            "cx": self.cx,
+            "cf": self.cF,
+            "lF": [self.lF.min(), self.lF.mean(), self.lF.max()],
+            "cw": self.cw,
+            "coord": self.coord.to_json(),
+        }
+
 
 class Ellipsoid(Particle):
     def __init__(self, *args, **kwargs):

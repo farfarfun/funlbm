@@ -114,6 +114,9 @@ class Coordinate(Worker):
             + ",".join([f"{i:.6f}" for i in self.angle])
         )
 
+    def to_json(self):
+        return {"center": self.center, "angle": self.angle}
+
 
 def example():
     """Example usage of the Coordinate class."""

@@ -1,5 +1,6 @@
 from typing import List
 
+from funtable.kv import SQLiteStore
 from funutil import deep_get
 
 from funlbm.base import Worker
@@ -18,6 +19,7 @@ class Config(BaseConfig):
         self.device: str = "auto"
         self.file_config = FileConfig()
         self.flow_config = FlowConfig()
+
         self.particles: List[ParticleConfig] = []
 
     def _from_json(self, config_json: dict, *args, **kwargs) -> "Config":
@@ -48,7 +50,11 @@ class LBMBase(Worker):
         self.flow = flow
         self.config = config
         self.particles = particles or []
-
+        self.db_store = SQLiteStore()
+        self.db_store.create_kv_table("flow")
+        self.db_store.create_kkv_table("particle")
+        self.table_flow = self.db_store.get_table("flow")
+        self.table_particle = self.db_store.get_table("particle")
         self.run_status = True
         logger.info(f"Running on device: {self.device}")
 
@@ -69,6 +75,19 @@ class LBMBase(Worker):
 
     def _log_step_info(self, step: int) -> None:
         """记录每一步的信息"""
+        data = {
+            "f": [self.flow.f.min(), self.flow.f.mean(), self.flow.f.max()],
+            "u": [self.flow.u.min(), self.flow.u.mean(), self.flow.u.max()],
+            "rho": [
+                self.flow.rou.min(),
+                self.flow.rou.mean(),
+                self.flow.rou.max(),
+            ],
+        }
+        self.table_flow.set(str(step), data)
+        for i, particle in enumerate(self.particles):
+            self.table_particle.set(str(step), str(i + 1), particle.to_json())
+
         info = [
             f"step={step:6d}",
             "f="
