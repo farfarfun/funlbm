@@ -305,7 +305,7 @@ wheels = [
 
 [[package]]
 name = "funlbm"
-version = "1.1.90"
+version = "1.1.91"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -370,7 +370,7 @@ wheels = [
 
 [[package]]
 name = "funutil"
-version = "1.0.46"
+version = "1.0.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachebox" },
@@ -378,9 +378,9 @@ dependencies = [
     { name = "diskcache" },
     { name = "loguru" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/30/60/f2602cfee28c633dcc2cbc2e53120edbc75cc13d670a410459d14aee0e5d/funutil-1.0.46.tar.gz", hash = "sha256:5444c7f7c7a25ac6b2d6da60dbb52563431e9055f9cfb7bcedc462f5f1490223", size = 17023 }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/84/be8ac279f3d1a9a0c9dc0da2725936e59ba40a876bae6ad1f3c77f8cca83/funutil-1.0.48.tar.gz", hash = "sha256:aa5ab12f45d9b9a0948ee0957f1993d79ea2bae0aa7a992f8cb7ae90a26725d1", size = 17111 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a1/71/c7e24aa3540abb9ecfc2da0de6d8417d0f56652bde5f03f4ca4e8472fb34/funutil-1.0.46-py3-none-any.whl", hash = "sha256:6ffdc9d298cd4c10da87a1d6a5447921ec9854a4385024792d9216720bc2939f", size = 23502 },
+    { url = "https://files.pythonhosted.org/packages/32/a1/b7847f0c669b43bce608ef837469cbec56c519cd2672777cf712be33990b/funutil-1.0.48-py3-none-any.whl", hash = "sha256:bc3bb2ae13f3049216537fabaa6a84c94e5f74abd55fd803d2062f1cbbf31996", size = 23541 },
 ]
 
 [[package]]
