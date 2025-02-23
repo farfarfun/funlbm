@@ -5,10 +5,10 @@ from funutil import run_timer
 from funvtk.hl import gridToVTK, pointsToVTK
 
 from funlbm.flow import FlowD3
-from funlbm.particle import Sphere
+from funlbm.particle import ParticleSwarm
 from funlbm.util import logger
 
-from .base import Config, LBMBase
+from funlbm.lbm.base import Config, LBMBase
 
 
 class LBMD3(LBMBase):
@@ -22,14 +22,11 @@ class LBMD3(LBMBase):
 
     def __init__(self, config: Config, *args, **kwargs):
         flow = FlowD3(config=config.flow_config, device=config.device, *args, **kwargs)
-        particles = [
-            Sphere(config=con, device=config.device) for con in config.particles
-        ]
         super(LBMD3, self).__init__(
             flow=flow,
             config=config,
             device=config.device,
-            particles=particles,
+            particles=ParticleSwarm(config.particles, device=config.device),
             *args,
             **kwargs,
         )
@@ -41,9 +38,7 @@ class LBMD3(LBMBase):
         self.flow.init()
         # 初始化颗粒
         self.flow.cul_equ()
-
-        for particle in self.particles:
-            particle.init()
+        self.particle_swarm.init()
 
     def _calculate_region_bounds(self, particle, n=2, h=1):
         """Calculate region bounds for particle interaction."""
@@ -81,7 +76,7 @@ class LBMD3(LBMBase):
 
     @run_timer
     def flow_to_lagrange(self, *args, **kwargs):
-        for particle in self.particles:
+        for particle in self.particle_swarm.particles:
             rl, rr = self._calculate_region_bounds(particle)
             lu = torch.zeros_like(particle.lu, device=self.device)
             lrou = torch.zeros_like(particle.lrou, device=self.device)
@@ -119,7 +114,7 @@ class LBMD3(LBMBase):
     def lagrange_to_flow(self, *args, **kwargs):
         self.flow.FOL[:, :, :, :] = 0
 
-        for particle in self.particles:
+        for particle in self.particle_swarm.particles:
             rl, rr = self._calculate_region_bounds(particle)
             for index, lar in enumerate(particle.lx):
                 il, ir = rl[index], rr[index]
@@ -157,7 +152,7 @@ class LBMD3(LBMBase):
             ]
         )
 
-        for particle in self.particles:
+        for particle in self.particle_swarm.particles:
             # Find extreme points of particle
             extreme_indices = torch.concatenate(
                 [torch.argmin(particle.lx, dim=0), torch.argmax(particle.lx, dim=0)]
@@ -248,7 +243,7 @@ class LBMD3(LBMBase):
             cellData=cell_data,
         )
 
-        for i, particle in enumerate(self.particles):
+        for i, particle in enumerate(self.particle_swarm.particles):
             lx = particle.lx.to("cpu").numpy()
             xf, yf, zf = lx[:, 0], lx[:, 1], lx[:, 2]
             data = {
