@@ -1,14 +1,13 @@
 from typing import List
-import torch
+
 from funtable.kv import SQLiteStore
 from funutil import deep_get
-import os
+
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig, FileConfig
 from funlbm.flow import FlowConfig, FlowD3
 from funlbm.particle import ParticleConfig, ParticleSwarm
 from funlbm.util import logger, set_cpu
-from multiprocessing import cpu_count
 
 set_cpu()
 
@@ -58,7 +57,7 @@ class LBMBase(Worker):
         super().__init__(*args, **kwargs)
         self.flow = flow
         self.config = config
-        self.particle_swarm: ParticleSwarm = particle_swarm
+        self.particle_swarm = ParticleSwarm(config.particles, device=config.device)
         self.db_store = SQLiteStore("funlbm-global.db")
         self.db_store.create_kv_table("flow")
         self.db_store.create_kkv_table("particle")

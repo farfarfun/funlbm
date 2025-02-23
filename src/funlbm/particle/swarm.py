@@ -1,9 +1,11 @@
 from typing import List
 
 import h5py
+
 from funlbm.particle import Particle, ParticleConfig
-from .base import create_particle
 from funlbm.util import logger
+
+from .base import create_particle
 
 
 class ParticleSwarm:

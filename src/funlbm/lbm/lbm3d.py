@@ -5,10 +5,9 @@ from funutil import run_timer
 from funvtk.hl import gridToVTK, pointsToVTK
 
 from funlbm.flow import FlowD3
+from funlbm.lbm.base import Config, LBMBase
 from funlbm.particle import ParticleSwarm
 from funlbm.util import logger
-
-from funlbm.lbm.base import Config, LBMBase
 
 
 class LBMD3(LBMBase):
