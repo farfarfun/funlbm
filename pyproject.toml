@@ -1,10 +1,10 @@
 [project]
 name = "funlbm"
-version = "1.1.102"
+version = "1.1.103"
 description = "funlbm"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = [ "click>=8.1.8", "funtable>=1.0.25", "funtecplot>=1.0.1", "funutil>=1.0.14", "funvtk>=1.0.9", "torch>=2.2.0", "transforms3d>=0.4.2",]
+dependencies = [ "click>=8.1.8", "funtable>=1.0.25", "funtecplot>=1.0.1", "funutil>=1.0.14", "funvtk>=1.0.9", "h5py>=3.13.0", "torch>=2.2.0", "transforms3d>=0.4.2",]
 [[project.authors]]
 name = "niuliangtao"
 email = "farfarfun@qq.com"
