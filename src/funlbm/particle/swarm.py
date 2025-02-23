@@ -6,11 +6,13 @@ from .base import create_particle
 
 
 class ParticleSwarm:
-    def __init__(self, configs=[]):
+    def __init__(self, configs=[], device=config.device):
         self.particles: List[Particle] = []
         for config in configs:
             self.particles.append(
-                create_particle(ParticleConfig().from_json(config_json=config))
+                create_particle(
+                    ParticleConfig().from_json(config_json=config), device=config.device
+                )
             )
 
     def init(self, *args, **kwargs):

@@ -6,7 +6,7 @@ from funutil import deep_get
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig, FileConfig
 from funlbm.flow import FlowConfig, FlowD3
-from funlbm.particle import ParticleConfig
+from funlbm.particle import ParticleConfig, ParticleSwarm
 from funlbm.util import logger
 
 
@@ -40,16 +40,21 @@ class LBMBase(Worker):
     Args:
         flow: 流场对象
         config: 配置对象
-        particles: 粒子列表
+        particle_swarm: 粒子列表
     """
 
     def __init__(
-        self, flow: FlowD3, config: Config, particles: List = None, *args, **kwargs
+        self,
+        flow: FlowD3,
+        config: Config,
+        particle_swarm: ParticleSwarm = None,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.flow = flow
         self.config = config
-        self.particles = particles or []
+        self.particle_swarm: ParticleSwarm = particle_swarm or []
         self.db_store = SQLiteStore("data.db")
         self.db_store.create_kv_table("flow")
         self.db_store.create_kkv_table("particle")
@@ -77,7 +82,7 @@ class LBMBase(Worker):
         """记录每一步的信息"""
 
         self.table_flow.set(str(step), self.flow.to_json())
-        for i, particle in enumerate(self.particles):
+        for i, particle in enumerate(self.particle_swarm.particles):
             self.table_particle.set(str(step), str(i + 1), particle.to_json())
 
         info = [
@@ -109,7 +114,7 @@ class LBMBase(Worker):
             ),
         ]
 
-        for particle in self.particles:
+        for particle in self.particle_swarm.particles:
             info.append(particle.to_str(step))
 
         logger.info("\t".join(info))
@@ -142,7 +147,7 @@ class LBMBase(Worker):
         self.flow_to_lagrange()
         self.particle_to_wall()
 
-        for particle in self.particles:
+        for particle in self.particle_swarm.particles:
             particle.update_from_lar(dt=self.config.dt, gl=self.config.flow_config.gl)
 
         self.lagrange_to_flow()
@@ -151,8 +156,7 @@ class LBMBase(Worker):
 
     def _update_particles(self) -> None:
         """更新粒子状态"""
-        for particle in self.particles:
-            particle.update(dt=self.config.dt)
+        self.particle_swarm.update(dt=self.config.dt)
 
     def init(self, *args, **kwargs):
         raise NotImplementedError()

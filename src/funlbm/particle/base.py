@@ -418,11 +418,11 @@ class Sphere(Particle):
         )
 
 
-def create_particle(config: ParticleConfig) -> Particle:
+def create_particle(config: ParticleConfig, device=config.device) -> Particle:
     if config.type == "ellipsoid":
-        return Ellipsoid(config=config)
+        return Ellipsoid(config=config, device=device)
     else:
-        return Sphere(config=config)
+        return Sphere(config=config, device=device)
 
 
 def example():
