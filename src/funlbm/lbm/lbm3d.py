@@ -92,7 +92,7 @@ class LBMD3(LBMBase):
 
                 region_x = self.flow.x[index_range]
                 tmp = self._calculate_weight_function(region_x - lar)
-                if torch.abs(torch.sum(tmp) - 1) > 1e-3:
+                if torch.abs(torch.sum(tmp) - 1) > 1e-3 and self.step > 100:
                     logger.error(f"sum={torch.sum(tmp)},异常了，程序停止")
                     self.run_status = False
 

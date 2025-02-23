@@ -20,6 +20,7 @@ class Config(BaseConfig):
         self.file_config = FileConfig()
         self.flow_config = FlowConfig()
 
+        self.step = 1
         self.particles: List[ParticleConfig] = []
 
     def _from_json(self, config_json: dict, *args, **kwargs) -> "Config":
@@ -72,7 +73,7 @@ class LBMBase(Worker):
         self.init()
         total_steps = min(max_steps, self.config.max_step)
 
-        for step in range(total_steps):
+        for self.step in range(total_steps):
             self.run_step(step=step)
             self._log_step_info(step)
             if self.run_status is False:
