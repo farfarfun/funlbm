@@ -12,6 +12,7 @@ class ParticleSwarm:
             self.particles.append(
                 create_particle(ParticleConfig(config_json=config), device=device)
             )
+        self.save_particle()
 
     def init(self, *args, **kwargs):
         for particle in self.particles:
@@ -22,6 +23,6 @@ class ParticleSwarm:
             particle.update(*args, **kwargs)
 
     def save_particle(self):
-        with h5py.File("./particle_lagrange.h5", "w") as fw:
+        with h5py.File("./particle_swarm.h5", "w") as fw:
             for i, particle in enumerate(self.particles):
                 fw.create_dataset(f"particle{i}", particle._lagrange)
