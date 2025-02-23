@@ -3,6 +3,7 @@ from typing import List
 import h5py
 from funlbm.particle import Particle, ParticleConfig
 from .base import create_particle
+from funlbm.util import logger
 
 
 class ParticleSwarm:
@@ -26,3 +27,4 @@ class ParticleSwarm:
         with h5py.File("./particle_swarm.h5", "w") as fw:
             for i, particle in enumerate(self.particles):
                 fw.create_dataset(f"particle{i}", particle._lagrange)
+        logger.success("save particle lagrange success.")
