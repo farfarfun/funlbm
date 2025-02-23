@@ -26,5 +26,5 @@ class ParticleSwarm:
     def save_particle(self):
         with h5py.File("./funlbm-particle-swarm-lagrange.h5", "w") as fw:
             for i, particle in enumerate(self.particles):
-                fw.create_dataset(f"particle{i}", particle._lagrange.cpu().numpy())
+                fw.create_dataset(f"particle{i}", data=particle._lagrange.cpu().numpy())
         logger.success("save particle lagrange success.")
