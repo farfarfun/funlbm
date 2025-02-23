@@ -37,6 +37,10 @@ class Config(BaseConfig):
         return self
 
 
+def create_lbm_config(path="./config.json") -> Config:
+    return Config().from_file(path)
+
+
 class LBMBase(Worker):
     """格子玻尔兹曼方法的基类实现
 
@@ -49,14 +53,14 @@ class LBMBase(Worker):
     def __init__(
         self,
         flow: FlowD3,
-        config: Config,
+        config: Config = None,
         particle_swarm: ParticleSwarm = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.flow = flow
-        self.config = config
+        self.config = config or create_lbm_config()
         self.particle_swarm = ParticleSwarm(config.particles, device=config.device)
         self.db_store = SQLiteStore("funlbm-global.db")
         self.db_store.create_kv_table("flow")
