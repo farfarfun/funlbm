@@ -26,7 +26,7 @@ class LBMD3(LBMBase):
             flow=flow,
             config=config,
             device=config.device,
-            particles=ParticleSwarm(config.particles, device=config.device),
+            particle_swarm=ParticleSwarm(config.particles, device=config.device),
             *args,
             **kwargs,
         )

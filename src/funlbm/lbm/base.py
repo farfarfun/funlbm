@@ -54,7 +54,7 @@ class LBMBase(Worker):
         super().__init__(*args, **kwargs)
         self.flow = flow
         self.config = config
-        self.particle_swarm: ParticleSwarm = particle_swarm or []
+        self.particle_swarm: ParticleSwarm = particle_swarm
         self.db_store = SQLiteStore("data.db")
         self.db_store.create_kv_table("flow")
         self.db_store.create_kkv_table("particle")
