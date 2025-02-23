@@ -4,9 +4,7 @@ from funtecplot.dump import PointData
 from funutil import run_timer
 from funvtk.hl import gridToVTK, pointsToVTK
 
-from funlbm.flow import FlowD3
-from funlbm.lbm.base import Config, LBMBase
-from funlbm.particle import ParticleSwarm
+from funlbm.lbm.base import LBMBase
 from funlbm.util import logger
 
 
@@ -19,16 +17,8 @@ class LBMD3(LBMBase):
         config: LBM配置对象
     """
 
-    def __init__(self, config: Config, *args, **kwargs):
-        flow = FlowD3(config=config.flow_config, device=config.device, *args, **kwargs)
-        super(LBMD3, self).__init__(
-            flow=flow,
-            config=config,
-            device=config.device,
-            particle_swarm=ParticleSwarm(config.particles, device=config.device),
-            *args,
-            **kwargs,
-        )
+    def __init__(self, *args, **kwargs):
+        super(LBMD3, self).__init__(*args, **kwargs)
 
     def init(self):
         """初始化流场和颗粒"""

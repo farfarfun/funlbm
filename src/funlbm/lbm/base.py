@@ -5,8 +5,8 @@ from funutil import deep_get
 
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig, FileConfig
-from funlbm.flow import FlowConfig, FlowD3
-from funlbm.particle import ParticleConfig, ParticleSwarm
+from funlbm.flow import FlowConfig, FlowD3, create_flow
+from funlbm.particle import ParticleConfig, ParticleSwarm, create_particle_swarm
 from funlbm.util import logger, set_cpu
 
 set_cpu()
@@ -52,16 +52,22 @@ class LBMBase(Worker):
 
     def __init__(
         self,
-        flow: FlowD3,
         config: Config = None,
+        flow: FlowD3 = None,
         particle_swarm: ParticleSwarm = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.flow = flow
-        self.config = config or create_lbm_config()
-        self.particle_swarm = ParticleSwarm(config.particles, device=config.device)
+        self.config: Config = config or create_lbm_config()
+
+        self.flow = flow or create_flow(
+            self.config.flow_config, device=self.device, *args, **kwargs
+        )
+        self.particle_swarm = particle_swarm or create_particle_swarm(
+            config.particles, device=self.device
+        )
+
         self.db_store = SQLiteStore("funlbm-global.db")
         self.db_store.create_kv_table("flow")
         self.db_store.create_kkv_table("particle")

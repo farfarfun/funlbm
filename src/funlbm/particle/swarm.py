@@ -28,3 +28,9 @@ class ParticleSwarm:
             for i, particle in enumerate(self.particles):
                 fw.create_dataset(f"particle{i}", data=particle._lagrange.cpu().numpy())
         logger.success("save particle lagrange success.")
+
+
+def create_particle_swarm(
+    configs: List[ParticleConfig] = [], device="cpu", *args, **kwargs
+):
+    return ParticleSwarm(configs=configs, device=device, *args, **kwargs)
