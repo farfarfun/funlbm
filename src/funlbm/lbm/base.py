@@ -1,5 +1,5 @@
 from typing import List
-
+import torch
 from funtable.kv import SQLiteStore
 from funutil import deep_get
 import os
