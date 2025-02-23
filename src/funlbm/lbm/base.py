@@ -2,7 +2,7 @@ from typing import List
 
 from funtable.kv import SQLiteStore
 from funutil import deep_get
-
+import os
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig, FileConfig
 from funlbm.flow import FlowConfig, FlowD3
