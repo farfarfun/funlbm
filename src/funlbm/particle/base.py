@@ -1,5 +1,7 @@
 import math
+from typing import List
 
+import h5py
 import numpy as np
 import torch
 from funutil import deep_get, run_timer
@@ -15,9 +17,11 @@ class ParticleConfig(BaseConfig):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.coord_config: CoordConfig = CoordConfig()
+        self.type = "ellipsoid"
 
     def _from_json(self, config_json: dict, *args, **kwargs):
         self.coord_config.from_json(deep_get(config_json, "coord"))
+        self.type = deep_get(config_json, "type") or self.type
 
 
 def cul_point(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5, device="cuda"):
@@ -414,6 +418,13 @@ class Sphere(Particle):
         )
 
 
+def create_particle(config: ParticleConfig) -> Particle:
+    if config.type == "ellipsoid":
+        return Ellipsoid(config=config)
+    else:
+        return Sphere(config=config)
+
+
 def example():
     ellipsoid = Ellipsoid(config=ParticleConfig())
     ellipsoid.init()
@@ -422,6 +433,3 @@ def example():
     print(ellipsoid.lx)
     print("#####")
     print(ellipsoid.lx)
-
-
-# example()
