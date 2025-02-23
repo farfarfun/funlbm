@@ -7,16 +7,10 @@ from funlbm.base import Worker
 from funlbm.config.base import BaseConfig, FileConfig
 from funlbm.flow import FlowConfig, FlowD3
 from funlbm.particle import ParticleConfig, ParticleSwarm
-from funlbm.util import logger
+from funlbm.util import logger, set_cpu
 from multiprocessing import cpu_count
 
-cpu_num = cpu_count()  # 这里设置成你想运行的CPU个数
-os.environ["OMP_NUM_THREADS"] = str(cpu_num)
-os.environ["OPENBLAS_NUM_THREADS"] = str(cpu_num)
-os.environ["MKL_NUM_THREADS"] = str(cpu_num)
-os.environ["VECLIB_MAXIMUM_THREADS"] = str(cpu_num)
-os.environ["NUMEXPR_NUM_THREADS"] = str(cpu_num)
-torch.set_num_threads(cpu_num)
+set_cpu()
 
 
 class Config(BaseConfig):

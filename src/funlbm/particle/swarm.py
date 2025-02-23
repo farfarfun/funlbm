@@ -13,11 +13,11 @@ class ParticleSwarm:
             self.particles.append(
                 create_particle(ParticleConfig(config_json=config), device=device)
             )
-        self.save_particle()
 
     def init(self, *args, **kwargs):
         for particle in self.particles:
             particle.init(*args, **kwargs)
+        self.save_particle()
 
     def update(self, *args, **kwargs):
         for particle in self.particles:
