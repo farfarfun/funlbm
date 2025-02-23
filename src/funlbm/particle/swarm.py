@@ -9,12 +9,10 @@ from .base import create_particle
 
 
 class ParticleSwarm:
-    def __init__(self, configs=[], device="cpu"):
+    def __init__(self, configs: List[ParticleConfig] = [], device="cpu"):
         self.particles: List[Particle] = []
         for config in configs:
-            self.particles.append(
-                create_particle(ParticleConfig(config_json=config), device=device)
-            )
+            self.particles.append(create_particle(config, device=device))
 
     def init(self, *args, **kwargs):
         for particle in self.particles:
