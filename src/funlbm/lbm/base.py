@@ -74,8 +74,8 @@ class LBMBase(Worker):
         total_steps = min(max_steps, self.config.max_step)
 
         for self.step in range(total_steps):
-            self.run_step(step=step)
-            self._log_step_info(step)
+            self.run_step(step=self.step)
+            self._log_step_info(self.step)
             if self.run_status is False:
                 break
 
