@@ -206,6 +206,6 @@ class Flow(Worker):
         }
 
     def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
-        group.create_dataset("f", self.f.cpu().numpy())
-        group.create_dataset("u", self.u.cpu().numpy())
-        group.create_dataset("rho", self.rou.cpu().numpy())
+        group.create_dataset("f", data=self.f.cpu().numpy())
+        group.create_dataset("u", data=self.u.cpu().numpy())
+        group.create_dataset("rho", data=self.rou.cpu().numpy())
