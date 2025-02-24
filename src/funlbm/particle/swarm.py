@@ -35,6 +35,11 @@ class ParticleSwarm(Worker):
             sub_group = group.create_group(f"particle_{str(i).zfill(6)}")
             particle.dump_checkpoint(sub_group, *args, **kwargs)
 
+    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        for i, particle in enumerate(self.particles):
+            sub_group = group.get(f"particle_{str(i).zfill(6)}")
+            particle.load_checkpoint(sub_group, *args, **kwargs)
+
 
 def create_particle_swarm(
     configs: List[ParticleConfig] = [], device="cpu", *args, **kwargs

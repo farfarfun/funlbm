@@ -193,7 +193,7 @@ class Particle(Worker):
 
         self.dupmp_dataset(group, "cu", self.cu)
         self.dupmp_dataset(group, "cx", self.cx)
-        self.dupmp_dataset(group, "cf", self.cf)
+        self.dupmp_dataset(group, "cF", self.cF)
         self.dupmp_dataset(group, "cw", self.cw)
 
         self.dupmp_dataset(group, "lx", self.lx)
@@ -206,7 +206,7 @@ class Particle(Worker):
             return
         self.cu = self.load_dataset(group, "cu")
         self.cx = self.load_dataset(group, "cx")
-        self.cf = self.load_dataset(group, "cf")
+        self.cF = self.load_dataset(group, "cF")
         self.cw = self.load_dataset(group, "cw")
         self.lx = self.load_dataset(group, "lx")
         self.lF = self.load_dataset(group, "lF")
