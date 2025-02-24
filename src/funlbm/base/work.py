@@ -58,5 +58,6 @@ class Worker:
         logger.success(f"dump {name} success.")
 
     def load_dataset(self, group: h5py.Group, name, all=False, *args, **kwargs):
-        torch.Tensor(group.get(name), device=self.device, dtype=torch.float32)
+        data = torch.Tensor(group.get(name)[:], device=self.device, dtype=torch.float32)
         logger.success(f"load {name} success.")
+        return data
