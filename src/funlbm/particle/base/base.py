@@ -1,3 +1,4 @@
+import h5py
 import torch
 from funutil import deep_get, run_timer
 
@@ -5,7 +6,6 @@ from funlbm.base import Worker
 from funlbm.config.base import BaseConfig
 from funlbm.particle.coord import CoordConfig, Coordinate
 from funlbm.util import tensor_format
-import h5py
 
 
 class ParticleConfig(BaseConfig):
@@ -191,11 +191,25 @@ class Particle(Worker):
         if group is None:
             return
 
-        group.create_dataset("cu", data=self.cu.cpu().numpy())
-        group.create_dataset("cx", data=self.cx.cpu().numpy())
-        group.create_dataset("cf", data=self.cF.cpu().numpy())
-        group.create_dataset("cw", data=self.cw.cpu().numpy())
+        group.create_dataset(
+            "cu", data=self.cu.cpu().numpy(), compression="gzip", compression_opts=9
+        )
+        group.create_dataset(
+            "cx", data=self.cx.cpu().numpy(), compression="gzip", compression_opts=9
+        )
+        group.create_dataset(
+            "cf", data=self.cF.cpu().numpy(), compression="gzip", compression_opts=9
+        )
+        group.create_dataset(
+            "cw", data=self.cw.cpu().numpy(), compression="gzip", compression_opts=9
+        )
 
-        group.create_dataset("lx", data=self.lx.cpu().numpy())
-        group.create_dataset("lF", data=self.lF.cpu().numpy())
-        group.create_dataset("lu", data=self.lu.cpu().numpy())
+        group.create_dataset(
+            "lx", data=self.lx.cpu().numpy(), compression="gzip", compression_opts=9
+        )
+        group.create_dataset(
+            "lF", data=self.lF.cpu().numpy(), compression="gzip", compression_opts=9
+        )
+        group.create_dataset(
+            "lu", data=self.lu.cpu().numpy(), compression="gzip", compression_opts=9
+        )
