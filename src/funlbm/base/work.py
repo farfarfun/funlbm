@@ -45,3 +45,6 @@ class Worker:
 
     def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
         pass
+
+    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        pass
