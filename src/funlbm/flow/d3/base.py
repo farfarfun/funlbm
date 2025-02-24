@@ -69,7 +69,7 @@ class FlowD3(Flow):
     def __init__(self, config: FlowConfig, *args, **kwargs):
         super().__init__(config=config, *args, **kwargs)
 
-    def _init(self, *args, **kwargs):
+    def init(self, *args, **kwargs):
         """初始化3D流场
 
         初始化网格坐标和物理量,包括:
