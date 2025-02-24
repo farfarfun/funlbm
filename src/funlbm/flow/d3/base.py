@@ -121,7 +121,6 @@ class FlowD3(Flow):
         self.u = (torch.matmul(self.f, self.param.e) + self.FOL / 2.0) / self.rou
 
         # TODO 计算gama
-
         self.update_u_rou_boundary()
 
     @run_timer

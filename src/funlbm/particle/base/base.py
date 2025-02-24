@@ -187,29 +187,28 @@ class Particle(Worker):
             "coord": self.coord.to_json(),
         }
 
-    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+    def dump_checkpoint(self, group: h5py.Group = None, all=False, *args, **kwargs):
         if group is None:
             return
 
-        group.create_dataset(
-            "cu", data=self.cu.cpu().numpy(), compression="gzip", compression_opts=9
-        )
-        group.create_dataset(
-            "cx", data=self.cx.cpu().numpy(), compression="gzip", compression_opts=9
-        )
-        group.create_dataset(
-            "cf", data=self.cF.cpu().numpy(), compression="gzip", compression_opts=9
-        )
-        group.create_dataset(
-            "cw", data=self.cw.cpu().numpy(), compression="gzip", compression_opts=9
-        )
+        self.dupmp_dataset(group, "cu", self.cu)
+        self.dupmp_dataset(group, "cx", self.cx)
+        self.dupmp_dataset(group, "cf", self.cf)
+        self.dupmp_dataset(group, "cw", self.cw)
 
-        group.create_dataset(
-            "lx", data=self.lx.cpu().numpy(), compression="gzip", compression_opts=9
-        )
-        group.create_dataset(
-            "lF", data=self.lF.cpu().numpy(), compression="gzip", compression_opts=9
-        )
-        group.create_dataset(
-            "lu", data=self.lu.cpu().numpy(), compression="gzip", compression_opts=9
-        )
+        self.dupmp_dataset(group, "lx", self.lx)
+        self.dupmp_dataset(group, "lF", self.lF)
+        self.dupmp_dataset(group, "lu", self.lu)
+        self.dupmp_dataset(group, "lrou", self.lrou)
+
+    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        if group is None:
+            return
+        self.cu = self.load_dataset(group, "cu")
+        self.cx = self.load_dataset(group, "cx")
+        self.cf = self.load_dataset(group, "cf")
+        self.cw = self.load_dataset(group, "cw")
+        self.lx = self.load_dataset(group, "lx")
+        self.lF = self.load_dataset(group, "lF")
+        self.lu = self.load_dataset(group, "lu")
+        self.lrou = self.load_dataset(group, "lrou")

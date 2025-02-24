@@ -195,3 +195,10 @@ class LBMBase(Worker):
         self.particle_swarm.dump_checkpoint(
             group=group.create_group("particle"), *args, **kwargs
         )
+
+    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        self.init()
+        self.flow.load_checkpoint(group.get("flow"), *args, **kwargs)
+        self.particle_swarm.load_checkpoint(
+            group=group.get("particle"), *args, **kwargs
+        )

@@ -43,8 +43,20 @@ class Worker:
         self.device = device_detect(device)
         logger.info(f"init {type(self).__name__} with device={self.device}")
 
-    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+    def dump_checkpoint(self, group: h5py.Group = None, all=False, *args, **kwargs):
         pass
 
-    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+    def load_checkpoint(self, group: h5py.Group = None, all=False, *args, **kwargs):
         pass
+
+    def dupmp_dataset(
+        self, group: h5py.Group, name: str, data, all=False, *args, **kwargs
+    ):
+        group.create_dataset(
+            name, data=data.cpu().numpy(), compression="gzip", compression_opts=9
+        )
+        logger.success(f"dump {name} success.")
+
+    def load_dataset(self, group: h5py.Group, name, all=False, *args, **kwargs):
+        torch.Tensor(group.get(name), device=self.device, dtype=torch.float32)
+        logger.success(f"load {name} success.")
