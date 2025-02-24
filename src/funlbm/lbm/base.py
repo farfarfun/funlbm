@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 import h5py
@@ -212,7 +213,7 @@ class LBMBase(Worker):
         self, checkpoint_path=None, group: h5py.Group = None, *args, **kwargs
     ):
         if group is None:
-            if checkpoint_path is not None:
+            if checkpoint_path is not None and os.path.exists(checkpoint_path):
                 group = h5py.File(checkpoint_path, "r")
             else:
                 logger.error(
