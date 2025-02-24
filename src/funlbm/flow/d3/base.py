@@ -5,7 +5,6 @@ from funutil.cache import cache
 
 from funlbm.config import Boundary, BoundaryCondition
 from funlbm.flow import Flow, FlowConfig
-from funlbm.parameter import Param, parse_3d_param
 
 
 def cul_u(y, z, a, b, size=100):
@@ -68,8 +67,7 @@ class FlowD3(Flow):
     """
 
     def __init__(self, config: FlowConfig, *args, **kwargs):
-        param: Param = parse_3d_param(config.param_type, *args, **kwargs)
-        super().__init__(param=param, config=config, *args, **kwargs)
+        super().__init__(config=config, *args, **kwargs)
 
     def init(self, *args, **kwargs):
         """初始化3D流场
@@ -324,23 +322,3 @@ class FlowD3(Flow):
             )
         else:
             raise NotImplementedError
-
-
-class FlowD3Q27(FlowD3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class FlowD3Q19(FlowD3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class FlowD3Q15(FlowD3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class FlowD3Q13(FlowD3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)

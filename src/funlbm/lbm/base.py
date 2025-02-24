@@ -63,7 +63,10 @@ class LBMBase(Worker):
         self.config: Config = config or create_lbm_config()
 
         self.flow = flow or create_flow(
-            self.config.flow_config, device=self.device, *args, **kwargs
+            flow_config=self.config.flow_config,
+            device=self.device,
+            *args,
+            **kwargs,
         )
         self.particle_swarm = particle_swarm or create_particle_swarm(
             self.config.particles, device=self.device
