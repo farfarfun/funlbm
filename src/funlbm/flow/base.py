@@ -157,6 +157,11 @@ class Flow(Worker):
         self.tau: Tensor = torch.zeros([1])
 
     def init(self, *args, **kwargs) -> None:
+        self._init()
+        if self.config.checkpoint is not None:
+            self.load_checkpoint(checkpoint_path=self.config.checkpoint)
+
+    def _init(self, *args, **kwargs) -> None:
         """初始化流场"""
         raise NotImplementedError("not implemented")
 

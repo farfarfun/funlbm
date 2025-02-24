@@ -18,6 +18,7 @@ class Config(BaseConfig):
         super().__init__(*args, **kwargs)
         self.dt: float = 1.0
         self.dx: float = 1.0
+        self.checkpoint = None
         self.max_step = 10000
         self.device: str = "auto"
         self.file_config = FileConfig()
@@ -28,8 +29,9 @@ class Config(BaseConfig):
     def _from_json(self, config_json: dict, *args, **kwargs) -> "Config":
         self.dt = deep_get(config_json, "dt") or self.dt
         self.dx = deep_get(config_json, "dx") or self.dx
-        self.max_step = deep_get(config_json, "max_step") or self.max_step
         self.device = deep_get(config_json, "device") or self.device
+        self.max_step = deep_get(config_json, "max_step") or self.max_step
+        self.checkpoint = deep_get(config_json, "checkpoint") or self.checkpoint
         self.file_config = FileConfig().from_json(deep_get(config_json, "file") or {})
         self.flow_config = FlowConfig().from_json(deep_get(config_json, "flow") or {})
         for config in deep_get(config_json, "particles") or []:
@@ -87,13 +89,17 @@ class LBMBase(Worker):
             max_steps: 最大步数
         """
         self.init()
+
         total_steps = min(max_steps, self.config.max_step)
 
-        for self.step in range(total_steps):
+        for i in range(total_steps):
             self.run_step(step=self.step)
             self._log_step_info(self.step)
             if self.run_status is False:
                 break
+            if self.step >= total_steps:
+                break
+            self.step += 1
 
     def _log_step_info(self, *args, **kwargs) -> None:
         """记录每一步的信息"""
@@ -191,13 +197,24 @@ class LBMBase(Worker):
             self.dump_checkpoint(fw)
 
     def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        group.create_dataset("step", data=[self.step])
         self.flow.dump_checkpoint(group.create_group("flow"), *args, **kwargs)
         self.particle_swarm.dump_checkpoint(
             group=group.create_group("particle"), *args, **kwargs
         )
 
-    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
-        self.init()
+    def load_checkpoint(
+        self, checkpoint_path=None, group: h5py.Group = None, *args, **kwargs
+    ):
+        if group is None:
+            if checkpoint_path is not None:
+                group = h5py.File(checkpoint_path, "r")
+            else:
+                logger.error(
+                    "load failed, checkpoint_path and group cannot be both None."
+                )
+                return
+        self.step = group["step"][0]
         self.flow.load_checkpoint(group.get("flow"), *args, **kwargs)
         self.particle_swarm.load_checkpoint(
             group=group.get("particle"), *args, **kwargs
