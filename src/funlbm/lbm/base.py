@@ -184,7 +184,9 @@ class LBMBase(Worker):
         raise NotImplementedError()
 
     def save(self, step=10, *args, **kwargs):
-        raise NotImplementedError()
+        filepath = f"{self.config.file_config.checkpoint_path}/checkpoint_{str(step).zfill(10)}.h5"
+        with h5py.File(filepath, "w") as fw:
+            self.dump_checkpoint(fw)
 
     def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
         self.flow.dump_checkpoint(group.create_group("flow"), *args, **kwargs)

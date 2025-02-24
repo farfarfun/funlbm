@@ -166,7 +166,7 @@ class LBMD3(LBMBase):
                 wall_normals, distances.unsqueeze(1)
             )
 
-    def save(self, step=10, *args, **kwargs):
+    def save_bak(self, step=10, *args, **kwargs):
         if step % self.config.file_config.per_steps > 0:
             return
 
