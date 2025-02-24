@@ -23,7 +23,6 @@ class Config(BaseConfig):
         self.file_config = FileConfig()
         self.flow_config = FlowConfig()
 
-        self.step = 1
         self.particles: List[ParticleConfig] = []
 
     def _from_json(self, config_json: dict, *args, **kwargs) -> "Config":
@@ -62,6 +61,7 @@ class LBMBase(Worker):
         super().__init__(*args, **kwargs)
         self.config: Config = config or create_lbm_config()
 
+        self.step = 1
         self.flow = flow or create_flow(
             flow_config=self.config.flow_config,
             device=self.device,
@@ -95,15 +95,15 @@ class LBMBase(Worker):
             if self.run_status is False:
                 break
 
-    def _log_step_info(self, step: int) -> None:
+    def _log_step_info(self, *args, **kwargs) -> None:
         """记录每一步的信息"""
 
-        self.table_flow.set(str(step), self.flow.to_json())
+        self.table_flow.set(str(self.step), self.flow.to_json())
         for i, particle in enumerate(self.particle_swarm.particles):
-            self.table_particle.set(str(step), str(i + 1), particle.to_json())
+            self.table_particle.set(str(self.step), str(i + 1), particle.to_json())
 
         info = [
-            f"step={step:6d}",
+            f"step={self.step:6d}",
             "f="
             + ",".join(
                 [
@@ -132,18 +132,14 @@ class LBMBase(Worker):
         ]
 
         for particle in self.particle_swarm.particles:
-            info.append(particle.to_str(step))
+            info.append(particle.to_str(self.step))
 
         logger.info("\t".join(info))
 
-    def run_step(self, step: int, *args, **kwargs) -> None:
-        """执行单步模拟
-
-        Args:
-            step: 当前步数
-        """
+    def run_step(self, *args, **kwargs) -> None:
+        """执行单步模拟"""
         # 流场计算
-        self._compute_flow(step)
+        self._compute_flow()
 
         # 浸没边界处理
         self._handle_immersed_boundary()
@@ -151,13 +147,13 @@ class LBMBase(Worker):
         # 颗粒更新
         self._update_particles()
 
-        self.save(step)
+        self.save(self.step)
 
-    def _compute_flow(self, step: int) -> None:
+    def _compute_flow(self) -> None:
         """计算流场"""
-        self.flow.cul_equ(step=step)
+        self.flow.cul_equ(step=self.step)
         self.flow.f_stream()
-        self.flow.update_u_rou(step=step)
+        self.flow.update_u_rou(step=self.step)
 
     def _handle_immersed_boundary(self) -> None:
         """处理浸没边界"""
