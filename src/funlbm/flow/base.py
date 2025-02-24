@@ -1,3 +1,4 @@
+import h5py
 import numpy as np
 import torch
 from funutil import deep_get
@@ -138,3 +139,8 @@ class Flow(Worker):
                 ]
             ),
         }
+
+    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        group.create_dataset("f", self.f.cpu().numpy())
+        group.create_dataset("u", self.u.cpu().numpy())
+        group.create_dataset("rho", self.rou.cpu().numpy())

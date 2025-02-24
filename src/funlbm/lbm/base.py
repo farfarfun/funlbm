@@ -1,5 +1,6 @@
 from typing import List
 
+import h5py
 from funtable.kv import SQLiteStore
 from funutil import deep_get
 
@@ -65,7 +66,7 @@ class LBMBase(Worker):
             self.config.flow_config, device=self.device, *args, **kwargs
         )
         self.particle_swarm = particle_swarm or create_particle_swarm(
-            config.particles, device=self.device
+            self.config.particles, device=self.device
         )
 
         self.db_store = SQLiteStore("funlbm-global.db")
@@ -185,3 +186,9 @@ class LBMBase(Worker):
 
     def save(self, step=10, *args, **kwargs):
         raise NotImplementedError()
+
+    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        self.flow.dump_checkpoint(group.create_group("flow"), *args, **kwargs)
+        self.particle_swarm.dump_checkpoint(
+            group=group.create_group("particle"), *args, **kwargs
+        )

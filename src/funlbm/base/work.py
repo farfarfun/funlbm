@@ -1,3 +1,4 @@
+import h5py
 import torch
 
 from funlbm.util import logger
@@ -41,3 +42,6 @@ class Worker:
     def __init__(self, device="cpu", *args, **kwargs):
         self.device = device_detect(device)
         logger.info(f"init {type(self).__name__} with device={self.device}")
+
+    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+        pass
