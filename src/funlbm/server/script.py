@@ -2,7 +2,7 @@ import os
 
 import click
 
-from funlbm.lbm import LBMD3, Config
+from funlbm.lbm import create_lbm
 
 document_url = "https://darkchat.yuque.com/org-wiki-darkchat-gfaase/ul41go"
 
@@ -19,6 +19,5 @@ def run(config: str = "./config.json"):
         info = f"""配置文件不存在，访问{document_url}去配置参数吧"""
         print(info)
         raise FileExistsError(config)
-    _config = Config().from_file(config)
-    lbm = LBMD3(config=_config)
+    lbm = create_lbm()
     lbm.run()
