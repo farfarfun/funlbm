@@ -25,7 +25,10 @@ class Sphere(Ellipsoid):
                 xr,
                 yr,
                 zr,
-                cul_value=lambda X, Y, Z: X**2 / self.r**2 + Y**2 / self.r**2 + Z**2 / self.r**2 - 1,
+                cul_value=lambda X, Y, Z: X**2 / self.r**2
+                + Y**2 / self.r**2
+                + Z**2 / self.r**2
+                - 1,
                 dx=dx,
                 device=self.device,
             ),
@@ -44,7 +47,9 @@ class Sphere(Ellipsoid):
         )
 
         self.I = torch.tensor(
-            np.array([self.r * self.r, self.r * self.r, self.r * self.r]) * self.mass.to("cpu").numpy() / 5.0,
+            np.array([self.r * self.r, self.r * self.r, self.r * self.r])
+            * self.mass.to("cpu").numpy()
+            / 5.0,
             device=self.device,
             dtype=torch.float32,
         )

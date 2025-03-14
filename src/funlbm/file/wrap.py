@@ -6,7 +6,9 @@ from funlbm.config.base import BaseConfig
 
 
 class SaveVal:
-    def __init__(self, per_step=10000000, flow_val=None, particle_val=None, *args, **kwargs):
+    def __init__(
+        self, per_step=10000000, flow_val=None, particle_val=None, *args, **kwargs
+    ):
         self.per_step = per_step
         self.flow_val = flow_val or []
         self.particle_val = particle_val or []
@@ -74,7 +76,10 @@ class FileWrap:
         return f"{self.checkpoint_dir}/checkpoint-{str(step).zfill(10)}.h5"
 
     def lasted_checkpoint_path(self):
-        paths = [os.path.join(self.checkpoint_dir, file) for file in os.listdir(self.checkpoint_dir)]
+        paths = [
+            os.path.join(self.checkpoint_dir, file)
+            for file in os.listdir(self.checkpoint_dir)
+        ]
         paths = sorted(paths, key=lambda x: x)
         return paths[-1] if len(paths) > 0 else None
 
@@ -82,7 +87,9 @@ class FileWrap:
         return f"{self.custom_dir}/custom-{str(step).zfill(10)}.h5"
 
     def lasted_custom_path(self):
-        paths = [os.path.join(self.custom_dir, file) for file in os.listdir(self.custom_dir)]
+        paths = [
+            os.path.join(self.custom_dir, file) for file in os.listdir(self.custom_dir)
+        ]
         paths = sorted(paths, key=lambda x: x)
         return paths[-1] if len(paths) > 0 else None
 

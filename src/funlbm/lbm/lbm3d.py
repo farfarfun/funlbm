@@ -35,7 +35,9 @@ class LBMD3(LBMBase):
         rl = torch.clamp(rl, min=0)
         rr = rl + (2 * n - 1) * h + 1
         # 限制上界
-        domain_size = torch.tensor(self.config.flow_config.size, device=self.device, dtype=torch.float32)
+        domain_size = torch.tensor(
+            self.config.flow_config.size, device=self.device, dtype=torch.float32
+        )
         rr = torch.clamp(rr, max=domain_size)
         return rl.to(dtype=torch.int32), rr.to(dtype=torch.int32)
 
@@ -49,7 +51,9 @@ class LBMD3(LBMBase):
 
         # 限制权重函数的作用范围
         mask = torch.all(torch.abs(r) <= n * h, dim=-1, keepdim=True)
-        tmp = torch.where(mask, (1 + torch.cos(torch.abs(r * np.pi / 2 / h))) / 4 / h, 0.0)
+        tmp = torch.where(
+            mask, (1 + torch.cos(torch.abs(r * np.pi / 2 / h))) / 4 / h, 0.0
+        )
         w = torch.prod(tmp, dim=-1, keepdim=True).to(dtype=torch.float32)
         # 归一化权重
         w_sum = torch.sum(w)
@@ -85,7 +89,9 @@ class LBMD3(LBMBase):
 
             particle.lu[:, :] = (
                 particle.cu
-                + torch.cross(particle.cw.unsqueeze(0), particle.lx - particle.cx, dim=-1)
+                + torch.cross(
+                    particle.cw.unsqueeze(0), particle.lx - particle.cx, dim=-1
+                )
                 + u_theta
                 + particle.lu_s
             )
@@ -107,7 +113,9 @@ class LBMD3(LBMBase):
                     slice(None),
                 )
                 tmp = self._calculate_weight_function(self.flow.x[index_range] - lar)
-                self.flow.FOL[index_range] = tmp * particle.lF[index, :] * particle.lm[index]
+                self.flow.FOL[index_range] = (
+                    tmp * particle.lF[index, :] * particle.lm[index]
+                )
 
     @run_timer
     def particle_to_wall(self, *args, **kwargs):
@@ -134,12 +142,17 @@ class LBMD3(LBMBase):
 
         for particle in self.particle_swarm.particles:
             # Find extreme points of particle
-            extreme_indices = torch.concatenate([torch.argmin(particle.lx, dim=0), torch.argmax(particle.lx, dim=0)])
+            extreme_indices = torch.concatenate(
+                [torch.argmin(particle.lx, dim=0), torch.argmax(particle.lx, dim=0)]
+            )
 
             # Calculate wall distances
             distances = k0 * (
                 1
-                - abs(particle.lx[extreme_indices][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]] - domain_bounds)
+                - abs(
+                    particle.lx[extreme_indices][[0, 1, 2, 3, 4, 5], [0, 1, 2, 0, 1, 2]]
+                    - domain_bounds
+                )
                 / (2 * self.config.dx)
             )
             distances = torch.clamp(distances, min=0)
@@ -148,7 +161,9 @@ class LBMD3(LBMBase):
                 continue
 
             logger.info(f"Distance of particle to wall = {distances}")
-            particle.lF[extreme_indices] += torch.multiply(wall_normals, distances.unsqueeze(1))
+            particle.lF[extreme_indices] += torch.multiply(
+                wall_normals, distances.unsqueeze(1)
+            )
 
 
 class LBMD3Q27(LBMD3):

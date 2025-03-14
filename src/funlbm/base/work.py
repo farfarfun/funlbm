@@ -50,7 +50,9 @@ class Worker:
         pass
 
     def dump_dataset(self, group: h5py.Group, name: str, data, *args, **kwargs):
-        group.create_dataset(name, data=data.cpu().numpy(), compression="gzip", compression_opts=9)
+        group.create_dataset(
+            name, data=data.cpu().numpy(), compression="gzip", compression_opts=9
+        )
         logger.debug(f"dump {name} success.")
         # logger.success(f"dump {name} success.")
 

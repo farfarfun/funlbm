@@ -50,7 +50,9 @@ class Coordinate(Worker):
     def __init__(self, config: Optional[CoordConfig] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         config = config or CoordConfig()
-        self.center = torch.tensor(config.center, device=self.device, dtype=torch.float32)
+        self.center = torch.tensor(
+            config.center, device=self.device, dtype=torch.float32
+        )
         self.angle = torch.tensor(
             [config.alpha, config.beta, config.gamma],
             device=self.device,
@@ -58,7 +60,9 @@ class Coordinate(Worker):
         )
         self.rotation = R.from_rotvec(self.angle.cpu().numpy())
 
-    def cul_point(self, points: Union[List[float], np.ndarray, torch.Tensor]) -> torch.Tensor:
+    def cul_point(
+        self, points: Union[List[float], np.ndarray, torch.Tensor]
+    ) -> torch.Tensor:
         """计算点在旋转和平移后的新位置
 
         Args:
@@ -72,7 +76,12 @@ class Coordinate(Worker):
         elif isinstance(points, torch.Tensor):
             points = points.cpu().numpy()
 
-        return torch.tensor(self.rotation.apply(points), device=self.device, dtype=torch.float32) + self.center
+        return (
+            torch.tensor(
+                self.rotation.apply(points), device=self.device, dtype=torch.float32
+            )
+            + self.center
+        )
 
     def update(self, center: torch.Tensor, w: torch.Tensor) -> None:
         """更新旋转角度并重新计算旋转矩阵

@@ -10,7 +10,9 @@ __all__ = ["LBMBase", "LBMD3", "LBMD3Q19", "Config"]
 
 
 def create_lbm(config: Union[str, Config] = "./config.json"):
-    config: Config = config if isinstance(config, Config) else Config.load_config(config)
+    config: Config = (
+        config if isinstance(config, Config) else Config.load_config(config)
+    )
 
     return LBMD3(config)
 

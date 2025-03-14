@@ -39,7 +39,9 @@ class Config(BaseConfig):
         self.device: str = device
         self.file_config = FileConfig(**file)
         self.flow_config = FlowConfig(**flow)
-        self.particles: List[ParticleConfig] = [ParticleConfig(**config) for config in particles]
+        self.particles: List[ParticleConfig] = [
+            ParticleConfig(**config) for config in particles
+        ]
         self.config_path = config_path or "./config.json"
 
     @staticmethod
@@ -78,7 +80,9 @@ class LBMBase(Worker):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.config: Config = config if isinstance(config, Config) else Config.load_config()
+        self.config: Config = (
+            config if isinstance(config, Config) else Config.load_config()
+        )
         kwargs["device"] = self.device
         self.step = 0
         self.flow: FlowBase = create_flow(
@@ -91,7 +95,9 @@ class LBMBase(Worker):
             *args,
             **kwargs,
         )
-        self.particle_swarm = create_particle_swarm(self.config.particles, *args, **kwargs)
+        self.particle_swarm = create_particle_swarm(
+            self.config.particles, *args, **kwargs
+        )
         self.run_status = True
         self.is_save = False
         logger.info(f"Running on device: {self.device}")
@@ -121,7 +127,9 @@ class LBMBase(Worker):
         res = f"step={self.step:6d}"
         res += "\tf=" + ",".join([f"{i:.6f}" for i in deep_get(flow_track, "f") or []])
         res += "\tu=" + ",".join([f"{i:.6f}" for i in deep_get(flow_track, "u") or []])
-        res += "\trho=" + ",".join([f"{i:.6f}" for i in deep_get(flow_track, "rho") or []])
+        res += "\trho=" + ",".join(
+            [f"{i:.6f}" for i in deep_get(flow_track, "rho") or []]
+        )
         for track in particle_track:
             res += f"m={(deep_get(track, 'm') or 0):.2f}"
             res += "\tcu=" + ",".join([f"{i:.6f}" for i in deep_get(track, "cu") or []])
@@ -129,8 +137,12 @@ class LBMBase(Worker):
             res += "\tcf=" + ",".join([f"{i:.6f}" for i in deep_get(track, "cF") or []])
             res += "\tlF=" + ",".join([f"{i:.6f}" for i in deep_get(track, "lF") or []])
             res += "\tcw=" + ",".join([f"{i:.6f}" for i in deep_get(track, "cw") or []])
-            res += "\tcenter=" + ",".join([f"{i:.6f}" for i in deep_get(track, "coord", "center")] or [])
-            res += "\tangle=" + ",".join([f"{i:.6f}" for i in deep_get(track, "coord", "angle")] or [])
+            res += "\tcenter=" + ",".join(
+                [f"{i:.6f}" for i in deep_get(track, "coord", "center")] or []
+            )
+            res += "\tangle=" + ",".join(
+                [f"{i:.6f}" for i in deep_get(track, "coord", "angle")] or []
+            )
 
         logger.info(res)
 
@@ -225,7 +237,9 @@ class LBMBase(Worker):
             logger.error(f"checkpoint dir {checkpoint_dir} not exists")
             return
         file_wrap = FileWrap(config=FileConfig(cache_dir=checkpoint_dir))
-        self.load_file(param=self.file_wrap.config.constant, file_path=file_wrap.constant_path())
+        self.load_file(
+            param=self.file_wrap.config.constant, file_path=file_wrap.constant_path()
+        )
         self.load_file(
             param=self.file_wrap.config.checkpoint,
             file_path=file_wrap.lasted_checkpoint_path(),
@@ -240,14 +254,18 @@ class LBMBase(Worker):
 
         with h5py.File(checkpoint_path, "w") as group:
             group.create_dataset("step", data=[self.step])
-            self.flow.dump_file(group.create_group("flow"), vals=param.flow_val, *args, **kwargs)
+            self.flow.dump_file(
+                group.create_group("flow"), vals=param.flow_val, *args, **kwargs
+            )
             self.particle_swarm.dump_file(
                 group=group.create_group("particle"),
                 vals=param.particle_val,
                 *args,
                 **kwargs,
             )
-        logger.success(f"save checkpoint success, step={self.step},path={checkpoint_path}")
+        logger.success(
+            f"save checkpoint success, step={self.step},path={checkpoint_path}"
+        )
 
     def load_file(self, param: SaveVal = None, file_path=None, *args, **kwargs):
         if param is None or file_path is None:
@@ -260,5 +278,7 @@ class LBMBase(Worker):
             return
         self.step = group["step"][0]
         self.flow.load_file(group.get("flow"), vals=param.flow_val, *args, **kwargs)
-        self.particle_swarm.load_file(group=group.get("particle"), vals=param.particle_val, *args, **kwargs)
+        self.particle_swarm.load_file(
+            group=group.get("particle"), vals=param.particle_val, *args, **kwargs
+        )
         logger.success(f"load checkpoint success, step={self.step},path={file_path}")

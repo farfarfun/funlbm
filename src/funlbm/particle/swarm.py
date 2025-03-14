@@ -47,5 +47,7 @@ class ParticleSwarm(Worker):
         return res
 
 
-def create_particle_swarm(configs: List[ParticleConfig] = [], device="cpu", *args, **kwargs):
+def create_particle_swarm(
+    configs: List[ParticleConfig] = [], device="cpu", *args, **kwargs
+):
     return ParticleSwarm(configs=configs, device=device, *args, **kwargs)

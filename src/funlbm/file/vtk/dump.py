@@ -39,21 +39,27 @@ def save(lbm: LBMBase, step=10, *args, **kwargs):
         axis_dim=3,
         data_dim=3,
         title="flow_u",
-    ).dump(filepath=f"{lbm.config.file_config.cache_dir}/tecplot_flow_u_{str(step).zfill(10)}.dat")
+    ).dump(
+        filepath=f"{lbm.config.file_config.cache_dir}/tecplot_flow_u_{str(step).zfill(10)}.dat"
+    )
     PointData(
         data=cell_data["rho"],
         variables=["x", "y", "z", "rho"],
         axis_dim=3,
         data_dim=1,
         title="flow_u",
-    ).dump(filepath=f"{lbm.config.file_config.cache_dir}/tecplot_flow_rho_{str(step).zfill(10)}.dat")
+    ).dump(
+        filepath=f"{lbm.config.file_config.cache_dir}/tecplot_flow_rho_{str(step).zfill(10)}.dat"
+    )
     PointData(
         data=cell_data["p"],
         variables=["x", "y", "z", "p"],
         axis_dim=3,
         data_dim=1,
         title="flow_u",
-    ).dump(filepath=f"{lbm.config.file_config.cache_dir}/tecplot_flow_p_{str(step).zfill(10)}.dat")
+    ).dump(
+        filepath=f"{lbm.config.file_config.cache_dir}/tecplot_flow_p_{str(step).zfill(10)}.dat"
+    )
 
     gridToVTK(
         f"{lbm.config.file_config.cache_dir}/flow_" + str(step).zfill(10),
