@@ -4,12 +4,10 @@
   "device": "cpu",
   "flow": {
     "param_type": "D3Q19",
-    "param": {
-      "Re": 0.45,
-      "rho": 1.0,
-      "mu": 0.0385,
-      "gl": -0.0098
-    },
+    "Re": 0.5,
+    "rho": 1.0,
+    "mu": 0.05,
+    "gl": 0.0,
     "size": [
       160,
       100,
@@ -38,19 +36,28 @@
   },
   "file": {
     "cache_dir": "./data",
-    "per_steps": 100
+    "custom": {
+      "per_step": 1000000
+    },
+    "checkpoint": {
+      "per_step": 5000000
+    }
   },
   "particles": [
     {
+      "type": "spheroid",
+      "a": 10,
+      "b": 8,
+      "c": 8,
       "rou": 1.155,
       "coord": {
+        "alpha": -1.507,
         "center": [
           40,
           50,
           50
         ]
-      },
-      "r": 7.5
+      }
     }
   ]
 }

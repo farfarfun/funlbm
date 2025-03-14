@@ -3,7 +3,6 @@ import math
 import h5py
 import numpy as np
 import torch
-from funutil import deep_get
 from funutil.cache import cache
 from torch import Tensor
 
@@ -34,9 +33,7 @@ class Param(Worker):
         self.vertex_reverse = vertex_reverse
         self.e = torch.tensor(e, device=self.device, dtype=torch.float32)
         self.w = torch.tensor(w, device=self.device, dtype=torch.float32)
-        self.cs = torch.tensor(
-            math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32
-        )
+        self.cs = torch.tensor(math.sqrt(1.0 / 3), device=self.device, dtype=torch.float32)
 
     @cache
     def eT(self) -> torch.Tensor:
@@ -88,33 +85,28 @@ class FlowConfig(BaseConfig):
         mu: 动力粘度
     """
 
-    def __init__(self, *args, **kwargs):
-        self.size: np.ndarray = np.zeros(3)  # 计算域大小
-        self.param: dict = {}  # 参数字典
-        self.param_type: str = "D3Q19"  # 参数类型
-        self.boundary: BoundaryConfig = None  # 边界配置
-
-        self.gl: float = 0.0  # 重力加速度
-        self.Re: float = 10  # 雷诺数
-        self.mu: float = 10  # 动力粘度
+    def __init__(
+        self,
+        size=None,
+        boundary=None,
+        param_type: str = "D3Q19",
+        gl: float = 0.0,
+        Re: float = 10,
+        mu: float = 10,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
+        self.size: np.ndarray = np.array(size or [100, 100, 100], dtype=int)
+        self.param_type: str = param_type
+        self.boundary: BoundaryConfig = BoundaryConfig(**boundary or {})
 
-    def _from_json(self, config_json: dict, *args, **kwargs):
-        self.size = np.array(
-            deep_get(config_json, "size") or [100, 100, 100], dtype=int
-        )
-        self.param = deep_get(config_json, "param") or self.param
-        self.boundary = BoundaryConfig().from_json(
-            deep_get(config_json, "boundary") or {}
-        )
-        self.param_type = deep_get(config_json, "param_type") or self.param_type
-
-        self.Re = float(deep_get(self.param, "Re") or self.Re)
-        self.mu = float(deep_get(self.param, "mu") or self.mu)
-        self.gl = float(deep_get(self.param, "gl") or self.gl)
+        self.gl: float = gl  # 重力加速度
+        self.Re: float = Re  # 雷诺数
+        self.mu: float = mu  # 动力粘度
 
 
-class Flow(Worker):
+class FlowBase(Worker):
     """流场基类
 
     实现了流场计算的基本功能
@@ -138,16 +130,16 @@ class Flow(Worker):
         self.param: Param = param
         self.config: FlowConfig = config
 
-        # 坐标
+        # 坐标,全局不变
         self.x: Tensor = torch.zeros([1])
-        # 力密度
+        # 力密度，每步都变
         self.f: Tensor = torch.zeros([1])
         self.feq: Tensor = torch.zeros([1])
-        # 速度
+        # 速度，每步都变，可以由f算出来
         self.u: Tensor = torch.zeros([1])
-        # 压强
+        # 压强，暂无
         self.p: Tensor = torch.zeros([1])
-        # 密度
+        # 密度，每步都变，可以有f算出
         self.rou: Tensor = torch.zeros([1])
         # 剪切率相关的变量
         self.gama: Tensor = torch.zeros([1])
@@ -180,7 +172,7 @@ class Flow(Worker):
         """返回流场对象的字符串表示"""
         return f"{self.__class__.__name__}(size={tuple(self.config.size)}, Re={self.config.Re}, mu={self.config.mu})"
 
-    def to_json(self):
+    def track(self):
         return {
             "f": tensor_format(
                 [
@@ -205,13 +197,46 @@ class Flow(Worker):
             ),
         }
 
-    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
-        self.dupmp_dataset(group, "f", self.f)
-        # self.dupmp_dataset(group, "u", self.u)
-        # self.dupmp_dataset(group, "rou", self.rou)
+    def dump_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+        if group is None:
+            return
+        vals = vals or ["x", "f", "p", "u", "rou", "gama", "FOL", "tau", "feq"]
+        if "x" in vals:
+            self.dump_dataset(group, "x", self.x)
+        if "f" in vals:
+            self.dump_dataset(group, "f", self.f)
+        if "p" in vals:
+            self.dump_dataset(group, "p", self.p)
+        if "u" in vals:
+            self.dump_dataset(group, "u", self.u)
+        if "rou" in vals:
+            self.dump_dataset(group, "rou", self.rou)
+        if "gama" in vals:
+            self.dump_dataset(group, "gama", self.gama)
+        if "FOL" in vals:
+            self.dump_dataset(group, "FOL", self.FOL)
+        if "tau" in vals:
+            self.dump_dataset(group, "tau", self.tau)
+        if "feq" in vals:
+            self.dump_dataset(group, "feq", self.feq)
 
-    def load_checkpoint(self, group: h5py.Group = None, all=False, *args, **kwargs):
-        self.f = self.load_dataset(group, "f")
-        self.update_u_rou()
-        # self.u = self.load_dataset(group, "u")
-        # self.rou = self.load_dataset(group, "rou")
+    def load_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+        if group is None:
+            return
+        vals = vals or group.keys()
+        if "x" in vals and "x" in group.keys():
+            self.x = self.load_dataset(group, "x")
+        if "f" in vals and "f" in group.keys():
+            self.f = self.load_dataset(group, "f")
+        if "u" in vals and "u" in group.keys():
+            self.u = self.load_dataset(group, "u")
+        if "rou" in vals and "rou" in group.keys():
+            self.rou = self.load_dataset(group, "rou")
+        if "gama" in vals and "gama" in group.keys():
+            self.gama = self.load_dataset(group, "gama")
+        if "FOL" in vals and "FOL" in group.keys():
+            self.FOL = self.load_dataset(group, "FOL")
+        if "tau" in vals and "tau" in group.keys():
+            self.tau = self.load_dataset(group, "tau")
+        if "feq" in vals and "feq" in group.keys():
+            self.feq = self.load_dataset(group, "feq")

@@ -1,8 +1,8 @@
-from .base import Flow, FlowConfig
+from .base import FlowBase, FlowConfig
 from .d3 import FlowD3, FlowD3Q13, FlowD3Q15, FlowD3Q19, FlowD3Q27
 
 __all__ = [
-    "Flow",
+    "FlowBase",
     "FlowD3",
     "FlowD3Q19",
     "FlowD3Q13",

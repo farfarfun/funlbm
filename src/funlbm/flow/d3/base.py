@@ -4,7 +4,7 @@ from funutil import run_timer
 from funutil.cache import cache
 
 from funlbm.config import Boundary, BoundaryCondition
-from funlbm.flow import Flow, FlowConfig
+from funlbm.flow import FlowBase, FlowConfig
 
 
 def cul_u(y, z, a, b, size=100):
@@ -54,7 +54,7 @@ def tran3d(direction, total):
         return 0, total, 0, total
 
 
-class FlowD3(Flow):
+class FlowD3(FlowBase):
     """3D流场类
 
     实现了3D流场的基本功能,包括:
@@ -114,12 +114,10 @@ class FlowD3(Flow):
             self.f[:, :, :, alpha] += t4[:, :, :, 0]
 
     @run_timer
-    def update_u_rou(self, step=0, *args, **kwargs):
+    def update_u_rou(self, *args, **kwargs):
         self.rou = torch.sum(self.f, dim=-1, keepdim=True)
-
         self.p = self.rou / 3.0
         self.u = (torch.matmul(self.f, self.param.e) + self.FOL / 2.0) / self.rou
-
         # TODO 计算gama
         self.update_u_rou_boundary()
 
@@ -134,12 +132,7 @@ class FlowD3(Flow):
 
         if self.config.boundary.input.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
             shape = self.u.shape
-            uw = (
-                self.config.Re
-                * self.config.mu
-                / self.rou.max()
-                / min(shape[1], shape[2])
-            )
+            uw = self.config.Re * self.config.mu / self.rou.max() / min(shape[1], shape[2])
             self.u[0, :, :, 0] = init_u(shape[1], shape[2], u_max=uw)
             self.rou[0, :, :, :] = self.rou[1, :, :, :]
 
@@ -150,11 +143,7 @@ class FlowD3(Flow):
     @run_timer
     def cul_equ(self, step=0, *args, **kwargs):
         tmp = torch.matmul(self.u, self.param.eT()) / (self.param.cs**2)
-        u2 = (
-            torch.linalg.norm(self.u, dim=-1, keepdim=True) ** 2
-            / (self.param.cs**2)
-            / 2
-        )
+        u2 = torch.linalg.norm(self.u, dim=-1, keepdim=True) ** 2 / (self.param.cs**2) / 2
         self.feq = (1 + tmp + tmp**2 / 2 - u2) * torch.matmul(self.rou, self.param.w)
         self.f = self.f - (self.f - self.feq) / self.tau
 
@@ -167,11 +156,7 @@ class FlowD3(Flow):
             e1, e2, e3 = e
 
             # 使用列表推导式简化代码
-            shifts_dims = [
-                (int(shift), dim)
-                for shift, dim in zip([e1, e2, e3], range(3))
-                if shift != 0
-            ]
+            shifts_dims = [(int(shift), dim) for shift, dim in zip([e1, e2, e3], range(3)) if shift != 0]
 
             f_temp = fcopy[..., k]
             for shift, dim in shifts_dims:
@@ -203,18 +188,10 @@ class FlowD3(Flow):
             self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:1, :, :, :], self.param.w[:, index])
-            tmp = (
-                tmp
-                * torch.matmul(self.param.e[index], boundary.get("uw"))
-                / self.param.cs**2
-            )
-            self.f[:1, :, :, index] = (
-                fcopy[:1, :, :, self.param.index_reverse(index)] - tmp
-            )
+            tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
+            self.f[:1, :, :, index] = fcopy[:1, :, :, self.param.index_reverse(index)] - tmp
         elif boundary.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
-            self.f[:1, :, :, :] = self.feq[:1, :, :, :] + (
-                self.f[1:2, :, :, :] - self.feq[1:2, :, :, :]
-            )
+            self.f[:1, :, :, :] = self.feq[:1, :, :, :] + (self.f[1:2, :, :, :] - self.feq[1:2, :, :, :])
         else:
             raise NotImplementedError
 
@@ -227,18 +204,10 @@ class FlowD3(Flow):
             self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[-1:, :, :, :], self.param.w[:, index])
-            tmp = (
-                tmp
-                * torch.matmul(self.param.e[index], boundary.get("uw"))
-                / self.param.cs**2
-            )
-            self.f[-1:, :, :, index] = (
-                fcopy[-1:, :, :, self.param.index_reverse(index)] - tmp
-            )
+            tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
+            self.f[-1:, :, :, index] = fcopy[-1:, :, :, self.param.index_reverse(index)] - tmp
         elif boundary.is_condition(BoundaryCondition.NON_EQUILIBRIUM):
-            self.f[-1:, :, :, :] = self.feq[-1:, :, :, :] + (
-                self.f[-2:-1, :, :, :] - self.feq[-2:-1, :, :, :]
-            )
+            self.f[-1:, :, :, :] = self.feq[-1:, :, :, :] + (self.f[-2:-1, :, :, :] - self.feq[-2:-1, :, :, :])
         else:
             raise NotImplementedError
 
@@ -251,14 +220,8 @@ class FlowD3(Flow):
             self.f[:, :1, :, index] = fcopy[:, :1, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :1, :, :], self.param.w[:, index])
-            tmp = (
-                tmp
-                * torch.matmul(self.param.e[index], boundary.get("uw"))
-                / self.param.cs**2
-            )
-            self.f[:, :1, :, index] = (
-                fcopy[:, :1, :, self.param.index_reverse(index)] - tmp
-            )
+            tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
+            self.f[:, :1, :, index] = fcopy[:, :1, :, self.param.index_reverse(index)] - tmp
         else:
             raise NotImplementedError
 
@@ -271,14 +234,8 @@ class FlowD3(Flow):
             self.f[:, -1:, :, index] = fcopy[:, -1:, :, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, -1:, :, :], self.param.w[:, index])
-            tmp = (
-                tmp
-                * torch.matmul(self.param.e[index], boundary.get("uw"))
-                / self.param.cs**2
-            )
-            self.f[:, -1:, :, index] = (
-                fcopy[:, -1:, :, self.param.index_reverse(index)] - tmp
-            )
+            tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
+            self.f[:, -1:, :, index] = fcopy[:, -1:, :, self.param.index_reverse(index)] - tmp
         else:
             raise NotImplementedError
 
@@ -291,14 +248,8 @@ class FlowD3(Flow):
             self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :, :1, :], self.param.w[:, index])
-            tmp = (
-                tmp
-                * torch.matmul(self.param.e[index], boundary.get("uw"))
-                / self.param.cs**2
-            )
-            self.f[:, :, :1, index] = (
-                fcopy[:, :, :1, self.param.index_reverse(index)] - tmp
-            )
+            tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
+            self.f[:, :, :1, index] = fcopy[:, :, :1, self.param.index_reverse(index)] - tmp
         else:
             raise NotImplementedError
 
@@ -311,13 +262,7 @@ class FlowD3(Flow):
             self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.index_reverse(index)]
         elif boundary.is_condition(BoundaryCondition.WALL_WITH_SPEED):
             tmp = 2 * torch.matmul(self.rou[:, :, -1:, :], self.param.w[:, index])
-            tmp = (
-                tmp
-                * torch.matmul(self.param.e[index], boundary.get("uw"))
-                / self.param.cs**2
-            )
-            self.f[:, :, -1:, index] = (
-                fcopy[:, :, -1:, self.param.index_reverse(index)] - tmp
-            )
+            tmp = tmp * torch.matmul(self.param.e[index], boundary.get("uw")) / self.param.cs**2
+            self.f[:, :, -1:, index] = fcopy[:, :, -1:, self.param.index_reverse(index)] - tmp
         else:
             raise NotImplementedError

@@ -1,6 +1,8 @@
+from typing import Dict
+
 import h5py
 import torch
-from funutil import deep_get, run_timer
+from funutil import run_timer
 
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig
@@ -9,14 +11,10 @@ from funlbm.util import tensor_format
 
 
 class ParticleConfig(BaseConfig):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, coord=None, type="ellipsoid", *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.coord_config: CoordConfig = CoordConfig()
-        self.type = "ellipsoid"
-
-    def _from_json(self, config_json: dict, *args, **kwargs):
-        self.coord_config.from_json(deep_get(config_json, "coord"))
-        self.type = deep_get(config_json, "type") or self.type
+        self.coord_config: CoordConfig = CoordConfig(**coord or {})
+        self.type = type
 
 
 class Particle(Worker):
@@ -48,9 +46,7 @@ class Particle(Worker):
         super().__init__(*args, **kwargs)
 
         self.config: ParticleConfig = config or ParticleConfig()
-        self.coord: Coordinate = Coordinate(
-            config=self.config.coord_config, *args, **kwargs
-        )
+        self.coord: Coordinate = Coordinate(config=self.config.coord_config, *args, **kwargs)
 
         # 颗粒质量[1]
         self.mass = None
@@ -64,9 +60,7 @@ class Particle(Worker):
         self.angle = None
 
         # 质心坐标[i,j,k]
-        self.cx = torch.tensor(
-            self.config.coord_config.center, device=self.device, dtype=torch.float32
-        )
+        self.cx = torch.tensor(self.config.coord_config.center, device=self.device, dtype=torch.float32)
         # 质心半径[a,b,b]
         self.cr = 5 * torch.ones(5, device=self.device, dtype=torch.float32)
         # 质心速度[i,j,k]
@@ -78,29 +72,18 @@ class Particle(Worker):
         # 质心合外力
         self.cT = torch.zeros(3, device=self.device, dtype=torch.float32)
 
-        self._lagrange: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self._lagrange: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点的坐标[m,i,3]
-        self.lx: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lx: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self.lu_s: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点上的力[m,i,3]
-        self.lF: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lF: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点的质量
-        self.lm: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lm: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点速度[m,i,3]
-        self.lu: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lu: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点速度[m,i,3]
-        self.lrou: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lrou: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
 
     def _init(self, dx=1, *args, **kwargs):
         raise NotImplementedError("还没实现")
@@ -112,9 +95,7 @@ class Particle(Worker):
         self.lx = torch.zeros_like(self._lagrange, dtype=torch.float32)
         self.lF = torch.zeros_like(self._lagrange, dtype=torch.float32)
         self.lu = torch.zeros_like(self._lagrange, dtype=torch.float32)
-        self.lm = torch.full(
-            (shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32
-        )
+        self.lm = torch.full((shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32)
         self.lrou = torch.empty((shape[0], 1), device=self.device, dtype=torch.float32)
 
     @run_timer
@@ -135,42 +116,24 @@ class Particle(Worker):
         if rouf <= 0:
             raise ValueError("Fluid density must be positive")
 
-        tmp = (
-            (1 - self.rou / rouf)
-            * self.mass
-            * torch.tensor([gl, 0, 0], device=self.device)
-        )
+        tmp = (1 - self.rou / rouf) * self.mass * torch.tensor([gl, 0, 0], device=self.device)
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
 
         self.cu = self.cu + self.cF / self.mass * dt
         self.cx = self.cx + self.cu * dt
 
-        self.cT = -torch.sum(
-            torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
-        )
+        self.cT = -torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0)
         self.cw = self.cw + 0.1 * self.cT * dt / self.I
 
     @run_timer
-    def update(self, dt):
+    def update(self, *args, **kwargs):
         self.coord.update(center=self.cx, w=self.cw)
         self.lx = self.coord.cul_point(self._lagrange)
 
     def from_json(self):
         pass
 
-    def to_str(self, step=0, *args, **kwargs):
-        res = f"m={self.mass:.2f}"
-        res += "\tcu=" + ",".join([f"{i:.6f}" for i in self.cu])
-        res += "\tcx=" + ",".join([f"{i:.6f}" for i in self.cx])
-        res += "\tcf=" + ",".join([f"{i:.6f}" for i in self.cF])
-        res += "\tlF=" + ",".join(
-            [f"{i:.6f}" for i in [self.lF.min(), self.lF.mean(), self.lF.max()]]
-        )
-        res += "\tcw=" + ",".join([f"{i:.6f}" for i in self.cw])
-        res += "\tr=" + self.coord.to_str()
-        return res
-
-    def to_json(self, step=0, *args, **kwargs):
+    def track(self, step=0, *args, **kwargs) -> Dict:
         return {
             "m": float(self.mass.cpu().numpy()),
             "cu": tensor_format(self.cu),
@@ -187,28 +150,74 @@ class Particle(Worker):
             "coord": self.coord.to_json(),
         }
 
-    def dump_checkpoint(self, group: h5py.Group = None, all=False, *args, **kwargs):
+    def dump_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
         if group is None:
             return
+        vals = vals or [
+            "cu",
+            "cx",
+            "cF",
+            "cw",
+            "lx",
+            "lu",
+            "lF",
+            "lrou",
+            "lu_s",
+            "lm",
+            "_lagrange",
+            "coord",
+        ]
+        if "cu" in vals:
+            self.dump_dataset(group, "cu", self.cu)
+        if "cx" in vals:
+            self.dump_dataset(group, "cx", self.cx)
+        if "cF" in vals:
+            self.dump_dataset(group, "cF", self.cF)
+        if "cw" in vals:
+            self.dump_dataset(group, "cw", self.cw)
+        if "lx" in vals:
+            self.dump_dataset(group, "lx", self.lx)
+        if "lu" in vals:
+            self.dump_dataset(group, "lu", self.lu)
+        if "lF" in vals:
+            self.dump_dataset(group, "lF", self.lF)
+        if "lrou" in vals:
+            self.dump_dataset(group, "lrou", self.lrou)
+        if "lu_s" in vals:
+            self.dump_dataset(group, "lu_s", self.lu_s)
+        if "lm" in vals:
+            self.dump_dataset(group, "lm", self.lm)
+        if "_lagrange" in vals:
+            self.dump_dataset(group, "_lagrange", self._lagrange)
+        if "coord" in vals:
+            self.coord.dump_file(group.create_group("coord"))
 
-        self.dupmp_dataset(group, "cu", self.cu)
-        self.dupmp_dataset(group, "cx", self.cx)
-        self.dupmp_dataset(group, "cF", self.cF)
-        self.dupmp_dataset(group, "cw", self.cw)
-
-        self.dupmp_dataset(group, "lx", self.lx)
-        self.dupmp_dataset(group, "lF", self.lF)
-        self.dupmp_dataset(group, "lu", self.lu)
-        self.dupmp_dataset(group, "lrou", self.lrou)
-
-    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+    def load_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
         if group is None:
             return
-        self.cu = self.load_dataset(group, "cu")
-        self.cx = self.load_dataset(group, "cx")
-        self.cF = self.load_dataset(group, "cF")
-        self.cw = self.load_dataset(group, "cw")
-        self.lx = self.load_dataset(group, "lx")
-        self.lF = self.load_dataset(group, "lF")
-        self.lu = self.load_dataset(group, "lu")
-        self.lrou = self.load_dataset(group, "lrou")
+        vals = vals or group.keys()
+        if "lm" in vals:
+            self.lm = self.load_dataset(group, "lm")
+        if "cu" in vals:
+            self.cu = self.load_dataset(group, "cu")
+        if "cx" in vals:
+            self.cx = self.load_dataset(group, "cx")
+        if "cF" in vals:
+            self.cF = self.load_dataset(group, "cF")
+        if "cw" in vals:
+            self.cw = self.load_dataset(group, "cw")
+        if "lx" in vals:
+            self.lx = self.load_dataset(group, "lx")
+        if "lu" in vals:
+            self.lu = self.load_dataset(group, "lu")
+        if "lF" in vals:
+            self.lF = self.load_dataset(group, "lF")
+        if "lrou" in vals:
+            self.lrou = self.load_dataset(group, "lrou")
+        if "lu_s" in vals:
+            self.lu_s = self.load_dataset(group, "lu_s")
+
+        if "_lagrange" in vals:
+            self._lagrange = self.load_dataset(group, "_lagrange")
+        if "coord" in vals:
+            self.coord.load_file(group.get("coord"))

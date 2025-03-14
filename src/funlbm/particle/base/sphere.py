@@ -3,14 +3,16 @@ import math
 import numpy as np
 import torch
 
-from .base import Particle
-from .ellipsoid import generate_uniform_points_on_ellipsoid
+from .ellipsoid import Ellipsoid, generate_uniform_points_on_ellipsoid
 
 
-class Sphere(Particle):
-    def __init__(self, *args, **kwargs):
+class Sphere(Ellipsoid):
+    def __init__(self, r=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.r = self.config.get("r") or 10
+        self.r = r or self.config.get("r") or 10
+        self.ra = self.r
+        self.rb = self.r
+        self.rc = self.r
 
     def _init(self, dx=1, *args, **kwargs):
         xl, yl, zl = -self.r - 2 * dx, -self.r - 2 * dx, -self.r - 2 * dx
@@ -23,10 +25,7 @@ class Sphere(Particle):
                 xr,
                 yr,
                 zr,
-                cul_value=lambda X, Y, Z: X**2 / self.r**2
-                + Y**2 / self.r**2
-                + Z**2 / self.r**2
-                - 1,
+                cul_value=lambda X, Y, Z: X**2 / self.r**2 + Y**2 / self.r**2 + Z**2 / self.r**2 - 1,
                 dx=dx,
                 device=self.device,
             ),
@@ -45,9 +44,7 @@ class Sphere(Particle):
         )
 
         self.I = torch.tensor(
-            np.array([self.r * self.r, self.r * self.r, self.r * self.r])
-            * self.mass.to("cpu").numpy()
-            / 5.0,
+            np.array([self.r * self.r, self.r * self.r, self.r * self.r]) * self.mass.to("cpu").numpy() / 5.0,
             device=self.device,
             dtype=torch.float32,
         )

@@ -1,47 +1,51 @@
-from typing import List
+from typing import Dict, List
 
 import h5py
+from funtable.kv import BaseKKVTable
 
 from funlbm.base import Worker
 from funlbm.particle import Particle, ParticleConfig
-from funlbm.util import logger
 
 from .base import create_particle
 
 
 class ParticleSwarm(Worker):
-    def __init__(self, configs: List[ParticleConfig] = [], device="cpu"):
+    def __init__(self, configs: List[ParticleConfig] = [], *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.particles: List[Particle] = []
         for config in configs:
-            self.particles.append(create_particle(config, device=device))
+            self.particles.append(create_particle(config, device=self.device))
 
     def init(self, *args, **kwargs):
         for particle in self.particles:
             particle.init(*args, **kwargs)
-        self.save_particle()
 
     def update(self, *args, **kwargs):
         for particle in self.particles:
             particle.update(*args, **kwargs)
 
-    def save_particle(self):
-        with h5py.File("./funlbm-particle-swarm-lagrange.h5", "w") as fw:
-            for i, particle in enumerate(self.particles):
-                fw.create_dataset(f"particle{i}", data=particle._lagrange.cpu().numpy())
-        logger.success("save particle lagrange success.")
-
-    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+    def dump_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+        if vals is None:
+            return
         for i, particle in enumerate(self.particles):
             sub_group = group.create_group(f"particle_{str(i).zfill(6)}")
-            particle.dump_checkpoint(sub_group, *args, **kwargs)
+            particle.dump_file(sub_group, vals=vals, *args, **kwargs)
 
-    def load_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
+    def load_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+        if vals is None:
+            return
         for i, particle in enumerate(self.particles):
             sub_group = group.get(f"particle_{str(i).zfill(6)}")
-            particle.load_checkpoint(sub_group, *args, **kwargs)
+            particle.load_file(sub_group, vals=vals, *args, **kwargs)
+
+    def track(self, step, particle_track: BaseKKVTable, *args, **kwargs) -> List[Dict]:
+        res = []
+        for i, particle in enumerate(self.particles):
+            _track = particle.track()
+            particle_track.set(str(step), str(i + 1), _track)
+            res.append(_track)
+        return res
 
 
-def create_particle_swarm(
-    configs: List[ParticleConfig] = [], device="cpu", *args, **kwargs
-):
+def create_particle_swarm(configs: List[ParticleConfig] = [], device="cpu", *args, **kwargs):
     return ParticleSwarm(configs=configs, device=device, *args, **kwargs)

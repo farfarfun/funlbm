@@ -1,47 +1,65 @@
+import json
 import os
-from typing import List
+import shutil
+from typing import Dict, List, Union
 
 import h5py
-from funtable.kv import SQLiteStore
-from funutil import deep_get
+from funtable.kv import BaseKVTable
+from funutil import deep_get, run_timer
 
 from funlbm.base import Worker
-from funlbm.config.base import BaseConfig, FileConfig
-from funlbm.flow import FlowConfig, FlowD3, create_flow
-from funlbm.particle import ParticleConfig, ParticleSwarm, create_particle_swarm
+from funlbm.config.base import BaseConfig
+from funlbm.file import FileConfig, FileWrap
+from funlbm.file.wrap import SaveVal
+from funlbm.flow import FlowBase, FlowConfig, create_flow
+from funlbm.particle import ParticleConfig, create_particle_swarm
 from funlbm.util import logger, set_cpu
 
 set_cpu()
 
 
 class Config(BaseConfig):
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        config_path=None,
+        dx=1.0,
+        dt=1.0,
+        max_step=10000,
+        device: str = "auto",
+        file=None,
+        flow=None,
+        particles=None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
-        self.dt: float = 1.0
-        self.dx: float = 1.0
-        self.checkpoint = None
-        self.max_step = 10000
-        self.device: str = "auto"
-        self.file_config = FileConfig()
-        self.flow_config = FlowConfig()
+        self.dt: float = dt
+        self.dx: float = dx
+        self.max_step: int = max_step
+        self.device: str = device
+        self.file_config = FileConfig(**file)
+        self.flow_config = FlowConfig(**flow)
+        self.particles: List[ParticleConfig] = [ParticleConfig(**config) for config in particles]
+        self.config_path = config_path or "./config.json"
 
-        self.particles: List[ParticleConfig] = []
+    @staticmethod
+    def load_config(path: str = "./config.json") -> "Config":
+        """从JSON文件加载配置
 
-    def _from_json(self, config_json: dict, *args, **kwargs) -> "Config":
-        self.dt = deep_get(config_json, "dt") or self.dt
-        self.dx = deep_get(config_json, "dx") or self.dx
-        self.device = deep_get(config_json, "device") or self.device
-        self.max_step = deep_get(config_json, "max_step") or self.max_step
-        self.checkpoint = deep_get(config_json, "checkpoint") or self.checkpoint
-        self.file_config = FileConfig().from_json(deep_get(config_json, "file") or {})
-        self.flow_config = FlowConfig().from_json(deep_get(config_json, "flow") or {})
-        for config in deep_get(config_json, "particles") or []:
-            self.particles.append(ParticleConfig().from_json(config_json=config))
-        return self
+        Args:
+            path: JSON配置文件路径
+
+        Returns:
+            self: 返回自身以支持链式调用
+        """
+        with open(path) as f:
+            kwargs = {"config_path": path}
+            kwargs.update(json.load(f))
+            return Config(**kwargs)
 
 
 def create_lbm_config(path="./config.json") -> Config:
-    return Config().from_file(path)
+    return Config.load_config(path)
 
 
 class LBMBase(Worker):
@@ -55,32 +73,27 @@ class LBMBase(Worker):
 
     def __init__(
         self,
-        config: Config = None,
-        flow: FlowD3 = None,
-        particle_swarm: ParticleSwarm = None,
+        config: Union[Config, str] = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.config: Config = config or create_lbm_config()
-
-        self.step = 1
-        self.flow = flow or create_flow(
+        self.config: Config = config if isinstance(config, Config) else Config.load_config()
+        kwargs["device"] = self.device
+        self.step = 0
+        self.flow: FlowBase = create_flow(
             flow_config=self.config.flow_config,
-            device=self.device,
             *args,
             **kwargs,
         )
-        self.particle_swarm = particle_swarm or create_particle_swarm(
-            self.config.particles, device=self.device
+        self.file_wrap = FileWrap(
+            self.config.file_config,
+            *args,
+            **kwargs,
         )
-
-        self.db_store = SQLiteStore("funlbm-global.db")
-        self.db_store.create_kv_table("flow")
-        self.db_store.create_kkv_table("particle")
-        self.table_flow = self.db_store.get_table("flow")
-        self.table_particle = self.db_store.get_table("particle")
+        self.particle_swarm = create_particle_swarm(self.config.particles, *args, **kwargs)
         self.run_status = True
+        self.is_save = False
         logger.info(f"Running on device: {self.device}")
 
     def run(self, max_steps: int = 1000000, *args, **kwargs) -> None:
@@ -89,59 +102,37 @@ class LBMBase(Worker):
         Args:
             max_steps: 最大步数
         """
-        self.init()
+        if self.step == 0:
+            self.init()
 
         total_steps = min(max_steps, self.config.max_step)
 
         for i in range(total_steps):
+            self.step += 1
             self.run_step(step=self.step)
-            self._log_step_info(self.step)
+
             if self.run_status is False:
                 break
             if self.step >= total_steps:
                 break
-            self.step += 1
 
-    def _log_step_info(self, *args, **kwargs) -> None:
+    def _log_step_info(self, flow_track, particle_track, *args, **kwargs) -> None:
         """记录每一步的信息"""
+        res = f"step={self.step:6d}"
+        res += "\tf=" + ",".join([f"{i:.6f}" for i in deep_get(flow_track, "f") or []])
+        res += "\tu=" + ",".join([f"{i:.6f}" for i in deep_get(flow_track, "u") or []])
+        res += "\trho=" + ",".join([f"{i:.6f}" for i in deep_get(flow_track, "rho") or []])
+        for track in particle_track:
+            res += f"m={(deep_get(track, 'm') or 0):.2f}"
+            res += "\tcu=" + ",".join([f"{i:.6f}" for i in deep_get(track, "cu") or []])
+            res += "\tcx=" + ",".join([f"{i:.6f}" for i in deep_get(track, "cx") or []])
+            res += "\tcf=" + ",".join([f"{i:.6f}" for i in deep_get(track, "cF") or []])
+            res += "\tlF=" + ",".join([f"{i:.6f}" for i in deep_get(track, "lF") or []])
+            res += "\tcw=" + ",".join([f"{i:.6f}" for i in deep_get(track, "cw") or []])
+            res += "\tcenter=" + ",".join([f"{i:.6f}" for i in deep_get(track, "coord", "center")] or [])
+            res += "\tangle=" + ",".join([f"{i:.6f}" for i in deep_get(track, "coord", "angle")] or [])
 
-        self.table_flow.set(str(self.step), self.flow.to_json())
-        for i, particle in enumerate(self.particle_swarm.particles):
-            self.table_particle.set(str(self.step), str(i + 1), particle.to_json())
-
-        info = [
-            f"step={self.step:6d}",
-            "f="
-            + ",".join(
-                [
-                    f"{i:.6f}"
-                    for i in [self.flow.f.min(), self.flow.f.mean(), self.flow.f.max()]
-                ]
-            ),
-            "u="
-            + ",".join(
-                [
-                    f"{i:.6f}"
-                    for i in [self.flow.u.min(), self.flow.u.mean(), self.flow.u.max()]
-                ]
-            ),
-            "rho="
-            + ",".join(
-                [
-                    f"{i:.6f}"
-                    for i in [
-                        self.flow.rou.min(),
-                        self.flow.rou.mean(),
-                        self.flow.rou.max(),
-                    ]
-                ]
-            ),
-        ]
-
-        for particle in self.particle_swarm.particles:
-            info.append(particle.to_str(self.step))
-
-        logger.info("\t".join(info))
+        logger.info(res)
 
     def run_step(self, *args, **kwargs) -> None:
         """执行单步模拟"""
@@ -154,7 +145,7 @@ class LBMBase(Worker):
         # 颗粒更新
         self._update_particles()
 
-        self.save(self.step)
+        self.save()
 
     def _compute_flow(self) -> None:
         """计算流场"""
@@ -162,6 +153,7 @@ class LBMBase(Worker):
         self.flow.f_stream()
         self.flow.update_u_rou(step=self.step)
 
+    @run_timer
     def _handle_immersed_boundary(self) -> None:
         """处理浸没边界"""
         self.flow_to_lagrange()
@@ -174,14 +166,13 @@ class LBMBase(Worker):
         self.flow.cul_equ2()
         self.flow.update_u_rou()
 
+    @run_timer
     def _update_particles(self) -> None:
         """更新粒子状态"""
         self.particle_swarm.update(dt=self.config.dt)
 
     def init(self, *args, **kwargs) -> None:
         self._init()
-        if self.config.checkpoint is not None:
-            self.load_checkpoint(checkpoint_path=self.config.checkpoint)
 
     def _init(self, *args, **kwargs):
         raise NotImplementedError()
@@ -195,39 +186,79 @@ class LBMBase(Worker):
     def particle_to_wall(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def save(self, step=10, *args, **kwargs):
-        if step % self.config.file_config.per_steps > 0:
+    def track(self, flow_track: BaseKVTable, *args, **kwargs) -> Dict:
+        _track = self.flow.track()
+        flow_track.set(str(self.step), _track)
+        return _track
+
+    @run_timer
+    def save(self, *args, **kwargs):
+        self._log_step_info(
+            self.track(self.file_wrap.track_flow),
+            self.particle_swarm.track(self.step, self.file_wrap.track_particle),
+        )
+        self.dump_file(
+            param=self.file_wrap.config.custom,
+            checkpoint_path=self.file_wrap.custom_path(self.step),
+            *args,
+            **kwargs,
+        )
+        self.dump_file(
+            param=self.file_wrap.config.checkpoint,
+            checkpoint_path=self.file_wrap.checkpoint_path(self.step),
+            *args,
+            **kwargs,
+        )
+        if self.is_save is False:
+            self.is_save = True
+            if self.config.config_path != self.file_wrap.config_path:
+                shutil.copy(self.config.config_path, self.file_wrap.config_path)
+            self.dump_file(
+                param=self.file_wrap.config.constant,
+                checkpoint_path=self.file_wrap.constant_path(self.step),
+                *args,
+                **kwargs,
+            )
+
+    def load_checkpoint(self, checkpoint_dir="./data", *args, **kwargs):
+        if checkpoint_dir is None or not os.path.exists(checkpoint_dir):
+            logger.error(f"checkpoint dir {checkpoint_dir} not exists")
             return
-        filepath = f"{self.config.file_config.checkpoint_path}/checkpoint_{str(step).zfill(10)}.h5"
-        with h5py.File(filepath, "w") as fw:
-            self.dump_checkpoint(fw)
-
-    def dump_checkpoint(self, group: h5py.Group = None, *args, **kwargs):
-        group.create_dataset("step", data=[self.step])
-        self.flow.dump_checkpoint(group.create_group("flow"), *args, **kwargs)
-        self.particle_swarm.dump_checkpoint(
-            group=group.create_group("particle"), *args, **kwargs
+        file_wrap = FileWrap(config=FileConfig(cache_dir=checkpoint_dir))
+        self.load_file(param=self.file_wrap.config.constant, file_path=file_wrap.constant_path())
+        self.load_file(
+            param=self.file_wrap.config.checkpoint,
+            file_path=file_wrap.lasted_checkpoint_path(),
         )
 
-    def load_checkpoint(
-        self, checkpoint_path=None, group: h5py.Group = None, *args, **kwargs
-    ):
-        if group is None:
-            if checkpoint_path is not None and os.path.exists(checkpoint_path):
-                group = h5py.File(checkpoint_path, "r")
-            else:
-                logger.error(
-                    "load failed, checkpoint_path and group cannot be both None."
-                )
-                return
+    def dump_file(self, param: SaveVal = None, checkpoint_path=None, *args, **kwargs):
+        if param is None or checkpoint_path is None:
+            return
+
+        if self.step % param.per_step > 0:
+            return
+
+        with h5py.File(checkpoint_path, "w") as group:
+            group.create_dataset("step", data=[self.step])
+            self.flow.dump_file(group.create_group("flow"), vals=param.flow_val, *args, **kwargs)
+            self.particle_swarm.dump_file(
+                group=group.create_group("particle"),
+                vals=param.particle_val,
+                *args,
+                **kwargs,
+            )
+        logger.success(f"save checkpoint success, step={self.step},path={checkpoint_path}")
+
+    def load_file(self, param: SaveVal = None, file_path=None, *args, **kwargs):
+        if param is None or file_path is None:
+            logger.error("load failed, param and checkpoint_path cannot be both None.")
+            return
+        if file_path is not None and os.path.exists(file_path):
+            group = h5py.File(file_path, "r")
+        else:
+            logger.error("load failed, checkpoint_path and group cannot be both None.")
+            return
         self.step = group["step"][0]
-        self.flow.load_checkpoint(group.get("flow"), *args, **kwargs)
-        self.particle_swarm.load_checkpoint(
-            group=group.get("particle"), *args, **kwargs
-        )
-
-
-
-
-
-
+        self.flow.load_file(group.get("flow"), vals=param.flow_val, *args, **kwargs)
+        self.particle_swarm.load_file(group=group.get("particle"), vals=param.particle_val, *args, **kwargs)
+        logger.success(f"load checkpoint success, step={self.step},path={file_path}")

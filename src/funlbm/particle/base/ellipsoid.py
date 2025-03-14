@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from scipy.optimize import fsolve
 
-from .base import Particle, ParticleConfig
+from funlbm.particle.base.base import Particle, ParticleConfig
 
 
 def find_intersection(point1, point2, cul_value):
@@ -28,9 +28,7 @@ def find_intersection(point1, point2, cul_value):
     return np.array([x, y, z])
 
 
-def generate_uniform_points_on_ellipsoid(
-    xl, yl, zl, xr, yr, zr, cul_value, dx=0.5, *args, **kwargs
-):
+def generate_uniform_points_on_ellipsoid(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5, *args, **kwargs):
     """
     在椭球表面上生成均匀分布的点。
 
@@ -82,43 +80,35 @@ def generate_uniform_points_on_ellipsoid(
                                 # 找到交点
                                 point1 = np.array(vertices[idx1])
                                 point2 = np.array(vertices[idx2])
-                                intersection = find_intersection(
-                                    point1, point2, cul_value
-                                )
+                                intersection = find_intersection(point1, point2, cul_value)
                                 intersection_points.append(intersection)
 
                     # 计算切面的重心
                     if len(intersection_points) >= 3:
-                        centroid = np.mean(intersection_points, axis=0)
-                        surface_points.append(centroid)
+                        centroid1 = np.mean(intersection_points, axis=0)
+                        centroid2 = find_intersection(np.array([0.0, 0.0, 0.0]), centroid1, cul_value)
+                        surface_points.append(centroid2)
 
     return np.array(surface_points)
 
 
 class Ellipsoid(Particle):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, ra=None, rb=None, rc=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ra, self.rb, self.rc = (
-            self.config.get("a") or 10,
-            self.config.get("b") or 10,
-            self.config.get("c") or 10,
-        )
+        self.ra = ra or self.config.get("a") or 20
+        self.rb = rb or self.config.get("b") or 10
+        self.rc = rc or self.config.get("c") or 10
 
     def _init(self, dx=1, *args, **kwargs):
-        xl, yl, zl = -self.ra - 2 * dx, -self.rb - 2 * dx, -self.rc - 2 * dx
-        xr, yr, zr = self.ra + 2 * dx, self.rb + 2 * dx, self.rc + 2 * dx
         self._lagrange = torch.tensor(
             generate_uniform_points_on_ellipsoid(
-                xl,
-                yl,
-                zl,
-                xr,
-                yr,
-                zr,
-                cul_value=lambda X, Y, Z: X**2 / self.ra**2
-                + Y**2 / self.rb**2
-                + Z**2 / self.rc**2
-                - 1,
+                -self.ra - 2 * dx,
+                -self.rb - 2 * dx,
+                -self.rc - 2 * dx,
+                self.ra + 2 * dx,
+                self.rb + 2 * dx,
+                self.rc + 2 * dx,
+                cul_value=lambda X, Y, Z: X**2 / self.ra**2 + Y**2 / self.rb**2 + Z**2 / self.rc**2 - 1,
                 dx=dx,
             ),
             device=self.device,
@@ -135,12 +125,14 @@ class Ellipsoid(Particle):
             dtype=torch.float32,
         )
         self.I = torch.tensor(
-            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb])
-            * self.mass.to("cpu").numpy()
-            / 5.0,
+            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb]) * self.mass.to("cpu").numpy() / 5.0,
             device=self.device,
             dtype=torch.float32,
         )
+        self.lu_s = torch.tensor(self.compute_vector(), device=self.device, dtype=torch.float32)
+
+    def compute_vector(self) -> np.array:
+        raise NotImplementedError
 
 
 def example():
@@ -148,6 +140,6 @@ def example():
     ellipsoid.init()
     ellipsoid.update()
 
-    print(ellipsoid.lx)
     print("#####")
     print(ellipsoid.lx)
+    print(ellipsoid.lu_s)

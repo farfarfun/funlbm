@@ -43,21 +43,18 @@ class Worker:
         self.device = device_detect(device)
         logger.info(f"init {type(self).__name__} with device={self.device}")
 
-    def dump_checkpoint(self, group: h5py.Group = None, all=False, *args, **kwargs):
+    def dump_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
         pass
 
-    def load_checkpoint(self, group: h5py.Group = None, all=False, *args, **kwargs):
+    def load_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
         pass
 
-    def dupmp_dataset(
-        self, group: h5py.Group, name: str, data, all=False, *args, **kwargs
-    ):
-        group.create_dataset(
-            name, data=data.cpu().numpy(), compression="gzip", compression_opts=9
-        )
-        logger.success(f"dump {name} success.")
+    def dump_dataset(self, group: h5py.Group, name: str, data, *args, **kwargs):
+        group.create_dataset(name, data=data.cpu().numpy(), compression="gzip", compression_opts=9)
+        logger.debug(f"dump {name} success.")
+        # logger.success(f"dump {name} success.")
 
-    def load_dataset(self, group: h5py.Group, name, all=False, *args, **kwargs):
-        data = torch.Tensor(group.get(name)[:], device=self.device, dtype=torch.float32)
+    def load_dataset(self, group: h5py.Group, name, *args, **kwargs):
+        data = torch.tensor(group.get(name)[:], device=self.device, dtype=torch.float32)
         logger.success(f"load {name} success.")
         return data

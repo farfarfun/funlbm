@@ -1,5 +1,4 @@
 import json
-import os
 from enum import Enum
 from typing import Any, Dict, Optional, Union
 
@@ -114,20 +113,14 @@ class Boundary(BaseConfig):
         poiseuille: 泊肃叶流配置
     """
 
-    def __init__(
-        self, condition: BoundaryCondition = BoundaryCondition.WALL, *args, **kwargs
-    ) -> None:
+    def __init__(self, code="WALL", poiseuille=None, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.condition: BoundaryCondition = condition
-        self.poiseuille: Optional[Any] = None
+        self.condition: BoundaryCondition = BoundaryCondition.find(code)
+        self.poiseuille: Optional[Any] = poiseuille
 
     def is_condition(self, condition: BoundaryCondition) -> bool:
         """检查是否为指定边界条件"""
         return self.condition == condition
-
-    def _from_json(self, config_json: Dict[str, Any], **kwargs) -> None:
-        self.condition = BoundaryCondition.find(deep_get(config_json, "code") or "WALL")
-        self.poiseuille = deep_get(config_json, "poiseuille")
 
 
 class BoundaryConfig(BaseConfig):
@@ -142,54 +135,21 @@ class BoundaryConfig(BaseConfig):
     - top: 顶边界
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        input=None,
+        output=None,
+        back=None,
+        forward=None,
+        bottom=None,
+        top=None,
+        *args,
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.input = Boundary(BoundaryCondition.WALL)
-        self.output = Boundary(BoundaryCondition.WALL)
-        self.back = Boundary(BoundaryCondition.WALL)
-        self.forward = Boundary(BoundaryCondition.WALL)
-        self.bottom = Boundary(BoundaryCondition.WALL)
-        self.top = Boundary(BoundaryCondition.WALL)
-
-    def _from_json(self, config_json: Dict[str, Any], **kwargs) -> None:
-        for boundary in ["input", "output", "back", "forward", "bottom", "top"]:
-            getattr(self, boundary).from_json(deep_get(config_json, boundary) or {})
-
-
-class FileConfig(BaseConfig):
-    """文件系统配置类
-
-    属性:
-        cache_dir: 缓存目录路径
-        per_steps: 每隔多少步保存一次
-    """
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.cache_dir: str = "./data"
-        self.per_steps: int = 100
-
-    @property
-    def vtk_path(self) -> str:
-        """获取VTK输出目录路径"""
-        path = os.path.join(self.cache_dir, "vtk")
-        os.makedirs(path, exist_ok=True)
-        return path
-
-    @property
-    def tecplot_path(self) -> str:
-        """获取VTK输出目录路径"""
-        path = os.path.join(self.cache_dir, "tecplot")
-        os.makedirs(path, exist_ok=True)
-        return path
-
-    @property
-    def checkpoint_path(self) -> str:
-        """获取VTK输出目录路径"""
-        path = os.path.join(self.cache_dir, "checkpoint")
-        os.makedirs(path, exist_ok=True)
-        return path
-
-    def _from_json(self, config_json: Dict[str, Any], **kwargs) -> None:
-        self.cache_dir = deep_get(config_json, "cache_dir") or self.cache_dir
-        self.per_steps = deep_get(config_json, "per_steps") or self.per_steps
+        self.input = Boundary(**input)
+        self.output = Boundary(**output)
+        self.back = Boundary(**back)
+        self.forward = Boundary(**forward or {})
+        self.bottom = Boundary(**bottom or {})
+        self.top = Boundary(**top or {})

@@ -1,8 +1,8 @@
 from typing import List, Optional, Union
 
+import h5py
 import numpy as np
 import torch
-from funutil import deep_get
 from scipy.spatial.transform import Rotation as R
 
 from funlbm.base import Worker
@@ -21,6 +21,7 @@ class CoordConfig(BaseConfig):
 
     def __init__(
         self,
+        center=None,
         alpha: float = np.pi / 2,
         beta: float = 0,
         gamma: float = 0,
@@ -28,19 +29,8 @@ class CoordConfig(BaseConfig):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.center: List[float] = [0, 0, 0]  # 坐标系中心点
+        self.center: List[float] = center or [0, 0, 0]  # 坐标系中心点
         self.alpha, self.beta, self.gamma = alpha, beta, gamma  # 三个旋转角度
-
-    def _from_json(self, config_json: dict, *args, **kwargs) -> None:
-        """从JSON加载配置
-
-        Args:
-            config_json: JSON配置字典
-        """
-        self.center = deep_get(config_json, "center") or self.center
-        self.alpha = deep_get(config_json, "alpha") or self.alpha
-        self.beta = deep_get(config_json, "beta") or self.beta
-        self.gamma = deep_get(config_json, "gamma") or self.gamma
 
 
 class Coordinate(Worker):
@@ -60,9 +50,7 @@ class Coordinate(Worker):
     def __init__(self, config: Optional[CoordConfig] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         config = config or CoordConfig()
-        self.center = torch.tensor(
-            config.center, device=self.device, dtype=torch.float32
-        )
+        self.center = torch.tensor(config.center, device=self.device, dtype=torch.float32)
         self.angle = torch.tensor(
             [config.alpha, config.beta, config.gamma],
             device=self.device,
@@ -70,9 +58,7 @@ class Coordinate(Worker):
         )
         self.rotation = R.from_rotvec(self.angle.cpu().numpy())
 
-    def cul_point(
-        self, points: Union[List[float], np.ndarray, torch.Tensor]
-    ) -> torch.Tensor:
+    def cul_point(self, points: Union[List[float], np.ndarray, torch.Tensor]) -> torch.Tensor:
         """计算点在旋转和平移后的新位置
 
         Args:
@@ -86,12 +72,7 @@ class Coordinate(Worker):
         elif isinstance(points, torch.Tensor):
             points = points.cpu().numpy()
 
-        return (
-            torch.tensor(
-                self.rotation.apply(points), device=self.device, dtype=torch.float32
-            )
-            + self.center
-        )
+        return torch.tensor(self.rotation.apply(points), device=self.device, dtype=torch.float32) + self.center
 
     def update(self, center: torch.Tensor, w: torch.Tensor) -> None:
         """更新旋转角度并重新计算旋转矩阵
@@ -107,19 +88,29 @@ class Coordinate(Worker):
         self.angle += w
         self.rotation = R.from_rotvec(self.angle.cpu().numpy())
 
-    def to_str(self):
-        return (
-            "center="
-            + ",".join([f"{i:.6f}" for i in self.center])
-            + "\tangle="
-            + ",".join([f"{i:.6f}" for i in self.angle])
-        )
-
     def to_json(self):
         return {
             "center": tensor_format(self.center),
             "angle": tensor_format(self.angle),
         }
+
+    def dump_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+        if group is None:
+            return
+        vals = vals or ["center", "angle"]
+        if "center" in vals:
+            self.dump_dataset(group, "center", self.center)
+        if "angle" in vals:
+            self.dump_dataset(group, "angle", self.angle)
+
+    def load_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+        if group is None:
+            return
+        vals = vals or group.keys()
+        if "center" in vals:
+            self.center = self.load_dataset(group, "center")
+        if "angle" in vals:
+            self.angle = self.load_dataset(group, "angle")
 
 
 def example():
