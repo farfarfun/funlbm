@@ -2,3 +2,15 @@
 2025-04-13 15:03:44.061 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
 2025-04-13 15:03:56.845 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
 2025-04-13 15:03:59.532 |ERROR   | funbuild.core.core : core:  35 | funbuild | - aigc_commit_message with error:litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: DeepseekException - {"error":{"message":"This model's maximum context length is 65536 tokens. However, you requested 102886 tokens (102886 in the messages, 0 in the completion). Please reduce the length of the messages or completion.","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}
+2025-04-13 15:40:32.789 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-13 15:40:32.790 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-13 15:40:41.403 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-13 15:40:55.943 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+release: 更新版本至1.2.5并优化粒子速度计算
+
+- 更新pyproject.toml中的版本号至1.2.5
+- 在spheroid.py中重构表面速度计算公式
+  - 引入tau0变量简化计算
+  - 添加B1常量定义
+  - 增加理想游动速度的日志输出
+- 更新日志文件记录新的构建和推送操作

@@ -44,14 +44,18 @@ class Spheroid(Ellipsoid):
                 np.sqrt(1 - xi**2),
             ]
         )
+        tau0 = self.rb / (sqrt(self.ra**2 - self.rb**2))
 
+        B1 = self.config.get("B1") or 0.00225
         # 表面速度公式
         size = (
-            -(self.config.get("B1") or 0.00225)
-            * tau
+            -B1
+            * tau0
             * np.sqrt(1 - xi**2)
-            * np.sqrt(tau**2 - xi**2)
+            * np.sqrt(tau0**2 - xi**2)
             * (1 + (self.config.get("beta") or 1) * xi)
             * e_xi
         )
+        U0 = B1 * tau0 * (tau0 - (tau0**2 - 1) * np.sinh(tau0) / np.sinh(tau0))
+        logger.warning(f"理想游动速度为:{U0}")
         return np.transpose(angle / np.linalg.norm(angle, axis=0) * size)
