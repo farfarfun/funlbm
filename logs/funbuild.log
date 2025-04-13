@@ -36,3 +36,14 @@ feat: 更新版本至1.2.6并改进日志记录
 - 修改plt_job函数，使用f-string动态生成路径
 
 这些改进增强了版本管理和路径处理的灵活性，同时完善了系统操作日志记录。
+2025-04-13 21:21:04.713 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-13 21:21:04.714 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-13 21:21:14.223 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-13 21:21:30.294 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+feat: 更新版本至1.2.8
+
+- 更新pyproject.toml中的版本号至1.2.8
+- 日志文件中添加了新的构建操作记录
+- 修正spheroid.py中的sqrt函数调用方式
+
+此次更新主要提升版本号，同时包含日志记录和代码质量改进。

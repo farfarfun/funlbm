@@ -44,7 +44,7 @@ class Spheroid(Ellipsoid):
                 np.sqrt(1 - xi**2),
             ]
         )
-        tau0 = self.rb / (sqrt(self.ra**2 - self.rb**2))
+        tau0 = self.rb / (np.sqrt(self.ra**2 - self.rb**2))
 
         B1 = self.config.get("B1") or 0.00225
         # 表面速度公式
