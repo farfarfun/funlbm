@@ -47,3 +47,14 @@ feat: 更新版本至1.2.8
 - 修正spheroid.py中的sqrt函数调用方式
 
 此次更新主要提升版本号，同时包含日志记录和代码质量改进。
+2025-04-13 23:04:40.754 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-13 23:04:40.755 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-13 23:04:49.424 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-13 23:05:04.059 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+feat: 更新版本至1.2.9
+
+- 提升项目版本号从1.2.8到1.2.9
+- 在spheroid.py中添加logger导入
+- 日志文件中记录构建、拉取和推送操作
+
+此次版本更新包含必要的依赖调整和日志记录完善。

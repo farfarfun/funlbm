@@ -1,6 +1,7 @@
 import numpy as np
 
 from .ellipsoid import Ellipsoid
+from funlbm.util import logger
 
 
 class Spheroid(Ellipsoid):
