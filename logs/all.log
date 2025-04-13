@@ -14,3 +14,14 @@ release: 更新版本至1.2.5并优化粒子速度计算
   - 添加B1常量定义
   - 增加理想游动速度的日志输出
 - 更新日志文件记录新的构建和推送操作
+2025-04-13 15:49:06.878 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-13 15:49:06.878 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-13 15:49:14.806 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-13 15:49:28.060 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+feat: 更新版本至1.2.6并改进日志记录
+
+- 将项目版本从1.2.5升级到1.2.6
+- 在日志文件中记录构建、拉取和推送操作
+- 修改plt_job函数，使用参数化路径代替硬编码路径
+
+这些改进增强了系统的可维护性和日志追踪能力。
