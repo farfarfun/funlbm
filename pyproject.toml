@@ -1,16 +1,33 @@
 [project]
 name = "funlbm"
-version = "1.2.3"
+version = "1.2.4"
 description = "funlbm"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [ "click>=8.1.8", "funtable>=1.0.25", "funtecplot>=1.0.1", "funutil>=1.0.14", "funvtk>=1.0.9", "h5py>=3.13.0", "scipy>=1.13.1", "torch>=2.2.0", "transforms3d>=0.4.2",]
 [[project.authors]]
-name = "niuliangtao"
+name = "牛哥"
+email = "niuliangtao@qq.com"
+
+[[project.authors]]
+name = "farfarfun"
+email = "farfarfun@qq.com"
+
+[[project.maintainers]]
+name = "牛哥"
+email = "niuliangtao@qq.com"
+
+[[project.maintainers]]
+name = "farfarfun"
 email = "farfarfun@qq.com"
 
 [project.scripts]
 funlbm = "funlbm.server.script:funlbm"
+
+[project.urls]
+Organization = "https://github.com/farfarfun"
+Repository = "https://github.com/farfarfun/funlbm"
+Releases = "https://github.com/farfarfun/funlbm/releases"
 
 [tool.setuptools]
 license-files = []
