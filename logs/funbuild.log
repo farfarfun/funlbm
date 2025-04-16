@@ -1,60 +1,14 @@
-2025-04-13 15:03:44.056 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-13 15:03:44.061 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-13 15:03:56.845 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-13 15:03:59.532 |ERROR   | funbuild.core.core : core:  35 | funbuild | - aigc_commit_message with error:litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: DeepseekException - {"error":{"message":"This model's maximum context length is 65536 tokens. However, you requested 102886 tokens (102886 in the messages, 0 in the completion). Please reduce the length of the messages or completion.","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}
-2025-04-13 15:40:32.789 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-13 15:40:32.790 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-13 15:40:41.403 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-13 15:40:55.943 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-release: 更新版本至1.2.5并优化粒子速度计算
+2025-04-16 11:44:00.299 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-16 11:44:00.303 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-16 11:44:09.750 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-16 11:44:26.634 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+feat: 升级至1.2.10版本并优化粒子计算
 
-- 更新pyproject.toml中的版本号至1.2.5
-- 在spheroid.py中重构表面速度计算公式
-  - 引入tau0变量简化计算
-  - 添加B1常量定义
-  - 增加理想游动速度的日志输出
-- 更新日志文件记录新的构建和推送操作
-2025-04-13 15:49:06.878 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-13 15:49:06.878 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-13 15:49:14.806 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-13 15:49:28.060 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-feat: 更新版本至1.2.6并改进日志记录
+- 更新pyproject.toml中的版本号至1.2.10
+- 清理并更新日志文件，记录最新构建操作
+- 重构spheroid.py中的表面速度计算逻辑
+  - 添加B1变量的零值检查
+  - 调整模块导入顺序
+  - 优化表面速度计算公式
 
-- 将项目版本从1.2.5升级到1.2.6
-- 在日志文件中记录构建、拉取和推送操作
-- 修改plt_job函数，使用参数化路径代替硬编码路径
-
-这些改进增强了系统的可维护性和日志追踪能力。
-2025-04-13 15:53:04.604 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-13 15:53:04.604 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-13 15:53:13.028 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-13 15:53:27.812 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-功能：升级至1.2.7版本并改进路径处理
-
-- 将项目版本从1.2.6升级到1.2.7
-- 在日志文件中记录构建、拉取和推送操作
-- 修改plt_job函数，使用f-string动态生成路径
-
-这些改进增强了版本管理和路径处理的灵活性，同时完善了系统操作日志记录。
-2025-04-13 21:21:04.713 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-13 21:21:04.714 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-13 21:21:14.223 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-13 21:21:30.294 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-feat: 更新版本至1.2.8
-
-- 更新pyproject.toml中的版本号至1.2.8
-- 日志文件中添加了新的构建操作记录
-- 修正spheroid.py中的sqrt函数调用方式
-
-此次更新主要提升版本号，同时包含日志记录和代码质量改进。
-2025-04-13 23:04:40.754 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-13 23:04:40.755 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-13 23:04:49.424 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-13 23:05:04.059 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-feat: 更新版本至1.2.9
-
-- 提升项目版本号从1.2.8到1.2.9
-- 在spheroid.py中添加logger导入
-- 日志文件中记录构建、拉取和推送操作
-
-此次版本更新包含必要的依赖调整和日志记录完善。
+此次更新包含版本升级和粒子计算优化，提高了代码健壮性。

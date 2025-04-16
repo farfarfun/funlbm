@@ -1,7 +1,8 @@
 import numpy as np
 
-from .ellipsoid import Ellipsoid
 from funlbm.util import logger
+
+from .ellipsoid import Ellipsoid
 
 
 class Spheroid(Ellipsoid):
@@ -13,6 +14,10 @@ class Spheroid(Ellipsoid):
 
     def compute_vector(self) -> np.array:
         self.update()
+        B1 = self.config.get("B1") or 0.00225
+        if B1 == 0.0:
+            return 0
+
         lx = self._lagrange.cpu().numpy()
         x, y, z = lx[:, 0], lx[:, 1], lx[:, 2]
 
@@ -37,6 +42,7 @@ class Spheroid(Ellipsoid):
         """
         计算椭球 Squirmer 的表面速度 u_s.
         """
+
         # 极角方向的单位向量 e_xi
         e_xi = np.array(
             [
@@ -47,7 +53,6 @@ class Spheroid(Ellipsoid):
         )
         tau0 = self.rb / (np.sqrt(self.ra**2 - self.rb**2))
 
-        B1 = self.config.get("B1") or 0.00225
         # 表面速度公式
         size = (
             -B1
