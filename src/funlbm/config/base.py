@@ -85,6 +85,9 @@ class BaseConfig:
         self._from_json(config_json, **kwargs)
         return self
 
+    def exists(self, key: str) -> bool:
+        return key in self.expand.keys()
+
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值
 

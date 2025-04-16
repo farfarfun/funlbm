@@ -12,3 +12,17 @@ feat: 升级至1.2.10版本并优化粒子计算
   - 优化表面速度计算公式
 
 此次更新包含版本升级和粒子计算优化，提高了代码健壮性。
+2025-04-16 11:45:50.206 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-16 11:45:50.206 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-16 11:45:58.235 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-16 11:52:25.022 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-16 11:52:25.022 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-16 11:52:32.657 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-16 11:54:41.595 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+feat: 升级版本并优化粒子计算逻辑
+
+- 将项目版本从1.2.10升级至1.2.12
+- 在BaseConfig类中添加exists方法用于检查配置项是否存在
+- 优化Spheroid类中compute_vector方法的B1参数处理逻辑
+  - 当B1为None或0时返回零数组
+- 日志文件中添加了funlbm构建和推送记录

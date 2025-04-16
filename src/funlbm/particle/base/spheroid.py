@@ -14,12 +14,12 @@ class Spheroid(Ellipsoid):
 
     def compute_vector(self) -> np.array:
         self.update()
-        B1 = self.config.get("B1") or 0.00225
-        if B1 == 0.0:
-            return 0
+        B1 = self.config.get("B1")
 
         lx = self._lagrange.cpu().numpy()
         x, y, z = lx[:, 0], lx[:, 1], lx[:, 2]
+        if B1 is None or B1 == 0:
+            return np.zeros_like(lx)
 
         # numerator = (x / self.ra) - 1
         # denominator = (x**2 / self.ra**4) + (y**2 / self.rb**4) + (z**2 / self.rc**4)
