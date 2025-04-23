@@ -62,6 +62,6 @@ class Spheroid(Ellipsoid):
             * (1 + (self.config.get("beta") or 1) * xi)
             * e_xi
         )
-        U0 = B1 * tau0 * (tau0 - (tau0**2 - 1) * np.sinh(tau0) / np.sinh(tau0))
+        U0 = B1 * tau0 * (tau0 - (tau0**2 - 1) * 0.5 * np.log((tau0 + 1) / (tau0 - 1)))
         logger.warning(f"理想游动速度为:{U0}")
         return np.transpose(angle / np.linalg.norm(angle, axis=0) * size)
