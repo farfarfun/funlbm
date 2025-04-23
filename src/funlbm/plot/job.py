@@ -38,7 +38,7 @@ def trans(track, particle_id="1"):
     return df
 
 
-def plt_u(df, keys, title="折线图"):
+def plt_u(df, keys, title="折线图", total=None):
     chart = ui.echart(
         {
             "title": {"text": title},
@@ -62,14 +62,15 @@ def plt_u(df, keys, title="折线图"):
     return chart
 
 
-def plt_job(job_id="13546157", title=None):
+def plt_job(job_id="13546157", title=None, total=None):
     path = f"/Users/bingtao/data/scnet/{job_id}"
     track_path = f"{path}/data/track.db"
     particle_table = SQLiteKKVTable(db_path=track_path, table_name="particle")
     track = particle_table.list_all()
 
     df0 = trans(track)
-    df0 = df0[::100]
+    total = total or len(df0)
+    df0 = df0[:total:100]
     with ui.card():
         ui.label(title or f"任务 {job_id}").classes("text-h6 text-amber-9 q-mb-md")
         with ui.row().classes("w-full h-full"):

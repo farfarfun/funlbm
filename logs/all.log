@@ -1,11 +1,11 @@
-2025-04-21 14:18:16.456 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-21 14:18:16.461 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-21 14:18:27.143 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-21 14:18:40.694 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-chore: 更新项目版本至1.2.13并轮换日志文件
+2025-04-23 23:32:54.299 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-23 23:32:54.301 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-23 23:35:10.568 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-23 23:35:29.799 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+功能：更新项目版本并增强绘图功能
 
-- 将pyproject.toml中的版本号从1.2.12更新至1.2.13
-- 轮换并清理日志文件，保留最新的构建记录
-- 添加新的压缩日志文件记录构建操作
+- 将pyproject.toml中的版本号从1.2.13更新至1.2.14
+- 为plt_u和plt_job函数添加total参数，支持自定义数据量
+- 优化plt_job函数的数据采样逻辑，使用total参数控制
 
-此次更新为常规维护，包含版本号更新和日志管理优化。
+此次更新包含版本号变更和绘图功能增强，改进后的绘图函数可以更灵活地控制显示的数据量。
