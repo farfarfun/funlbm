@@ -20,3 +20,15 @@ fix: 优化Spheroid类计算逻辑并更新版本
 - 日志文件中记录构建操作信息
 
 此次修改主要解决了Spheroid类中参数处理不完善的问题，同时进行了常规版本更新。
+2025-04-24 21:41:53.968 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 21:41:53.968 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 21:42:03.599 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 21:42:19.280 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 优化Spheroid类计算逻辑并更新版本
+
+- 修正Spheroid类中ra和rb参数的默认值设置
+- 重构compute_vector方法中的角度计算逻辑
+- 简化表面速度计算公式
+- 更新项目版本至1.2.18
+
+此次修改主要解决了Spheroid类中参数处理不完善的问题，优化了向量计算逻辑，同时进行了常规版本更新。
