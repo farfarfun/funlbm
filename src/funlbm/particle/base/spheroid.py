@@ -14,7 +14,8 @@ class Spheroid(Ellipsoid):
 
     def compute_vector(self) -> np.array:
         self.update()
-        B1 = self.config.get("B1")
+        B1 = self.config.get("B1") or 0
+        beta = self.config.get("beta") or 0
 
         lx = self._lagrange.cpu().numpy()
         x, y, z = lx[:, 0], lx[:, 1], lx[:, 2]
@@ -24,9 +25,7 @@ class Spheroid(Ellipsoid):
         # numerator = (x / self.ra) - 1
         # denominator = (x**2 / self.ra**4) + (y**2 / self.rb**4) + (z**2 / self.rc**4)
         # scale = numerator / denominator
-        # angle = np.array([self.ra - x, -y, -z]) - scale * np.array(
-        #     [x / self.ra**2, y / self.rb**2, z / self.rc**2]
-        # )
+        # angle = np.array([self.ra - x, -y, -z]) - scale * np.array(    [x / self.ra**2, y / self.rb**2, z / self.rc**2] )
         angle = np.array([(self.ra**2 - x**2) / -np.abs(x), -y, -z])
 
         """
@@ -59,7 +58,7 @@ class Spheroid(Ellipsoid):
             * tau0
             * np.sqrt(1 - xi**2)
             * np.sqrt(tau0**2 - xi**2)
-            * (1 + (self.config.get("beta") or 1) * xi)
+            * (1 + beta * xi)
             * e_xi
         )
         U0 = B1 * tau0 * (tau0 - (tau0**2 - 1) * 0.5 * np.log((tau0 + 1) / (tau0 - 1)))

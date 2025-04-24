@@ -8,3 +8,15 @@ fix: 修正Spheroid类中tau0计算并更新版本
 - 更新项目版本号至1.2.16
 
 此次修正解决了tau0计算中的错误，同时进行了常规版本更新。
+2025-04-24 18:03:57.031 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 18:03:57.032 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 18:04:05.237 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 18:04:19.374 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 优化Spheroid类计算逻辑并更新版本
+
+- 在Spheroid类中添加beta参数的默认值处理
+- 优化tau0计算中的数学表达式
+- 更新项目版本号至1.2.17
+- 日志文件中记录构建操作信息
+
+此次修改主要解决了Spheroid类中参数处理不完善的问题，同时进行了常规版本更新。
