@@ -7,6 +7,7 @@ from .ellipsoid import Ellipsoid
 
 class Spheroid(Ellipsoid):
     """
+    长球体颗粒
     https://darkchat.yuque.com/org-wiki-darkchat-gfaase/uvmi28/wlbp0rf6bck1ppfm
     """
 
@@ -40,7 +41,9 @@ class Spheroid(Ellipsoid):
         tau0 = self.rc / (np.sqrt(self.rc**2 - self.ra**2))
 
         # 表面速度公式
-        size = -B1 * tau0 * np.sqrt(1 - xi**2) * np.sqrt(tau0**2 - xi**2) * (1 + beta * xi)
+        size = (
+            -B1 * tau0 * np.sqrt(1 - xi**2) * np.sqrt(tau0**2 - xi**2) * (1 + beta * xi)
+        )
         U0 = B1 * tau0 * (tau0 - (tau0**2 - 1) * 0.5 * np.log((tau0 + 1) / (tau0 - 1)))
         logger.warning(f"理想游动速度为:{U0}")
         return np.transpose(angle / np.linalg.norm(angle, axis=0) * size)

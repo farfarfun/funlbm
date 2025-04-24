@@ -32,3 +32,15 @@ fix: 优化Spheroid类计算逻辑并更新版本
 - 更新项目版本至1.2.18
 
 此次修改主要解决了Spheroid类中参数处理不完善的问题，优化了向量计算逻辑，同时进行了常规版本更新。
+2025-04-24 21:42:25.145 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 21:42:25.145 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 21:42:33.614 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 21:42:49.880 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+docs: 更新日志和代码注释
+
+- 在日志文件中记录build/pull/push操作
+- 更新项目版本至1.2.19
+- 为Spheroid类添加中文注释说明
+- 优化表面速度公式的代码格式以提高可读性
+
+这些变更主要是文档和代码格式的改进，不影响实际功能。
