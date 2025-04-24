@@ -27,14 +27,22 @@ class Spheroid(Ellipsoid):
         if B1 is None or B1 == 0:
             return np.zeros_like(lx)
 
-        angle = np.array([-x, -y, (self.rc**2 - z**2) / -np.abs(z)])
+        angle = np.array(
+            [
+                -x,
+                -y,
+                (self.rc**2 - z**2) / -(np.abs(z) + np.finfo(dtype=np.float32).eps),
+            ]
+        )
 
         """
         将笛卡尔坐标 (x, y, z) 转换为长球体坐标 (tau, xi, phi).
         """
-        r = np.sqrt(x**2 + y**2)
         xi = (
-            np.sqrt(r**2 + (z + self.ra) ** 2 - np.sqrt(r**2 + (z - self.ra) ** 2))
+            (
+                np.sqrt(x**2 + y**2 + (z + self.ra) ** 2)
+                - np.sqrt(x**2 + y**2 + (z - self.ra) ** 2)
+            )
             / 2
             / self.ra
         )

@@ -66,3 +66,15 @@ fix: 修正长球体坐标转换公式
 - 新公式使用更精确的数学表达式计算xi值
 
 此修正确保笛卡尔坐标到长球体坐标的转换更加准确，影响所有依赖此坐标转换的功能。
+2025-04-24 22:14:53.287 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 22:14:53.288 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 22:15:04.633 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 22:15:21.706 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 增强长球体坐标转换的数值稳定性
+
+- 在z轴分母计算中添加极小值eps避免除零错误
+- 修正xi值的计算公式，使用更精确的数学表达式
+- 改进角度计算数组的构建方式
+
+这些修改提高了坐标转换的数值稳定性，特别是在z值接近零的情况下。
+同时修正了xi值的计算公式，使其更符合数学定义。
