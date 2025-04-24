@@ -36,7 +36,7 @@ class Spheroid(Ellipsoid):
                 (self.rc**2 - z**2) / (z + np.finfo(dtype=np.float32).eps),
             ]
         )
-        angle = angle * z / np.abs(z)
+        angle = -angle * z / np.abs(z)
         angle = angle / np.linalg.norm(angle, axis=0)
 
         """
