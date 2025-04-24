@@ -28,6 +28,7 @@ class Spheroid(Ellipsoid):
             return np.zeros_like(lx)
 
         # angle = np.array([ -x, -y,(self.rc**2 - z**2) / -(np.abs(z) + np.finfo(dtype=np.float32).eps),])
+
         angle = np.array(
             [
                 -x,

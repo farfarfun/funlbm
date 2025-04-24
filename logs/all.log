@@ -111,3 +111,14 @@ fix: 修正长球体表面速度计算公式
 - 更新项目版本号至1.2.25
 
 此修改解决了长球体表面速度计算中的方向错误问题，确保粒子运动方向正确。同时更新版本号以反映代码变更。
+2025-04-24 23:35:19.759 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 23:35:19.759 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 23:35:28.311 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 23:35:44.462 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+chore: 更新版本号并添加构建日志记录
+
+- 将项目版本号从1.2.25更新至1.2.26
+- 在日志文件中记录构建、拉取和推送操作
+- 清理球体类中的注释代码
+
+这些变更为维护性更新，不影响核心功能。版本号变更反映代码库状态变化，日志记录有助于追踪构建流程。
