@@ -51,7 +51,7 @@ class Spheroid(Ellipsoid):
                 np.sqrt(1 - xi**2),
             ]
         )
-        tau0 = self.rb / (np.sqrt(self.ra**2 - self.rb**2))
+        tau0 = self.ra / (np.sqrt(self.ra**2 - self.rb**2))
 
         # 表面速度公式
         size = (

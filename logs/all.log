@@ -1,22 +1,10 @@
-2025-04-23 23:32:54.299 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-23 23:32:54.301 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-23 23:35:10.568 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-23 23:35:29.799 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-功能：更新项目版本并增强绘图功能
+2025-04-24 18:00:28.290 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 18:00:28.294 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 18:00:38.048 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 18:00:54.628 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 修正Spheroid类中tau0计算并更新版本
 
-- 将pyproject.toml中的版本号从1.2.13更新至1.2.14
-- 为plt_u和plt_job函数添加total参数，支持自定义数据量
-- 优化plt_job函数的数据采样逻辑，使用total参数控制
+- 将tau0计算从rb/sqrt(ra^2-rb^2)修正为ra/sqrt(ra^2-rb^2)
+- 更新项目版本号至1.2.16
 
-此次更新包含版本号变更和绘图功能增强，改进后的绘图函数可以更灵活地控制显示的数据量。
-2025-04-23 23:55:09.575 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-23 23:55:09.576 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-23 23:55:19.446 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-23 23:55:36.421 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-fix: 修正Spheroid类中U0计算公式
-
-- 将U0计算中的np.sinh(tau0)替换为更精确的0.5 * np.log((tau0 + 1)/(tau0 - 1))
-- 更新项目版本号至1.2.15
-- 日志中添加build/pull/push操作记录
-
-此次修正解决了U0计算中的精度问题，同时进行了常规版本更新和操作日志记录。
+此次修正解决了tau0计算中的错误，同时进行了常规版本更新。
