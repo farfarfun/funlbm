@@ -27,13 +27,16 @@ class Spheroid(Ellipsoid):
         if B1 is None or B1 == 0:
             return np.zeros_like(lx)
 
+        # angle = np.array([ -x, -y,(self.rc**2 - z**2) / -(np.abs(z) + np.finfo(dtype=np.float32).eps),])
         angle = np.array(
             [
                 -x,
                 -y,
-                (self.rc**2 - z**2) / -(np.abs(z) + np.finfo(dtype=np.float32).eps),
+                (self.rc**2 - z**2) / (z + np.finfo(dtype=np.float32).eps),
             ]
         )
+        angle = angle * z / np.abs(z)
+        angle = angle / np.linalg.norm(angle, axis=0)
 
         """
         将笛卡尔坐标 (x, y, z) 转换为长球体坐标 (tau, xi, phi).
@@ -58,4 +61,4 @@ class Spheroid(Ellipsoid):
         )
         U0 = B1 * tau0 * (tau0 - (tau0**2 - 1) * 0.5 * np.log((tau0 + 1) / (tau0 - 1)))
         logger.warning(f"理想游动速度为:{U0}")
-        return np.transpose(angle / np.linalg.norm(angle, axis=0) * size)
+        return np.transpose(angle * size)

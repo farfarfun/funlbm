@@ -100,3 +100,14 @@ fix: 修正长球体表面速度计算公式
 - 同时更新了项目版本号至1.2.24
 
 此修改提供了更灵活的数据采样控制，便于根据不同需求调整图表精度。
+2025-04-24 23:34:49.514 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 23:34:49.515 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 23:34:59.063 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 23:35:14.154 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 修正长球体表面速度计算公式
+
+- 修正角度计算中的分母符号问题
+- 添加角度归一化处理
+- 更新项目版本号至1.2.25
+
+此修改解决了长球体表面速度计算中的方向错误问题，确保粒子运动方向正确。同时更新版本号以反映代码变更。
