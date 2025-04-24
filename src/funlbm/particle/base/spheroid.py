@@ -54,7 +54,7 @@ class Spheroid(Ellipsoid):
 
         # 表面速度公式
         size = (
-            -B1 * tau0 * np.sqrt(1 - xi**2) * np.sqrt(tau0**2 - xi**2) * (1 + beta * xi)
+            -B1 * tau0 * np.sqrt(1 - xi**2) / np.sqrt(tau0**2 - xi**2) * (1 + beta * xi)
         )
         U0 = B1 * tau0 * (tau0 - (tau0**2 - 1) * 0.5 * np.log((tau0 + 1) / (tau0 - 1)))
         logger.warning(f"理想游动速度为:{U0}")

@@ -26,6 +26,7 @@ class LBMD3(LBMBase):
         # 初始化颗粒
         self.flow.cul_equ()
         self.particle_swarm.init()
+        self.particle_swarm.update()
 
     def _calculate_region_bounds(self, particle, n=2, h=1):
         """Calculate region bounds for particle interaction."""

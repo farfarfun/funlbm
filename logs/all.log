@@ -78,3 +78,14 @@ fix: 增强长球体坐标转换的数值稳定性
 
 这些修改提高了坐标转换的数值稳定性，特别是在z值接近零的情况下。
 同时修正了xi值的计算公式，使其更符合数学定义。
+2025-04-24 23:11:56.410 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 23:11:56.410 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 23:12:16.099 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 23:12:32.661 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 修正长球体表面速度计算公式
+
+- 修正Spheroid类中表面速度公式的分母部分
+- 原公式缺少分母的平方根运算，导致计算结果错误
+- 新公式为: -B1*tau0*sqrt(1-xi^2)/sqrt(tau0^2-xi^2)*(1+beta*xi)
+
+此修正确保了表面速度计算的准确性，影响粒子运动模拟结果。
