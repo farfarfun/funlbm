@@ -44,3 +44,14 @@ docs: 更新日志和代码注释
 - 优化表面速度公式的代码格式以提高可读性
 
 这些变更主要是文档和代码格式的改进，不影响实际功能。
+2025-04-24 21:45:25.405 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 21:45:25.406 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 21:45:48.028 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 21:46:04.754 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+chore: 更新项目版本号至1.2.20
+
+- 将pyproject.toml中的版本号从1.2.19更新为1.2.20
+- 修正Spheroid类中rc变量的赋值逻辑
+- 在日志文件中记录构建、拉取和推送操作
+
+此次版本更新包含小幅度功能改进和错误修正。

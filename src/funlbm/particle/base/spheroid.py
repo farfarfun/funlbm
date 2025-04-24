@@ -15,7 +15,7 @@ class Spheroid(Ellipsoid):
         super().__init__(*args, **kwargs)
         self.ra = ra or self.config.get("a") or 10
         self.rb = ra or self.config.get("a") or 10
-        self.rc = rb or self.config.get("b") or 20
+        self.rc = rb or self.config.get("c") or 20
 
     def compute_vector(self) -> np.array:
         self.update()
