@@ -32,8 +32,12 @@ class Spheroid(Ellipsoid):
         """
         将笛卡尔坐标 (x, y, z) 转换为长球体坐标 (tau, xi, phi).
         """
-
-        xi = np.arccos(z / np.sqrt(x**2 + y**2 + z**2 - self.ra**2))
+        r = np.sqrt(x**2 + y**2)
+        xi = (
+            np.sqrt(r**2 + (z + self.ra) ** 2 - np.sqrt(r**2 + (z - self.ra) ** 2))
+            / 2
+            / self.ra
+        )
 
         """
         计算椭球 Squirmer 的表面速度 u_s.

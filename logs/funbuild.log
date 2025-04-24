@@ -55,3 +55,14 @@ chore: 更新项目版本号至1.2.20
 - 在日志文件中记录构建、拉取和推送操作
 
 此次版本更新包含小幅度功能改进和错误修正。
+2025-04-24 22:00:05.272 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-24 22:00:05.273 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-24 22:00:17.691 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-24 22:00:33.923 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 修正长球体坐标转换公式
+
+- 修正Spheroid类中笛卡尔坐标转换的数学公式
+- 原公式计算xi值时存在错误，可能导致坐标转换不准确
+- 新公式使用更精确的数学表达式计算xi值
+
+此修正确保笛卡尔坐标到长球体坐标的转换更加准确，影响所有依赖此坐标转换的功能。
