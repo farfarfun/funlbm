@@ -9,3 +9,14 @@ chore: 更新版本号并维护日志文件
 - 在Particle基类中将角速度cw重置为零
 
 此次变更为常规维护更新，主要涉及日志管理和版本号递增。
+2025-04-26 07:02:58.498 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-26 07:02:58.498 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-26 07:03:07.345 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-26 07:03:20.379 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+fix: 修复粒子角速度重置问题并更新版本号
+
+- 在Particle基类中修正角速度cw的重置逻辑
+- 将项目版本号从1.2.28更新至1.2.29
+- 在日志文件中记录build/pull/push操作
+
+此次变更确保角速度重置时保持正确的张量类型，同时进行常规版本更新和操作日志记录。
