@@ -150,6 +150,7 @@ class Particle(Worker):
             torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
         )
         self.cw = self.cw + 0.1 * self.cT * dt / self.I
+        self.cw = 0
 
     @run_timer
     def update(self, *args, **kwargs):

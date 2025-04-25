@@ -1,11 +1,11 @@
-2025-04-25 00:00:07.681 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-25 00:00:07.685 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-25 00:00:19.011 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-25 00:00:34.557 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-fix: 修正长球体角度计算并更新版本
+2025-04-26 06:54:55.402 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-26 06:54:55.406 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-26 06:55:06.319 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-26 06:55:21.707 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+chore: 更新版本号并维护日志文件
 
-- 修正Spheroid类中角度计算的符号问题
-- 更新项目版本号至1.2.27
-- 轮转日志文件(压缩旧日志，创建新日志)
+- 轮转日志文件(新增压缩日志，清空当前日志内容)
+- 将项目版本号从1.2.27更新至1.2.28
+- 在Particle基类中将角速度cw重置为零
 
-此次修改解决了长球体角度计算中的方向问题，同时进行了常规版本更新和日志维护。
+此次变更为常规维护更新，主要涉及日志管理和版本号递增。
