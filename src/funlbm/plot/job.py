@@ -62,8 +62,14 @@ def plt_u(df, keys, title="折线图", total=None):
     return chart
 
 
-def plt_job(job_id="13546157", title=None, total=None, step=100):
-    path = f"/Users/bingtao/data/scnet/{job_id}"
+def plt_job(
+    job_id="13546157",
+    title=None,
+    total=None,
+    step=100,
+    home="/Users/bingtao/data/scnet",
+):
+    path = f"{home}/{job_id}"
     track_path = f"{path}/data/track.db"
     particle_table = SQLiteKKVTable(db_path=track_path, table_name="particle")
     track = particle_table.list_all()
