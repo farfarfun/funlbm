@@ -31,3 +31,15 @@ fix: 修复粒子角速度重置问题并更新版本号
 - 在日志文件中记录build/pull/push操作信息
 
 此次变更主要改进了绘图函数的可配置性，同时进行了常规版本更新和操作日志记录。
+2025-04-26 17:10:36.621 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-26 17:10:36.622 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-26 17:10:50.065 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-26 17:11:10.174 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+功能：优化椭球体表面点生成算法并添加进度条
+
+- 使用itertools.product优化三重循环结构
+- 添加tqdm进度条显示处理进度
+- 重构边处理逻辑，提高算法效率
+- 添加示例代码测试点生成功能
+
+这些改进使得椭球体表面点生成过程更高效且可视化，便于监控处理进度。

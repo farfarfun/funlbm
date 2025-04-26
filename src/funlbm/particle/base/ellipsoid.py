@@ -1,10 +1,20 @@
 import math
+from itertools import product
 
 import numpy as np
 import torch
 from scipy.optimize import fsolve
+from tqdm import tqdm
 
 from funlbm.particle.base.base import Particle, ParticleConfig
+
+list1 = [1, 2, 3]
+list2 = ["a", "b"]
+list3 = ["A", "B", "C"]
+
+combinations = list(product(list1, list2, list3))
+print(combinations)
+# 输出同上
 
 
 def find_intersection(point1, point2, cul_value):
@@ -52,49 +62,71 @@ def generate_uniform_points_on_ellipsoid(
     surface_points = []
 
     # 遍历所有方块
-    for i in range(len(x_range) - 1):
-        for j in range(len(y_range) - 1):
-            for k in range(len(z_range) - 1):
-                # 当前方块的 8 个顶点
-                x0, x1 = x_range[i], x_range[i + 1]
-                y0, y1 = y_range[j], y_range[j + 1]
-                z0, z1 = z_range[k], z_range[k + 1]
-                vertices = [
-                    (x0, y0, z0),
-                    (x0, y0, z1),
-                    (x0, y1, z0),
-                    (x0, y1, z1),
-                    (x1, y0, z0),
-                    (x1, y0, z1),
-                    (x1, y1, z0),
-                    (x1, y1, z1),
-                ]
+    ijk = product(
+        range(len(x_range) - 1), range(len(y_range) - 1), range(len(z_range) - 1)
+    )
+    pbar = tqdm(list(ijk))
+    for i, j, k in pbar:
+        x0, x1 = x_range[i], x_range[i + 1]
+        y0, y1 = y_range[j], y_range[j + 1]
+        z0, z1 = z_range[k], z_range[k + 1]
+        vertices = [
+            (x0, y0, z0),  # 0
+            (x0, y0, z1),  # 1
+            (x0, y1, z0),  # 2
+            (x0, y1, z1),  # 3
+            (x1, y0, z0),  # 4
+            (x1, y0, z1),  # 5
+            (x1, y1, z0),  # 6
+            (x1, y1, z1),  # 7
+        ]
+        edges = [
+            (0, 1),
+            (0, 2),
+            (0, 4),
+            (1, 3),
+            (1, 5),
+            (2, 3),
+            (2, 6),
+            (3, 7),
+            (4, 5),
+            (4, 6),
+            (5, 7),
+            (6, 7),
+        ]
 
-                # 判断顶点是否在椭球内部或外部
-                inside = [cul_value(x, y, z) < 0 for x, y, z in vertices]
-                if any(inside) and not all(inside):
-                    # 当前方块与椭球表面相交
-                    # 找到所有与椭球表面相交的边
-                    intersection_points = []
-                    for idx1 in range(len(vertices)):
-                        for idx2 in range(idx1 + 1, len(vertices)):
-                            if inside[idx1] != inside[idx2]:
-                                # 找到交点
-                                point1 = np.array(vertices[idx1])
-                                point2 = np.array(vertices[idx2])
-                                intersection = find_intersection(
-                                    point1, point2, cul_value
-                                )
-                                intersection_points.append(intersection)
+        # 判断顶点是否在椭球内部或外部
+        inside = [cul_value(x, y, z) < 0 for x, y, z in vertices]
+        # 如果所有顶点都在椭球外部，跳过
+        if not any(inside):
+            continue
 
-                    # 计算切面的重心
-                    if len(intersection_points) >= 3:
-                        centroid1 = np.mean(intersection_points, axis=0)
-                        centroid2 = find_intersection(
-                            np.array([0.0, 0.0, 0.0]), centroid1, cul_value
-                        )
-                        surface_points.append(centroid2)
+        # 如果所有顶点都在椭球内部，跳过
+        if all(inside):
+            continue
 
+        # 当前方块与椭球表面相交
+        # 找到所有与椭球表面相交的边
+        intersection_points = []
+
+        for idx1, idx2 in edges:
+            # 都在内部||外部，跳过
+            if inside[idx1] == inside[idx2]:
+                continue
+            # 找到交点
+            point1 = np.array(vertices[idx1])
+            point2 = np.array(vertices[idx2])
+            intersection = find_intersection(point1, point2, cul_value)
+            intersection_points.append(intersection)
+
+        # 计算切面的重心
+        if len(intersection_points) >= 3:
+            centroid1 = np.mean(intersection_points, axis=0)
+            centroid2 = find_intersection(
+                np.array([0.0, 0.0, 0.0]), centroid1, cul_value
+            )
+            surface_points.append(centroid2)
+            pbar.set_description(f"Found {len(surface_points)} points")
     return np.array(surface_points)
 
 
@@ -156,3 +188,15 @@ def example():
     print("#####")
     print(ellipsoid.lx)
     print(ellipsoid.lu_s)
+
+    a = generate_uniform_points_on_ellipsoid(
+        -11,
+        -11,
+        -11,
+        11,
+        11,
+        11,
+        cul_value=lambda x, y, z: x**2 / 10**2 + y**2 / 8**2 + z**2 / 7**2 - 1,
+    )
+    # print(a)
+    print(len(a))
