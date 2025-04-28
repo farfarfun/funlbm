@@ -1,7 +1,6 @@
 import os
 
 
-from funlbm.lbm import create_lbm
 from .base import funlbm_cli
 
 document_url = "https://darkchat.yuque.com/org-wiki-darkchat-gfaase/ul41go"
@@ -9,6 +8,8 @@ document_url = "https://darkchat.yuque.com/org-wiki-darkchat-gfaase/ul41go"
 
 @funlbm_cli.command()
 def run(config: str = "./config.json"):
+    from funlbm.lbm import create_lbm
+
     """
     运行代码
     """
