@@ -22,6 +22,5 @@ def run(config: str = "./config.json"):
     lbm = create_lbm()
     lbm.run()
 
-cli = typer.Typer(help='build tool for "fun"')
 
-    @cli.command()
+cli = typer.Typer(help='build tool for "fun"')
