@@ -24,3 +24,12 @@ chore: 更新版本号至1.2.35
 
 - 更新pyproject.toml中的项目版本号
 - 同步更新相关依赖和文档
+2025-04-28 19:55:32.682 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-28 19:55:32.683 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-28 19:55:44.686 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-28 19:55:59.071 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+chore: 更新版本号至1.2.36
+
+- 更新pyproject.toml中的项目版本号
+- 同步更新相关依赖和文档
+- 在日志文件中添加build/pull/push操作记录
