@@ -2,3 +2,13 @@
 2025-04-28 19:48:25.481 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
 2025-04-28 19:48:32.570 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
 2025-04-28 19:48:37.519 |ERROR   | funbuild.core.core : core:  35 | funbuild | - aigc_commit_message with error:litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: DeepseekException - {"error":{"message":"This model's maximum context length is 65536 tokens. However, you requested 252974 tokens (252974 in the messages, 0 in the completion). Please reduce the length of the messages or completion.","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}
+2025-04-28 19:48:43.652 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-28 19:48:43.653 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-28 19:48:49.415 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-28 19:49:01.700 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+chore: 更新版本号至1.2.33
+
+- 更新pyproject.toml中的版本号
+- 同步更新uv.lock文件中的版本号
+
+这是一个常规的版本号更新提交，不包含功能变更。
