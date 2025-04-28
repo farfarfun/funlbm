@@ -47,3 +47,17 @@ refactor: 清理代码并改进功能
 - 在日志文件中添加build/pull/push操作记录
 
 这些变更提高了代码整洁度，改进了功能实现，并更新了项目版本。
+2025-04-28 21:09:49.657 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-28 21:09:49.658 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-28 21:10:01.557 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-28 21:10:19.024 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+feat: 新增更新功能并调整依赖
+
+- 升级版本号至1.2.38
+- 移除click依赖，新增typer依赖
+- 添加update.py实现自动更新功能
+- 修正submit.py中的logger名称
+- 更新__init__.py包含新模块
+- 日志记录build/pull/push操作
+
+此次变更主要添加了自动更新功能，并优化了项目依赖关系。

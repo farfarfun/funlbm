@@ -6,7 +6,7 @@ from funbuild.shell import run_shell
 from funutil import getLogger
 from .base import funlbm_cli
 
-logger = getLogger("funbuild")
+logger = getLogger("funlbm")
 
 
 @funlbm_cli.command()
