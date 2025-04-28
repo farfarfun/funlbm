@@ -51,7 +51,7 @@ def submit():
 
     if os.path.exists("config.json"):
         logger.info("检测到config.json文件，当做funlbm任务本地运行")
-        run_shell(f"cd {task_dir} && funlbm run")
+        run_shell(f"""cd {task_dir} && nohup funlbm run > output.log 2>&1 &""")
         return
 
     logger.error("找不到需要提交的任务")

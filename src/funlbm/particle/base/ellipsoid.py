@@ -8,14 +8,6 @@ from tqdm import tqdm
 
 from funlbm.particle.base.base import Particle, ParticleConfig
 
-list1 = [1, 2, 3]
-list2 = ["a", "b"]
-list3 = ["A", "B", "C"]
-
-combinations = list(product(list1, list2, list3))
-print(combinations)
-# 输出同上
-
 
 def find_intersection(point1, point2, cul_value):
     """

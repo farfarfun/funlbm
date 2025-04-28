@@ -33,3 +33,17 @@ chore: 更新版本号至1.2.36
 - 更新pyproject.toml中的项目版本号
 - 同步更新相关依赖和文档
 - 在日志文件中添加build/pull/push操作记录
+2025-04-28 19:58:48.255 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-28 19:58:48.256 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-28 19:58:58.148 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-28 19:59:15.414 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+refactor: 清理代码并改进功能
+
+- 删除冗余的script.py文件，将功能整合到run.py中
+- 在run.py中添加函数文档字符串
+- 修改submit.py中的命令执行方式，添加nohup和日志重定向
+- 清理ellipsoid.py中的测试代码
+- 更新项目版本号至1.2.37
+- 在日志文件中添加build/pull/push操作记录
+
+这些变更提高了代码整洁度，改进了功能实现，并更新了项目版本。
