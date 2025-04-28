@@ -139,7 +139,7 @@ class Particle(Worker):
         tmp = (
             (1 - self.rou / rouf)
             * self.mass
-            * torch.tensor([gl, 0, 0], device=self.device)
+            * torch.tensor([0, 0, gl], device=self.device)
         )
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
 
