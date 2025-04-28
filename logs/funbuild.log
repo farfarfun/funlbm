@@ -1,45 +1,4 @@
-2025-04-26 06:54:55.402 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-26 06:54:55.406 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-26 06:55:06.319 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-26 06:55:21.707 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-chore: 更新版本号并维护日志文件
-
-- 轮转日志文件(新增压缩日志，清空当前日志内容)
-- 将项目版本号从1.2.27更新至1.2.28
-- 在Particle基类中将角速度cw重置为零
-
-此次变更为常规维护更新，主要涉及日志管理和版本号递增。
-2025-04-26 07:02:58.498 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-26 07:02:58.498 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-26 07:03:07.345 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-26 07:03:20.379 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-fix: 修复粒子角速度重置问题并更新版本号
-
-- 在Particle基类中修正角速度cw的重置逻辑
-- 将项目版本号从1.2.28更新至1.2.29
-- 在日志文件中记录build/pull/push操作
-
-此次变更确保角速度重置时保持正确的张量类型，同时进行常规版本更新和操作日志记录。
-2025-04-26 14:39:33.929 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-26 14:39:33.929 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-26 14:39:51.205 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-26 14:40:07.838 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-功能：改进绘图函数并更新版本
-
-- 在plt_job函数中添加home参数，提高路径配置灵活性
-- 更新项目版本号至1.2.30
-- 在日志文件中记录build/pull/push操作信息
-
-此次变更主要改进了绘图函数的可配置性，同时进行了常规版本更新和操作日志记录。
-2025-04-26 17:10:36.621 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
-2025-04-26 17:10:36.622 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
-2025-04-26 17:10:50.065 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
-2025-04-26 17:11:10.174 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
-功能：优化椭球体表面点生成算法并添加进度条
-
-- 使用itertools.product优化三重循环结构
-- 添加tqdm进度条显示处理进度
-- 重构边处理逻辑，提高算法效率
-- 添加示例代码测试点生成功能
-
-这些改进使得椭球体表面点生成过程更高效且可视化，便于监控处理进度。
+2025-04-28 19:48:25.474 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-28 19:48:25.481 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-28 19:48:32.570 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-28 19:48:37.519 |ERROR   | funbuild.core.core : core:  35 | funbuild | - aigc_commit_message with error:litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: DeepseekException - {"error":{"message":"This model's maximum context length is 65536 tokens. However, you requested 252974 tokens (252974 in the messages, 0 in the completion). Please reduce the length of the messages or completion.","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}
