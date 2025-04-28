@@ -16,3 +16,11 @@ chore: 更新版本号至1.2.33
 2025-04-28 19:49:06.469 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
 2025-04-28 19:49:17.969 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
 2025-04-28 19:49:21.078 |ERROR   | funbuild.core.core : core:  35 | funbuild | - aigc_commit_message with error:litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: DeepseekException - {"error":{"message":"This model's maximum context length is 65536 tokens. However, you requested 249518 tokens (249518 in the messages, 0 in the completion). Please reduce the length of the messages or completion.","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}
+2025-04-28 19:52:42.746 |INFO    | funbuild.core.core : core: 127 | funbuild | - funlbm build
+2025-04-28 19:52:42.747 |INFO    | funbuild.core.core : core: 106 | funbuild | - funlbm pull
+2025-04-28 19:52:51.687 |INFO    | funbuild.core.core : core: 111 | funbuild | - funlbm push
+2025-04-28 19:53:04.325 |INFO    | funbuild.core.core : core:  31 | funbuild | - [Generated commit message]
+chore: 更新版本号至1.2.35
+
+- 更新pyproject.toml中的项目版本号
+- 同步更新相关依赖和文档
