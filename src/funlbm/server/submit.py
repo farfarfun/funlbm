@@ -42,7 +42,7 @@ def submit(config="./config.json"):
         logger.info("检测到main.cpp文件，当做C++任务本地运行")
         logger.info("编译main.cpp")
         run_shell(f"cd {task_dir} && g++ main.cpp -o {task_name}-task.app")
-        logger.info("编译完成，开始执行")
+        logger.info("编译完成，开始执行。")
         run_shell(
             f"""cd {task_dir} && nohup ./{task_name}-task.app > output.log 2>&1 &"""
         )
