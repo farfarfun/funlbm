@@ -4,13 +4,14 @@ from datetime import datetime
 
 from funbuild.shell import run_shell
 from funutil import getLogger
+
 from .base import funlbm_cli
 
 logger = getLogger("funlbm")
 
 
 @funlbm_cli.command()
-def submit():
+def submit(config="./config.json"):
     task_dir = os.path.join(
         os.path.expanduser("~"), "workbench", datetime.now().strftime("%Y%m%d%H%M%S")
     )
@@ -49,7 +50,7 @@ def submit():
             fw.write(json.dumps({"task_name": task_name}, indent=2))
         return
 
-    if os.path.exists("config.json"):
+    if os.path.exists(config):
         logger.info("检测到config.json文件，当做funlbm任务本地运行")
         run_shell(f"""cd {task_dir} && nohup funlbm run > output.log 2>&1 &""")
         return
