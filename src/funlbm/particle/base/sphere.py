@@ -15,6 +15,7 @@ class Sphere(Ellipsoid):
         self.rc = self.r
 
     def _init(self, dx=1, *args, **kwargs):
+        super()._init(dx=dx, *args, **kwargs)
         xl, yl, zl = -self.r - 2 * dx, -self.r - 2 * dx, -self.r - 2 * dx
         xr, yr, zr = self.r + 2 * dx, self.r + 2 * dx, self.r + 2 * dx
         self._lagrange = torch.tensor(
@@ -35,11 +36,7 @@ class Sphere(Ellipsoid):
             device=self.device,
             dtype=torch.float32,
         )
-        self.mass = torch.tensor(
-            4.0 / 3.0 * math.pi * self.r * self.r * self.r,
-            device=self.device,
-            dtype=torch.float32,
-        )
+
         self.area = torch.tensor(
             4.0 * math.pi * self.r * self.r,
             device=self.device,

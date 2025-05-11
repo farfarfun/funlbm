@@ -9,7 +9,9 @@ from funlbm.config.base import BaseConfig
 from funlbm.particle.coord import CoordConfig, Coordinate
 from funlbm.util import tensor_format
 
+from funutil import getLogger
 
+logger = getLogger('funlbm')
 class ParticleConfig(BaseConfig):
     def __init__(self, coord=None, type="ellipsoid", *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -118,6 +120,12 @@ class Particle(Worker):
         )
         self.lrou = torch.empty((shape[0], 1), device=self.device, dtype=torch.float32)
 
+        logger.info(f"lagrange shape: {shape}")
+        logger.info(f"area is {self.area}")
+        logger.info(f"mass is {self.mass}")
+
+
+
     @run_timer
     def update_from_lar(self, dt: float, gl: float = 9.8, rouf: float = 1.0) -> None:
         """
@@ -137,9 +145,9 @@ class Particle(Worker):
             raise ValueError("Fluid density must be positive")
 
         tmp = (
-            (1 - self.rou / rouf)
-            * self.mass
-            * torch.tensor([0, 0, gl], device=self.device)
+            #(1 - rouf / self.rou)*
+            self.mass
+            * torch.tensor([0, 0, -gl], device=self.device)
         )
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
 

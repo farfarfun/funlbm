@@ -81,9 +81,10 @@ class LBMBase(Worker):
     ):
         super().__init__(*args, **kwargs)
         self.config: Config = (
-            config if isinstance(config, Config) else Config.load_config()
+            config if isinstance(config, Config) else Config.load_config(path=config)
         )
-        kwargs["device"] = self.device
+        self.device = self.config.device
+        kwargs["device"] = self.config.device
         self.step = 0
         self.flow: FlowBase = create_flow(
             flow_config=self.config.flow_config,

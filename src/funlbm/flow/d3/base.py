@@ -98,6 +98,7 @@ class FlowD3(FlowBase):
         self.p = torch.zeros_like(self.rou)
         self.f = torch.zeros([*shape, self.param.e_dim], device=self.device)
         self.f = torch.matmul(self.rou, self.param.w)
+
         self.update_u_rou()
 
     @run_timer
@@ -184,8 +185,8 @@ class FlowD3(FlowBase):
 
         # 注意：入口/出口边界的处理必须在其他边界之前，
         # 因为入口/出口边界的处理可能会影响到其他边界
-        self.f_stream_bound_input(fcopy, bound_config.input)
-        self.f_stream_bound_output(fcopy, bound_config.output)
+        self.f_stream_bound_x_start(fcopy, bound_config.input)
+        self.f_stream_bound_x_end(fcopy, bound_config.output)
 
         # 其他边界的处理顺序不重要
         self.f_stream_bound_y_start(fcopy, bound_config.back)
@@ -193,7 +194,7 @@ class FlowD3(FlowBase):
         self.f_stream_bound_z_start(fcopy, bound_config.bottom)
         self.f_stream_bound_z_end(fcopy, bound_config.top)
 
-    def f_stream_bound_input(self, fcopy: torch.Tensor, boundary: Boundary) -> None:
+    def f_stream_bound_x_start(self, fcopy: torch.Tensor, boundary: Boundary) -> None:
         index = self.param.vertex_index(0, 1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):
             self.f[:1, :, :, index] = fcopy[-1:, :, :, index]
@@ -216,7 +217,7 @@ class FlowD3(FlowBase):
         else:
             raise NotImplementedError
 
-    def f_stream_bound_output(self, fcopy: torch.Tensor, boundary: Boundary) -> None:
+    def f_stream_bound_x_end(self, fcopy: torch.Tensor, boundary: Boundary) -> None:
         # 右边
         index = self.param.vertex_index(0, -1)
         if boundary.is_condition(BoundaryCondition.PERIODICAL):

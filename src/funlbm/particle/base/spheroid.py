@@ -17,6 +17,15 @@ class Spheroid(Ellipsoid):
         self.rb = ra or self.config.get("a") or 10
         self.rc = rb or self.config.get("c") or 20
 
+    def _init(self, dx=1, *args, **kwargs):
+        super()._init(dx=dx, *args, **kwargs)
+        # e = math.sqrt(1 - self.ra**2 / self.rc**2)
+        # self.area = torch.tensor(
+        #     42.0 * math.pi * self.ra**2 * (1 + self.rc / e / self.ra * math.asin(e)),
+        #     device=self.device,
+        #     dtype=torch.float32,
+        # )
+
     def compute_vector(self) -> np.array:
         self.update()
         B1 = self.config.get("B1") or 0

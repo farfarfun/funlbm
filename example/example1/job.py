@@ -1,9 +1,8 @@
-import json
+from funlbm.plot.job import plt_job
+from nicegui import  ui
 
-from funlbm2.config import Config
-from funlbm2.lbm.base import Solver
 
-path = "./config.json"
-_config = Config().from_json(json.loads(open(path).read()))
-solver = Solver(_config)
-solver.run()
+plt_job(13995570,home='/Users/bingtao/data/scnet/workbench/')
+plt_job(13771817,home='/Users/bingtao/data/scnet/workbench/')
+
+ui.run()

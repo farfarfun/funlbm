@@ -7,7 +7,9 @@ from scipy.optimize import fsolve
 from tqdm import tqdm
 
 from funlbm.particle.base.base import Particle, ParticleConfig
+from funutil import getLogger
 
+logger = getLogger('funlbm')
 
 def find_intersection(point1, point2, cul_value):
     """
@@ -129,7 +131,7 @@ class Ellipsoid(Particle):
         self.rb = rb or self.config.get("b") or 10
         self.rc = rc or self.config.get("c") or 10
 
-    def _init(self, dx=1, *args, **kwargs):
+    def _init(self, dx=0.5, *args, **kwargs):
         self._lagrange = torch.tensor(
             generate_uniform_points_on_ellipsoid(
                 -self.ra - 2 * dx,
@@ -147,13 +149,24 @@ class Ellipsoid(Particle):
             device=self.device,
             dtype=torch.float32,
         )
-        self.mass = torch.tensor(
+        self.mass = self.rou * torch.tensor(
             4.0 / 3.0 * math.pi * self.ra * self.rb * self.rc,
             device=self.device,
             dtype=torch.float32,
         )
+        p = 1.6075
         self.area = torch.tensor(
-            4.0 / 3.0 * math.pi * math.pow(self.ra * self.rb * self.rc, 2.0 / 3.0),
+            4.0
+            * math.pi
+            * (
+                (
+                    self.ra**p * self.rb**p
+                    + self.ra**p * self.rc**p
+                    + self.rb**p * self.rc**p
+                )
+                / 3
+            )
+            ** (1 / p),
             device=self.device,
             dtype=torch.float32,
         )
@@ -167,6 +180,7 @@ class Ellipsoid(Particle):
         self.lu_s = torch.tensor(
             self.compute_vector(), device=self.device, dtype=torch.float32
         )
+
 
     def compute_vector(self) -> np.array:
         raise NotImplementedError
