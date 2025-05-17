@@ -1,0 +1,66 @@
+{
+    "dx": 1,
+    "dt": 1,
+    "max_step": 1000000,
+    "device": "cpu",
+    "flow": {
+        "param_type": "D3Q19",
+        "Re": 1.5,
+        "rho": 1.0,
+        "mu": 0.047,
+        "gl": 0.000392,
+        "size": [
+            100,
+            100,
+            160
+        ],
+        "boundary": {
+            "input": {
+                "code": "WALL"
+            },
+            "output": {
+                "code": "WALL"
+            },
+            "back": {
+                "code": "WALL"
+            },
+            "forward": {
+                "code": "WALL"
+            },
+            "top": {
+                "code": "WALL"
+            },
+            "bottom": {
+                "code": "WALL"
+            }
+        }
+    },
+    "file": {
+        "cache_dir": "./data",
+        "custom": {
+            "per_step": 500
+        },
+        "checkpoint": {
+            "per_step": 2000
+        }
+    },
+    "particles": [
+        {
+            "type": "spheroid",
+            "a": 7.5,
+            "b": 7.5,
+            "c": 7.5,
+            "B1": 0,
+            "beta": 0,
+            "rou": 1.164,
+            "coord": {
+                "alpha": 0,
+                "center": [
+                    50,
+                    50,
+                    40
+                ]
+            }
+        }
+    ]
+}
