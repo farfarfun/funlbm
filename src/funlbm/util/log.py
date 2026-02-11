@@ -1,3 +1,3 @@
-from funutil import getLogger
+from funlog import getLogger
 
 logger = getLogger("funlbm")

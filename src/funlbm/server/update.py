@@ -1,5 +1,6 @@
 from funbuild.shell import run_shell
-from funutil import getLogger
+from funlog import getLogger
+
 from .base import funlbm_cli
 
 logger = getLogger("funlbm")

@@ -3,13 +3,14 @@ from itertools import product
 
 import numpy as np
 import torch
+from funlog import getLogger
 from scipy.optimize import fsolve
 from tqdm import tqdm
 
 from funlbm.particle.base.base import Particle, ParticleConfig
-from funutil import getLogger
 
-logger = getLogger('funlbm')
+logger = getLogger("funlbm")
+
 
 def find_intersection(point1, point2, cul_value):
     """
@@ -32,9 +33,7 @@ def find_intersection(point1, point2, cul_value):
     return np.array([x, y, z])
 
 
-def generate_uniform_points_on_ellipsoid(
-    xl, yl, zl, xr, yr, zr, cul_value, dx=0.5, *args, **kwargs
-):
+def generate_uniform_points_on_ellipsoid(xl, yl, zl, xr, yr, zr, cul_value, dx=0.5, *args, **kwargs):
     """
     在椭球表面上生成均匀分布的点。
 
@@ -56,9 +55,7 @@ def generate_uniform_points_on_ellipsoid(
     surface_points = []
 
     # 遍历所有方块
-    ijk = product(
-        range(len(x_range) - 1), range(len(y_range) - 1), range(len(z_range) - 1)
-    )
+    ijk = product(range(len(x_range) - 1), range(len(y_range) - 1), range(len(z_range) - 1))
     pbar = tqdm(list(ijk))
     for i, j, k in pbar:
         x0, x1 = x_range[i], x_range[i + 1]
@@ -116,9 +113,7 @@ def generate_uniform_points_on_ellipsoid(
         # 计算切面的重心
         if len(intersection_points) >= 3:
             centroid1 = np.mean(intersection_points, axis=0)
-            centroid2 = find_intersection(
-                np.array([0.0, 0.0, 0.0]), centroid1, cul_value
-            )
+            centroid2 = find_intersection(np.array([0.0, 0.0, 0.0]), centroid1, cul_value)
             surface_points.append(centroid2)
             pbar.set_description(f"Found {len(surface_points)} points")
     return np.array(surface_points)
@@ -140,10 +135,7 @@ class Ellipsoid(Particle):
                 self.ra + 2 * dx,
                 self.rb + 2 * dx,
                 self.rc + 2 * dx,
-                cul_value=lambda X, Y, Z: X**2 / self.ra**2
-                + Y**2 / self.rb**2
-                + Z**2 / self.rc**2
-                - 1,
+                cul_value=lambda X, Y, Z: X**2 / self.ra**2 + Y**2 / self.rb**2 + Z**2 / self.rc**2 - 1,
                 dx=dx,
             ),
             device=self.device,
@@ -158,29 +150,16 @@ class Ellipsoid(Particle):
         self.area = torch.tensor(
             4.0
             * math.pi
-            * (
-                (
-                    self.ra**p * self.rb**p
-                    + self.ra**p * self.rc**p
-                    + self.rb**p * self.rc**p
-                )
-                / 3
-            )
-            ** (1 / p),
+            * ((self.ra**p * self.rb**p + self.ra**p * self.rc**p + self.rb**p * self.rc**p) / 3) ** (1 / p),
             device=self.device,
             dtype=torch.float32,
         )
         self.I = torch.tensor(
-            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb])
-            * self.mass.to("cpu").numpy()
-            / 5.0,
+            np.array([self.rb * self.rc, self.ra * self.rc, self.ra * self.rb]) * self.mass.to("cpu").numpy() / 5.0,
             device=self.device,
             dtype=torch.float32,
         )
-        self.lu_s = torch.tensor(
-            self.compute_vector(), device=self.device, dtype=torch.float32
-        )
-
+        self.lu_s = torch.tensor(self.compute_vector(), device=self.device, dtype=torch.float32)
 
     def compute_vector(self) -> np.array:
         raise NotImplementedError

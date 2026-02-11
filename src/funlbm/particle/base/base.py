@@ -2,6 +2,7 @@ from typing import Dict
 
 import h5py
 import torch
+from funlog import getLogger
 from funutil import run_timer
 
 from funlbm.base import Worker
@@ -9,9 +10,9 @@ from funlbm.config.base import BaseConfig
 from funlbm.particle.coord import CoordConfig, Coordinate
 from funlbm.util import tensor_format
 
-from funutil import getLogger
+logger = getLogger("funlbm")
 
-logger = getLogger('funlbm')
+
 class ParticleConfig(BaseConfig):
     def __init__(self, coord=None, type="ellipsoid", *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,9 +49,7 @@ class Particle(Worker):
         super().__init__(*args, **kwargs)
 
         self.config: ParticleConfig = config or ParticleConfig()
-        self.coord: Coordinate = Coordinate(
-            config=self.config.coord_config, *args, **kwargs
-        )
+        self.coord: Coordinate = Coordinate(config=self.config.coord_config, *args, **kwargs)
 
         # 颗粒质量[1]
         self.mass = None
@@ -64,9 +63,7 @@ class Particle(Worker):
         self.angle = None
 
         # 质心坐标[i,j,k]
-        self.cx = torch.tensor(
-            self.config.coord_config.center, device=self.device, dtype=torch.float32
-        )
+        self.cx = torch.tensor(self.config.coord_config.center, device=self.device, dtype=torch.float32)
         # 质心半径[a,b,b]
         self.cr = 5 * torch.ones(5, device=self.device, dtype=torch.float32)
         # 质心速度[i,j,k]
@@ -78,32 +75,18 @@ class Particle(Worker):
         # 质心合外力
         self.cT = torch.zeros(3, device=self.device, dtype=torch.float32)
 
-        self._lagrange: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self._lagrange: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点的坐标[m,i,3]
-        self.lx: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
-        self.lu_s: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lx: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self.lu_s: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点上的力[m,i,3]
-        self.lF: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lF: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点的质量
-        self.lm: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lm: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点速度[m,i,3]
-        self.lu: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lu: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
         # 拉格朗日点速度[m,i,3]
-        self.lrou: torch.Tensor = torch.zeros(
-            [0], device=self.device, dtype=torch.float32
-        )
+        self.lrou: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
 
     def _init(self, dx=1, *args, **kwargs):
         raise NotImplementedError("还没实现")
@@ -115,16 +98,12 @@ class Particle(Worker):
         self.lx = torch.zeros_like(self._lagrange, dtype=torch.float32)
         self.lF = torch.zeros_like(self._lagrange, dtype=torch.float32)
         self.lu = torch.zeros_like(self._lagrange, dtype=torch.float32)
-        self.lm = torch.full(
-            (shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32
-        )
+        self.lm = torch.full((shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32)
         self.lrou = torch.empty((shape[0], 1), device=self.device, dtype=torch.float32)
 
         logger.info(f"lagrange shape: {shape}")
         logger.info(f"area is {self.area}")
         logger.info(f"mass is {self.mass}")
-
-
 
     @run_timer
     def update_from_lar(self, dt: float, gl: float = 9.8, rouf: float = 1.0) -> None:
@@ -145,18 +124,15 @@ class Particle(Worker):
             raise ValueError("Fluid density must be positive")
 
         tmp = (
-            #(1 - rouf / self.rou)*
-            self.mass
-            * torch.tensor([0, 0, -gl], device=self.device)
+            # (1 - rouf / self.rou)*
+            self.mass * torch.tensor([0, 0, -gl], device=self.device)
         )
         self.cF = torch.sum(-self.lF * self.lm, dim=0) + tmp
 
         self.cu = self.cu + self.cF / self.mass * dt
         self.cx = self.cx + self.cu * dt
 
-        self.cT = -torch.sum(
-            torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
-        )
+        self.cT = -torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0)
         self.cw = self.cw + self.cT * dt / self.I
         # TODO 这里是临时不让旋转
         # self.cw = 0 * self.cw

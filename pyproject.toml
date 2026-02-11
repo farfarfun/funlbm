@@ -1,16 +1,12 @@
 [project]
 name = "funlbm"
-version = "1.2.51"
+version = "1.2.52"
 description = "funlbm"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [ "funtable>=1.0.25", "funtecplot>=1.0.1", "funutil>=1.0.14", "funvtk>=1.0.9", "h5py>=3.13.0", "nicegui>=2.15.0", "pandas>=2.2.3", "scipy>=1.13.1", "torch>=2.2.0", "transforms3d>=0.4.2", "typer>=0.15.2",]
 [[project.authors]]
-name = "牛哥"
-email = "niuliangtao@qq.com"
-
-[[project.authors]]
-name = "farfarfun"
+name = "niuliangtao"
 email = "farfarfun@qq.com"
 
 [[project.maintainers]]
