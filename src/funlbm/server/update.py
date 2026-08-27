@@ -1,5 +1,5 @@
 from funbuild.shell import run_shell
-from funlog import getLogger
+from farlog import getLogger
 
 from .base import funlbm_cli
 

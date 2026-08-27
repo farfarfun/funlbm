@@ -11,22 +11,12 @@ Known upstream bugs discovered while writing this suite (NOT fixed here,
 per task scope -- only dependency-declaration gaps were fixed in
 pyproject.toml):
 
-1. ``funlbm.util.log`` (and therefore ``funlbm.base``, ``funlbm.flow``,
-   ``funlbm.particle``, ``funlbm.lbm``) does ``from funlog import getLogger``.
-   The public PyPI package named ``funlog`` (published by Joshua Levy) is an
-   unrelated "tiny decorators for logging function calls" library and does
-   not provide ``getLogger`` -- it is a naming collision, not the
-   farfarfun-internal logger. The real farfarfun logger with a matching
-   ``getLogger`` API is published as ``farlog`` (post nltlog->farlog
-   rename, see the org's naming-migration history). Fixing this requires a
-   source change (import from the correct package), which is out of scope
-   for this smoke-test task.
-2. ``funlbm.server.submit`` / ``funlbm.server.update`` (and therefore
+1. ``funlbm.server.submit`` / ``funlbm.server.update`` (and therefore
    ``funlbm.server`` and the ``funlbm`` CLI entry point) do
    ``from funbuild.shell import run_shell``. The currently published
    ``funbuild`` (1.6.69) has no ``shell`` submodule at all -- its API has
    drifted. This also requires a source change, out of scope here.
-3. ``funlbm.config.base.BoundaryConfig.__init__`` does
+2. ``funlbm.config.base.BoundaryConfig.__init__`` does
    ``Boundary(**input)`` / ``Boundary(**output)`` / ``Boundary(**back)``
    without an ``or {}`` fallback (unlike ``forward``/``bottom``/``top``
    a few lines below, which do have the fallback). Calling
@@ -176,17 +166,10 @@ def test_file_wrap_creates_dirs_and_paths(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Submodules that cannot be imported due to real upstream bugs (see module
-# docstring). Skipped rather than faked -- these are not smoke-testable
-# without a source fix that is out of scope for this task.
+# Submodules previously blocked by the funlog/farlog naming collision
+# (issue #153, fixed: `from funlog import getLogger` -> `from farlog import
+# getLogger`). These now import cleanly.
 # ---------------------------------------------------------------------------
-
-_FUNLOG_BUG_REASON = (
-    "无法导入：源码中 `from funlog import getLogger` 引用的 PyPI 包 'funlog' "
-    "是与 farfarfun 无关的第三方装饰器库（命名冲突），真正需要的内部日志库现已"
-    "发布为 'farlog'（nltlog->farlog 重命名后的新名字）。这是源码 bug，"
-    "非依赖声明问题，本次任务范围内未修复，仅记录。"
-)
 
 _FUNBUILD_SHELL_BUG_REASON = (
     "无法导入：源码中 `from funbuild.shell import run_shell` "
@@ -206,13 +189,10 @@ _FUNBUILD_SHELL_BUG_REASON = (
         "funlbm.lbm",
     ],
 )
-def test_modules_blocked_by_funlog_naming_collision(module_name):
-    pytest.importorskip(module_name, reason=_FUNLOG_BUG_REASON)
-    pytest.fail(
-        f"{module_name} imported successfully -- the funlog bug documented "
-        "in this test's skip reason appears to be fixed upstream; please "
-        "replace this skip with real smoke tests for this module."
-    )
+def test_modules_import_cleanly(module_name):
+    import importlib
+
+    importlib.import_module(module_name)
 
 
 def test_server_module_blocked_by_funbuild_api_drift():

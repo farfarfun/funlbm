@@ -2,7 +2,7 @@ from typing import Dict
 
 import h5py
 import torch
-from funlog import getLogger
+from farlog import getLogger
 from funutil import run_timer
 
 from funlbm.base import Worker

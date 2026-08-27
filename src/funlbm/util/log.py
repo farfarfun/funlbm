@@ -1,3 +1,3 @@
-from funlog import getLogger
+from farlog import getLogger
 
 logger = getLogger("funlbm")

@@ -3,7 +3,7 @@ from itertools import product
 
 import numpy as np
 import torch
-from funlog import getLogger
+from farlog import getLogger
 from scipy.optimize import fsolve
 from tqdm import tqdm
 
