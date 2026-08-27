@@ -1,6 +1,6 @@
 [project]
 name = "funlbm"
-version = "1.2.53"
+version = "1.2.54"
 description = "funlbm"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -24,6 +24,10 @@ funlbm = "funlbm.server:funlbm"
 Organization = "https://github.com/farfarfun"
 Repository = "https://github.com/farfarfun/funlbm"
 Releases = "https://github.com/farfarfun/funlbm/releases"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.setuptools]
 license-files = []
