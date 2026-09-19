@@ -1,10 +1,12 @@
 [project]
 name = "funlbm"
 version = "1.2.88"
-description = "funlbm"
+description = "基于 PyTorch 的三维格子玻尔兹曼方法（LBM）数值模拟库，支持流固耦合粒子仿真"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [ "funtable>=1.0.25", "funtecplot>=1.0.1", "funutil>=1.0.14", "funvtk>=1.0.9", "h5py>=3.13.0", "nicegui>=2.15.0", "pandas>=2.2.3", "scipy>=1.13.1", "torch>=2.2.0", "transforms3d>=0.4.2", "typer>=0.15.2", "funbuild>=1.0.0", "tqdm>=4.65.0", "cachebox>=4.0.0", "diskcache>=5.6.0", "farlog>=1.1.4",]
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [ "funtable>=1.0.25", "funtecplot>=1.0.1", "funutil>=1.0.14", "funvtk>=1.0.9", "h5py>=3.13.0", "nicegui>=2.15.0", "pandas>=2.2.3", "scipy>=1.13.1", "torch>=2.2.0", "transforms3d>=0.4.2", "typer>=0.15.2", "funshell>=1.0.23", "tqdm>=4.65.0", "cachebox>=4.0.0", "diskcache>=5.6.0", "farlog>=1.1.7",]
 [[project.authors]]
 name = "niuliangtao"
 email = "farfarfun@qq.com"
@@ -28,9 +30,6 @@ Releases = "https://github.com/farfarfun/funlbm/releases"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.setuptools]
-license-files = []
 
 [dependency-groups]
 dev = [ "pytest>=8.0.0",]
