@@ -1,33 +1,16 @@
-"""Lightweight smoke tests for funlbm.
+"""funlbm 冒烟测试与核心路径回归测试。
 
-funlbm is a Lattice-Boltzmann-Method (LBM) numerical simulation package built
-on numpy/scipy/torch/h5py. These tests intentionally avoid running any real
-simulation (heavy compute) and avoid touching real data files or GUI/plot
-output; they only check that the package installs correctly and that the
-handful of submodules which *can* import cleanly behave sanely on trivial
-inputs.
-
-Known upstream bugs discovered while writing this suite (NOT fixed here,
-per task scope -- only dependency-declaration gaps were fixed in
-pyproject.toml):
-
-1. ``funlbm.server.submit`` / ``funlbm.server.update`` (and therefore
-   ``funlbm.server`` and the ``funlbm`` CLI entry point) do
-   ``from funbuild.shell import run_shell``. The currently published
-   ``funbuild`` (1.6.69) has no ``shell`` submodule at all -- its API has
-   drifted. This also requires a source change, out of scope here.
-2. ``funlbm.config.base.BoundaryConfig.__init__`` does
-   ``Boundary(**input)`` / ``Boundary(**output)`` / ``Boundary(**back)``
-   without an ``or {}`` fallback (unlike ``forward``/``bottom``/``top``
-   a few lines below, which do have the fallback). Calling
-   ``BoundaryConfig()`` with all-default arguments raises ``TypeError``.
+funlbm 是基于 numpy/scipy/torch/h5py 的三维格子玻尔兹曼方法（LBM）数值模拟包。
+这些测试覆盖：包能正常安装导入、公开配置类的正常路径与边界、CLI 入口能正常工作，
+以及一个使用极小网格（6x6x6，无颗粒，单步）的端到端 LBM 求解流程，
+用来在不引入昂贵计算的前提下验证核心模拟链路（flow -> particle -> checkpoint）没有回归。
 """
 
+import json
 import subprocess
 import sys
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Basic package import
@@ -39,12 +22,29 @@ def test_import_top_level_package():
 
 
 def test_import_funlbm_config():
-    import funlbm.config  # noqa: F401
+    import funlbm.config
     import funlbm.config.base  # noqa: F401
 
 
 def test_import_funlbm_file():
     import funlbm.file  # noqa: F401
+
+
+@pytest.mark.parametrize(
+    "module_name",
+    [
+        "funlbm.util",
+        "funlbm.base",
+        "funlbm.flow",
+        "funlbm.particle",
+        "funlbm.lbm",
+        "funlbm.server",
+    ],
+)
+def test_modules_import_cleanly(module_name):
+    import importlib
+
+    importlib.import_module(module_name)
 
 
 # ---------------------------------------------------------------------------
@@ -85,8 +85,6 @@ def test_boundary_with_explicit_periodical_code():
 
 
 def test_boundary_config_with_explicit_empty_faces():
-    """BoundaryConfig works when input/output/back are passed explicitly
-    (the only way to avoid the default-args bug, see module docstring)."""
     from funlbm.config.base import BoundaryConfig
 
     cfg = BoundaryConfig(input={}, output={}, back={})
@@ -95,14 +93,18 @@ def test_boundary_config_with_explicit_empty_faces():
         assert boundary.condition.name == "WALL"
 
 
-def test_boundary_config_default_construction_bug():
-    """Documents a real bug: BoundaryConfig() with pure defaults crashes
-    because `input`/`output`/`back` are unpacked with `**` without an
-    `or {}` fallback (see module docstring, item 3). Not fixed here."""
+def test_boundary_config_default_construction():
+    """回归测试：BoundaryConfig() 全部使用默认参数时不应报错。
+
+    此前 input/output/back 在 `**` 展开时缺少 `or {}` 兜底（forward/bottom/top
+    有），传 None 会直接 TypeError。已在 funlbm.config.base 修复。
+    """
     from funlbm.config.base import BoundaryConfig
 
-    with pytest.raises(TypeError):
-        BoundaryConfig()
+    cfg = BoundaryConfig()
+    for face in ("input", "output", "back", "forward", "bottom", "top"):
+        boundary = getattr(cfg, face)
+        assert boundary.condition.name == "WALL"
 
 
 def test_base_config_json_roundtrip():
@@ -119,8 +121,6 @@ def test_base_config_json_roundtrip():
 
 
 def test_base_config_from_file(tmp_path):
-    import json
-
     from funlbm.config.base import BaseConfig
 
     config_path = tmp_path / "config.json"
@@ -128,6 +128,25 @@ def test_base_config_from_file(tmp_path):
 
     cfg = BaseConfig().from_file(str(config_path))
     assert cfg.get("foo") == "bar"
+
+
+# ---------------------------------------------------------------------------
+# funlbm.lbm.base -- Config 顶层配置的正常路径与边界（file/flow/particles 缺省）
+# ---------------------------------------------------------------------------
+
+
+def test_lbm_config_all_defaults():
+    """回归测试：Config() 全部使用默认参数时不应报错。
+
+    此前 file/flow 在 `**` 展开时没有 `or {}` 兜底，传 None 会直接 TypeError；
+    particles=None 时 `for config in particles` 也会 TypeError。均已修复。
+    """
+    from funlbm.lbm.base import Config
+
+    cfg = Config()
+    assert cfg.file_config.cache_dir == "./data"
+    assert cfg.flow_config.param_type == "D3Q19"
+    assert cfg.particles == []
 
 
 # ---------------------------------------------------------------------------
@@ -166,61 +185,65 @@ def test_file_wrap_creates_dirs_and_paths(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Submodules previously blocked by the funlog/farlog naming collision
-# (issue #153, fixed: `from funlog import getLogger` -> `from farlog import
-# getLogger`). These now import cleanly.
+# CLI 入口 -- funlbm.server (submit/update 已从 funbuild.shell 迁移到 funshell)
 # ---------------------------------------------------------------------------
-
-_FUNBUILD_SHELL_BUG_REASON = (
-    "无法导入：源码中 `from funbuild.shell import run_shell` "
-    "（server/submit.py, server/update.py）在当前已发布的 funbuild 1.6.69 中"
-    "不存在 shell 子模块，属于上游 API 漂移。这是源码 bug，非依赖声明问题，"
-    "本次任务范围内未修复，仅记录。"
-)
-
-
-@pytest.mark.parametrize(
-    "module_name",
-    [
-        "funlbm.util",
-        "funlbm.base",
-        "funlbm.flow",
-        "funlbm.particle",
-        "funlbm.lbm",
-    ],
-)
-def test_modules_import_cleanly(module_name):
-    import importlib
-
-    importlib.import_module(module_name)
-
-
-def test_server_module_blocked_by_funbuild_api_drift():
-    pytest.importorskip("funlbm.server", reason=_FUNBUILD_SHELL_BUG_REASON)
-    pytest.fail(
-        "funlbm.server imported successfully -- the funbuild.shell bug "
-        "documented in this test's skip reason appears to be fixed "
-        "upstream; please replace this skip with a real smoke test."
-    )
 
 
 def test_cli_entry_point_help():
-    """The `funlbm` console-script entry point (funlbm.server:funlbm)
-    currently cannot even start because funlbm.server fails to import
-    (see test_server_module_blocked_by_funbuild_api_drift). We invoke it
-    via `python -m funlbm.server` equivalent (the installed console
-    script) and skip with a clear reason instead of faking a pass."""
+    """funlbm 控制台脚本入口 (funlbm.server:funlbm) 应能正常启动并打印帮助。"""
     result = subprocess.run(
-        [sys.executable, "-c", "from funlbm.server import funlbm"],
+        [
+            sys.executable,
+            "-c",
+            "import sys; from funlbm.server import funlbm; sys.argv=['funlbm', '--help']; funlbm()",
+        ],
         capture_output=True,
         text=True,
+        env={"COLUMNS": "200"},
     )
-    if result.returncode != 0:
-        pytest.skip(
-            "funlbm CLI entry point cannot be imported: "
-            + _FUNBUILD_SHELL_BUG_REASON
+    assert result.returncode == 0
+    assert "run" in result.stdout
+    assert "submit" in result.stdout
+    assert "update" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# 端到端最小 LBM 求解流程（极小网格 6x6x6，无颗粒，单步），验证核心链路无回归
+# ---------------------------------------------------------------------------
+
+
+def test_lbm_end_to_end_single_step(tmp_path):
+    """用极小网格跑通 flow -> particle -> checkpoint 的完整单步流程。
+
+    网格足够小（6x6x6，无颗粒），单步耗时在毫秒级，用来在 CI 中低成本地
+    验证核心模拟链路没有被破坏，而不是像此前那样完全跳过 server/核心路径。
+    """
+    from funlbm.lbm import create_lbm
+
+    cache_dir = tmp_path / "data"
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "dx": 1.0,
+                "dt": 1.0,
+                "max_step": 1,
+                "device": "cpu",
+                "file": {
+                    "cache_dir": str(cache_dir),
+                    "custom": {"per_step": 1},
+                    "checkpoint": {"per_step": 1},
+                },
+                "flow": {"size": [6, 6, 6], "param_type": "D3Q19"},
+                "particles": [],
+            }
         )
-    pytest.fail(
-        "funlbm CLI entry point imported successfully -- please replace "
-        "this skip with a real `--help` subprocess test."
     )
+
+    lbm = create_lbm(str(config_path))
+    lbm.run(max_steps=1)
+
+    assert lbm.step == 1
+    assert (cache_dir / "checkpoint" / "checkpoint-0000000001.h5").exists()
+    assert (cache_dir / "custom" / "custom-0000000001.h5").exists()
+    assert (cache_dir / "constant.h5").exists()
