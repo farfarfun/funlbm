@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 import h5py
 from funtable.kv import BaseKKVTable
 
@@ -10,10 +8,12 @@ from .base import create_particle
 
 
 class ParticleSwarm(Worker):
-    def __init__(self, configs: List[ParticleConfig] = [], *args, **kwargs):
+    """粒子群，管理一组粒子实例的初始化、更新与持久化"""
+
+    def __init__(self, configs: list[ParticleConfig] | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.particles: List[Particle] = []
-        for config in configs:
+        self.particles: list[Particle] = []
+        for config in configs or []:
             self.particles.append(create_particle(config, device=self.device))
 
     def init(self, *args, **kwargs):
@@ -38,7 +38,7 @@ class ParticleSwarm(Worker):
             sub_group = group.get(f"particle_{str(i).zfill(6)}")
             particle.load_file(sub_group, vals=vals, *args, **kwargs)
 
-    def track(self, step, particle_track: BaseKKVTable, *args, **kwargs) -> List[Dict]:
+    def track(self, step, particle_track: BaseKKVTable, *args, **kwargs) -> list[dict]:
         res = []
         for i, particle in enumerate(self.particles):
             _track = particle.track()
@@ -48,6 +48,15 @@ class ParticleSwarm(Worker):
 
 
 def create_particle_swarm(
-    configs: List[ParticleConfig] = [], device="cpu", *args, **kwargs
-):
-    return ParticleSwarm(configs=configs, device=device, *args, **kwargs)
+    configs: list[ParticleConfig] | None = None, device="cpu", *args, **kwargs
+) -> ParticleSwarm:
+    """创建粒子群实例
+
+    Args:
+        configs: 粒子配置列表，默认为空列表
+        device: 计算设备，默认为 cpu
+
+    Returns:
+        ParticleSwarm: 初始化好的粒子群
+    """
+    return ParticleSwarm(configs=configs or [], device=device, *args, **kwargs)

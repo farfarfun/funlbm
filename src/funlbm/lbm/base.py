@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-from typing import Dict, List, Union
 
 import h5py
 from funtable.kv import BaseKVTable
@@ -37,10 +36,10 @@ class Config(BaseConfig):
         self.dx: float = dx
         self.max_step: int = max_step
         self.device: str = device
-        self.file_config = FileConfig(**file)
-        self.flow_config = FlowConfig(**flow)
-        self.particles: List[ParticleConfig] = [
-            ParticleConfig(**config) for config in particles
+        self.file_config = FileConfig(**(file or {}))
+        self.flow_config = FlowConfig(**(flow or {}))
+        self.particles: list[ParticleConfig] = [
+            ParticleConfig(**config) for config in particles or []
         ]
         self.config_path = config_path or "./config.json"
 
@@ -75,7 +74,7 @@ class LBMBase(Worker):
 
     def __init__(
         self,
-        config: Union[Config, str] = None,
+        config: Config | str | None = None,
         *args,
         **kwargs,
     ):
@@ -199,7 +198,7 @@ class LBMBase(Worker):
     def particle_to_wall(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def track(self, flow_track: BaseKVTable, *args, **kwargs) -> Dict:
+    def track(self, flow_track: BaseKVTable, *args, **kwargs) -> dict:
         _track = self.flow.track()
         flow_track.set(str(self.step), _track)
         return _track

@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from funutil import deep_get
 
@@ -27,7 +27,7 @@ class BoundaryCondition(Enum):
     FULL_DEVELOPMENT = 1600
 
     @classmethod
-    def find(cls, code: Union[int, str]) -> "BoundaryCondition":
+    def find(cls, code: int | str) -> "BoundaryCondition":
         """根据代码或名称查找边界条件
 
         Args:
@@ -51,11 +51,10 @@ class BaseConfig:
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        self.expand: Dict[str, Any] = kwargs.copy()
+        self.expand: dict[str, Any] = kwargs.copy()
 
-    def _from_json(self, config_json: Dict[str, Any], **kwargs) -> None:
+    def _from_json(self, config_json: dict[str, Any], **kwargs) -> None:
         """从JSON加载配置的内部方法"""
-        pass
 
     def from_file(self, path: str) -> "BaseConfig":
         """从JSON文件加载配置
@@ -70,7 +69,7 @@ class BaseConfig:
             self.from_json(json.load(f))
         return self
 
-    def from_json(self, config_json: Dict[str, Any], **kwargs) -> "BaseConfig":
+    def from_json(self, config_json: dict[str, Any], **kwargs) -> "BaseConfig":
         """从JSON字典加载配置
 
         Args:
@@ -100,7 +99,7 @@ class BaseConfig:
         """
         return deep_get(self.expand, key) or default
 
-    def to_json(self) -> Dict[str, Any]:
+    def to_json(self) -> dict[str, Any]:
         """转换配置为JSON字典"""
         return self.expand
 
@@ -119,7 +118,7 @@ class Boundary(BaseConfig):
     def __init__(self, code="WALL", poiseuille=None, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.condition: BoundaryCondition = BoundaryCondition.find(code)
-        self.poiseuille: Optional[Any] = poiseuille
+        self.poiseuille: Any | None = poiseuille
 
     def is_condition(self, condition: BoundaryCondition) -> bool:
         """检查是否为指定边界条件"""
@@ -150,9 +149,9 @@ class BoundaryConfig(BaseConfig):
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.input = Boundary(**input)
-        self.output = Boundary(**output)
-        self.back = Boundary(**back)
-        self.forward = Boundary(**forward or {})
-        self.bottom = Boundary(**bottom or {})
-        self.top = Boundary(**top or {})
+        self.input = Boundary(**(input or {}))
+        self.output = Boundary(**(output or {}))
+        self.back = Boundary(**(back or {}))
+        self.forward = Boundary(**(forward or {}))
+        self.bottom = Boundary(**(bottom or {}))
+        self.top = Boundary(**(top or {}))
