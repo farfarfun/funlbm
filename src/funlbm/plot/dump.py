@@ -2,9 +2,10 @@ import matplotlib
 
 matplotlib.use("TkAgg")
 
-from funlbm.lbm import LBMBase
 import matplotlib.pyplot as plt
 from scipy.spatial import ConvexHull
+
+from funlbm.lbm import LBMBase
 from funlbm.particle import Particle
 
 

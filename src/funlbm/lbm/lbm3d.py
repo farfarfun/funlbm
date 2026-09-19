@@ -16,7 +16,7 @@ class LBMD3(LBMBase):
     """
 
     def __init__(self, *args, **kwargs):
-        super(LBMD3, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _init(self):
         """初始化流场和颗粒"""

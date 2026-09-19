@@ -1,6 +1,7 @@
-import torch
 import os
 from multiprocessing import cpu_count
+
+import torch
 
 
 def set_cpu():

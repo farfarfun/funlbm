@@ -3,7 +3,7 @@ from .ellipsoid import Ellipsoid
 from .sphere import Sphere
 from .spheroid import Spheroid
 
-__all__ = ["Particle", "Particle", "create_particle", "Ellipsoid", "Sphere", "Spheroid"]
+__all__ = ["Ellipsoid", "Particle", "Sphere", "Spheroid", "create_particle"]
 
 
 def create_particle(config: ParticleConfig, device="cpu") -> Particle:

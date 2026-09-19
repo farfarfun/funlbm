@@ -1,4 +1,3 @@
-from .wrap import FileWrap
-from .wrap import FileConfig
+from .wrap import FileConfig, FileWrap
 
-__all__ = ["FileWrap", "FileConfig"]
+__all__ = ["FileConfig", "FileWrap"]

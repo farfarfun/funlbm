@@ -6,8 +6,8 @@ from .d3q27 import FlowD3Q27
 
 __all__ = [
     "FlowD3",
-    "FlowD3Q27",
-    "FlowD3Q19",
-    "FlowD3Q15",
     "FlowD3Q13",
+    "FlowD3Q15",
+    "FlowD3Q19",
+    "FlowD3Q27",
 ]

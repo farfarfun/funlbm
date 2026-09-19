@@ -1,7 +1,8 @@
 import numpy as np
-from funlbm.lbm import LBMBase
 from funtecplot.dump import PointData
 from funvtk import gridToVTK, pointsToVTK
+
+from funlbm.lbm import LBMBase
 
 
 def save(lbm: LBMBase, step=10, *args, **kwargs):

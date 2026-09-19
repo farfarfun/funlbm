@@ -26,10 +26,9 @@ class Sphere(Ellipsoid):
                 xr,
                 yr,
                 zr,
-                cul_value=lambda X, Y, Z: X**2 / self.r**2
-                + Y**2 / self.r**2
-                + Z**2 / self.r**2
-                - 1,
+                cul_value=lambda X, Y, Z: (
+                    X**2 / self.r**2 + Y**2 / self.r**2 + Z**2 / self.r**2 - 1
+                ),
                 dx=dx,
                 device=self.device,
             ),

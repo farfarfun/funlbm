@@ -1,5 +1,3 @@
-from typing import List, Optional, Union
-
 import h5py
 import numpy as np
 import torch
@@ -7,7 +5,7 @@ from scipy.spatial.transform import Rotation as R
 
 from funlbm.base import Worker
 from funlbm.config.base import BaseConfig
-from funlbm.util import tensor_format
+from funlbm.util import logger, tensor_format
 
 
 class CoordConfig(BaseConfig):
@@ -29,7 +27,7 @@ class CoordConfig(BaseConfig):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.center: List[float] = center or [0, 0, 0]  # 坐标系中心点
+        self.center: list[float] = center or [0, 0, 0]  # 坐标系中心点
         self.alpha, self.beta, self.gamma = alpha, beta, gamma  # 三个旋转角度
 
 
@@ -47,7 +45,7 @@ class Coordinate(Worker):
         config (CoordConfig): 坐标系配置对象
     """
 
-    def __init__(self, config: Optional[CoordConfig] = None, *args, **kwargs):
+    def __init__(self, config: CoordConfig | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         config = config or CoordConfig()
         self.center = torch.tensor(
@@ -61,7 +59,7 @@ class Coordinate(Worker):
         self.rotation = R.from_rotvec(self.angle.cpu().numpy())
 
     def cul_point(
-        self, points: Union[List[float], np.ndarray, torch.Tensor]
+        self, points: list[float] | np.ndarray | torch.Tensor
     ) -> torch.Tensor:
         """计算点在旋转和平移后的新位置
 
@@ -122,11 +120,11 @@ class Coordinate(Worker):
             self.angle = self.load_dataset(group, "angle")
 
 
-def example():
-    """Example usage of the Coordinate class."""
+def example() -> None:
+    """Coordinate 类的示例用法，演示如何变换一个点的坐标"""
     coord = Coordinate(CoordConfig(alpha=np.pi / 2.0, beta=0, gamma=0))
     result = coord.cul_point([1, 0, 1])
-    print(f"Transformed point: {result}")
+    logger.info(f"Transformed point: {result}")
 
 
 # example()

@@ -1,5 +1,3 @@
-from typing import Dict
-
 import h5py
 import torch
 from farlog import getLogger
@@ -49,7 +47,9 @@ class Particle(Worker):
         super().__init__(*args, **kwargs)
 
         self.config: ParticleConfig = config or ParticleConfig()
-        self.coord: Coordinate = Coordinate(config=self.config.coord_config, *args, **kwargs)
+        self.coord: Coordinate = Coordinate(
+            config=self.config.coord_config, *args, **kwargs
+        )
 
         # 颗粒质量[1]
         self.mass = None
@@ -63,7 +63,9 @@ class Particle(Worker):
         self.angle = None
 
         # 质心坐标[i,j,k]
-        self.cx = torch.tensor(self.config.coord_config.center, device=self.device, dtype=torch.float32)
+        self.cx = torch.tensor(
+            self.config.coord_config.center, device=self.device, dtype=torch.float32
+        )
         # 质心半径[a,b,b]
         self.cr = 5 * torch.ones(5, device=self.device, dtype=torch.float32)
         # 质心速度[i,j,k]
@@ -75,18 +77,32 @@ class Particle(Worker):
         # 质心合外力
         self.cT = torch.zeros(3, device=self.device, dtype=torch.float32)
 
-        self._lagrange: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self._lagrange: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点的坐标[m,i,3]
-        self.lx: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
-        self.lu_s: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self.lx: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
+        self.lu_s: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点上的力[m,i,3]
-        self.lF: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self.lF: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点的质量
-        self.lm: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self.lm: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点速度[m,i,3]
-        self.lu: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self.lu: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
         # 拉格朗日点速度[m,i,3]
-        self.lrou: torch.Tensor = torch.zeros([0], device=self.device, dtype=torch.float32)
+        self.lrou: torch.Tensor = torch.zeros(
+            [0], device=self.device, dtype=torch.float32
+        )
 
     def _init(self, dx=1, *args, **kwargs):
         raise NotImplementedError("还没实现")
@@ -98,7 +114,9 @@ class Particle(Worker):
         self.lx = torch.zeros_like(self._lagrange, dtype=torch.float32)
         self.lF = torch.zeros_like(self._lagrange, dtype=torch.float32)
         self.lu = torch.zeros_like(self._lagrange, dtype=torch.float32)
-        self.lm = torch.full((shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32)
+        self.lm = torch.full(
+            (shape[0], 1), self.area / shape[0], device=self.device, dtype=torch.float32
+        )
         self.lrou = torch.empty((shape[0], 1), device=self.device, dtype=torch.float32)
 
         logger.info(f"lagrange shape: {shape}")
@@ -132,7 +150,9 @@ class Particle(Worker):
         self.cu = self.cu + self.cF / self.mass * dt
         self.cx = self.cx + self.cu * dt
 
-        self.cT = -torch.sum(torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0)
+        self.cT = -torch.sum(
+            torch.cross(self.lx - self.cx, self.lF, dim=-1) * self.lm, dim=0
+        )
         self.cw = self.cw + self.cT * dt / self.I
         # TODO 这里是临时不让旋转
         # self.cw = 0 * self.cw
@@ -145,7 +165,7 @@ class Particle(Worker):
     def from_json(self):
         pass
 
-    def track(self, step=0, *args, **kwargs) -> Dict:
+    def track(self, step=0, *args, **kwargs) -> dict:
         return {
             "m": float(self.mass.cpu().numpy()),
             "cu": tensor_format(self.cu),

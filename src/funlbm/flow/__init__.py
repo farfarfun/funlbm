@@ -3,13 +3,13 @@ from .d3 import FlowD3, FlowD3Q13, FlowD3Q15, FlowD3Q19, FlowD3Q27
 
 __all__ = [
     "FlowBase",
-    "FlowD3",
-    "FlowD3Q19",
-    "FlowD3Q13",
     "FlowConfig",
-    "create_flow",
+    "FlowD3",
+    "FlowD3Q13",
     "FlowD3Q15",
+    "FlowD3Q19",
     "FlowD3Q27",
+    "create_flow",
 ]
 
 
@@ -38,4 +38,4 @@ def create_flow(flow_config: FlowConfig, *args, **kwargs):
     elif flow_config.param_type == "D3Q13":
         return FlowD3Q13(config=flow_config, *args, **kwargs)
     else:
-        raise ValueError("Unknown parameter type: {}".format(flow_config.param_type))
+        raise ValueError(f"Unknown parameter type: {flow_config.param_type}")

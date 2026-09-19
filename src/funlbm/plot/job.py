@@ -4,7 +4,17 @@ from funtable.kv import SQLiteKKVTable
 from nicegui import ui
 
 
-def trans(track, particle_id="1"):
+def trans(track: dict, particle_id: str = "1") -> pd.DataFrame:
+    """将 track 字典（SQLiteKKVTable 中记录的逐步颗粒状态）展开为 DataFrame。
+
+    Args:
+        track: `{step: {particle_id: {...状态字段...}}}` 结构的逐步记录。
+        particle_id: 要提取的颗粒 id。
+
+    Returns:
+        按 step 展开的 DataFrame，包含速度/位置/角速度/角度等列，
+        并附加合速度列 `u`。
+    """
     res = [
         {
             "step": step,
