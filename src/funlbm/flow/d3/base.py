@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from funutil import run_timer
-from funutil.cache import cache
+from farcache import cache
 
 from funlbm.config import Boundary, BoundaryCondition
 from funlbm.flow import FlowBase, FlowConfig

@@ -7,7 +7,8 @@ logger = getLogger("funlbm")
 
 
 @funlbm_cli.command()
-def update():
+def update() -> None:
+    """更新 funlbm 包。"""
     logger.info("开始更新")
     run_shell("pip install funlbm -U")
     logger.success("更新成功")

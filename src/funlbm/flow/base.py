@@ -3,7 +3,7 @@ import math
 import h5py
 import numpy as np
 import torch
-from funutil.cache import cache
+from farcache import cache
 from torch import Tensor
 
 from funlbm.base import Worker

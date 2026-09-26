@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-def create_flow(flow_config: FlowConfig, *args, **kwargs):
+def create_flow(flow_config: FlowConfig, *args: object, **kwargs: object) -> FlowBase:
     # return FlowD3(config=flow_config, *args, **kwargs)
 
     """解析3D模型参数

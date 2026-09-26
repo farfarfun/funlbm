@@ -11,7 +11,8 @@ logger = getLogger("funlbm")
 
 
 @funlbm_cli.command()
-def submit(config="./config.json"):
+def submit(config: str = "./config.json") -> None:
+    """提交 Slurm、C++ 或 funlbm 任务；找不到任务时以失败退出。"""
     task_dir = os.path.join(
         os.path.expanduser("~"), "workbench", datetime.now().strftime("%Y%m%d%H%M%S")
     )
@@ -55,4 +56,4 @@ def submit(config="./config.json"):
         run_shell(f"""cd {task_dir} && nohup funlbm run > output.log 2>&1 &""")
         return
 
-    logger.error("找不到需要提交的任务")
+    raise FileNotFoundError("找不到需要提交的任务")
