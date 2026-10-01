@@ -13,7 +13,7 @@ import sys
 import pytest
 
 # ---------------------------------------------------------------------------
-# Basic package import
+# 基础包导入
 # ---------------------------------------------------------------------------
 
 
@@ -63,7 +63,7 @@ def test_boundary_condition_find_by_int_and_name():
 def test_boundary_condition_find_unknown_falls_back_to_wall():
     from funlbm.config import BoundaryCondition
 
-    # Unknown code/name should not raise, defaults to WALL.
+    # 未知编码或名称不应抛出异常，而应回退到 WALL。
     assert BoundaryCondition.find("not-a-real-condition") is BoundaryCondition.WALL
     assert BoundaryCondition.find(-1) is BoundaryCondition.WALL
 
@@ -150,7 +150,7 @@ def test_lbm_config_all_defaults():
 
 
 # ---------------------------------------------------------------------------
-# funlbm.file -- FileConfig / FileWrap (real but tiny filesystem I/O)
+# funlbm.file -- FileConfig / FileWrap（少量真实文件系统操作）
 # ---------------------------------------------------------------------------
 
 
@@ -165,9 +165,7 @@ def test_file_config_defaults():
 
 
 def test_file_wrap_creates_dirs_and_paths(tmp_path):
-    """FileWrap does real (but tiny/local) filesystem + sqlite setup, so we
-    point it at pytest's tmp_path instead of mocking -- it's cheap and self
-    contained (no network, no large data)."""
+    """使用临时目录验证 FileWrap 的目录、路径和 SQLite 初始化。"""
     from funlbm.file import FileConfig, FileWrap
 
     cfg = FileConfig(cache_dir=str(tmp_path))
@@ -179,7 +177,7 @@ def test_file_wrap_creates_dirs_and_paths(tmp_path):
     assert (tmp_path / "custom").is_dir()
     assert wrap.checkpoint_path(7).endswith("checkpoint-0000000007.h5")
     assert wrap.custom_path(7).endswith("custom-0000000007.h5")
-    # No checkpoints/custom files written yet -> "latest" lookups are None.
+    # 尚未写入检查点或自定义文件时，最新路径应为空。
     assert wrap.lasted_checkpoint_path() is None
     assert wrap.lasted_custom_path() is None
 
@@ -205,6 +203,54 @@ def test_cli_entry_point_help():
     assert "run" in result.stdout
     assert "submit" in result.stdout
     assert "update" in result.stdout
+
+
+def test_submit_config_task(monkeypatch, tmp_path):
+    """存在指定配置时，submit 应复制文件并启动本地任务。"""
+    import funlbm.server.submit as submit_module
+
+    commands = []
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr("builtins.input", lambda _: "demo")
+    monkeypatch.setattr(submit_module, "run_shell", commands.append)
+    (tmp_path / "job.json").write_text("{}")
+
+    submit_module.submit("job.json")
+
+    assert len(commands) == 2
+    assert "cp -r" in commands[0]
+    assert "nohup funlbm run" in commands[1]
+
+
+def test_update_runs_upgrade_command(monkeypatch):
+    """update 应调用包升级命令。"""
+    import funlbm.server.update as update_module
+
+    commands = []
+    monkeypatch.setattr(update_module, "run_shell", commands.append)
+
+    update_module.update()
+
+    assert commands == ["pip install funlbm -U"]
+
+
+def test_submit_cli_fails_when_task_is_missing(monkeypatch, tmp_path):
+    """没有可提交任务时，submit CLI 应返回非零退出码和明确异常。"""
+    from typer.testing import CliRunner
+
+    import funlbm.server.submit as submit_module
+    from funlbm.server.base import funlbm_cli
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(submit_module, "run_shell", lambda _: None)
+
+    result = CliRunner().invoke(funlbm_cli, ["submit"], input="\n")
+
+    assert result.exit_code != 0
+    assert isinstance(result.exception, FileNotFoundError)
+    assert str(result.exception) == "找不到需要提交的任务"
 
 
 # ---------------------------------------------------------------------------
