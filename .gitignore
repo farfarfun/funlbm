@@ -41,3 +41,4 @@ runtime.log
 .specstory/
 CLAUDE.local.md
 AGENTS.local.md
+uv.lock
