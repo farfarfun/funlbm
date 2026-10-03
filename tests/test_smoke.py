@@ -206,7 +206,12 @@ def test_cli_entry_point_help():
 
 
 def test_submit_config_task(monkeypatch, tmp_path):
-    """存在指定配置时，submit 应复制文件并启动本地任务。"""
+    """存在指定配置时，submit 应复制文件并启动本地任务。
+
+    回归测试：配置文件名非默认 ``config.json``（如 ``job.json``）时，
+    提交的后台命令必须显式带上 ``--config job.json``，否则任务目录里只有
+    job.json、没有 config.json，`funlbm run` 按默认路径找配置会直接失败。
+    """
     import funlbm.server.submit as submit_module
 
     commands = []
@@ -220,7 +225,33 @@ def test_submit_config_task(monkeypatch, tmp_path):
 
     assert len(commands) == 2
     assert "cp -r" in commands[0]
-    assert "nohup funlbm run" in commands[1]
+    assert "nohup funlbm run --config job.json" in commands[1]
+
+
+def test_submit_rejects_unsafe_task_name(monkeypatch, tmp_path):
+    """任务名包含 shell 特殊字符时应拒绝提交，而不是拼进 shell 命令执行。
+
+    `cp -r` 复制步骤只使用经 `shlex.quote` 处理的 `task_dir`，不包含用户输入的
+    任务名，提交前执行并不构成注入风险，因此该命令允许先于校验执行；
+    真正需要拦截的是后面会把任务名拼进命令的 `sbatch`/`g++`/`nohup` 调用。
+    """
+    import funlbm.server.submit as submit_module
+
+    commands = []
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr("builtins.input", lambda _: "demo; rm -rf /tmp/x")
+    monkeypatch.setattr(submit_module, "run_shell", commands.append)
+    (tmp_path / "config.json").write_text("{}")
+
+    with pytest.raises(ValueError):
+        submit_module.submit("config.json")
+
+    # 校验发生在把任务名拼进命令之前：只应看到不含任务名的 `cp -r` 复制命令，
+    # 不应出现任何包含恶意任务名片段的命令被执行。
+    assert len(commands) == 1
+    assert commands[0].startswith("cp -r")
+    assert "rm -rf" not in commands[0]
 
 
 def test_update_runs_upgrade_command(monkeypatch):

@@ -166,6 +166,15 @@ class Particle(Worker):
         pass
 
     def track(self, step=0, *args, **kwargs) -> dict:
+        """汇总颗粒质心运动状态与受力统计，用于日志与跟踪数据库。
+
+        Args:
+            step: 当前模拟步数（当前实现未使用，预留给跟踪数据库按步存储）。
+
+        Returns:
+            包含质量、质心速度/坐标/合力/角速度、拉格朗日点受力统计
+            及坐标系信息的字典。
+        """
         return {
             "m": float(self.mass.cpu().numpy()),
             "cu": tensor_format(self.cu),

@@ -14,20 +14,17 @@ __all__ = [
 
 
 def create_flow(flow_config: FlowConfig, *args: object, **kwargs: object) -> FlowBase:
-    # return FlowD3(config=flow_config, *args, **kwargs)
-
-    """解析3D模型参数
-
-    根据参数类型创建对应的参数对象
+    """根据流场配置创建对应的流场对象。
 
     Args:
-        flow_type: 参数类型,支持"D3Q27"/"D3Q19"/"D3Q15"/"D3Q13"
+        flow_config: 流场配置，`param_type` 字段决定创建哪种离散速度模型，
+            支持 "D3Q27"/"D3Q19"/"D3Q15"/"D3Q13"。
 
     Returns:
-        Param: 参数对象
+        FlowBase: 对应离散速度模型的流场对象。
 
     Raises:
-        ValueError: 当参数类型不支持时
+        ValueError: 当 `flow_config.param_type` 不受支持时。
     """
     if flow_config.param_type == "D3Q27":
         return FlowD3Q27(config=flow_config, *args, **kwargs)

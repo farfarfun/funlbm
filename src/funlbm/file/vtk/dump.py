@@ -5,7 +5,15 @@ from funvtk import gridToVTK, pointsToVTK
 from funlbm.lbm import LBMBase
 
 
-def save(lbm: LBMBase, step=10, *args, **kwargs):
+def save(lbm: LBMBase, step=10, *args, **kwargs) -> None:
+    """把流场和颗粒数据导出为 Tecplot（.dat）与 VTK 文件，供后处理可视化。
+
+    按 `lbm.config.file_config.per_steps` 控制导出频率；非整除步数直接跳过。
+
+    Args:
+        lbm: 已完成当前步计算的 LBM 求解器实例。
+        step: 当前模拟步数，用于判断是否到达导出频率以及生成文件名。
+    """
     if step % lbm.config.file_config.per_steps > 0:
         return
 

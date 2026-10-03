@@ -60,6 +60,17 @@ class Config(BaseConfig):
 
 
 def create_lbm_config(path="./config.json") -> Config:
+    """从 JSON 配置文件创建 `Config` 对象。
+
+    Args:
+        path: JSON 配置文件路径，默认为当前目录下的 config.json。
+
+    Returns:
+        根据配置文件内容构造出的 `Config` 实例。
+
+    Raises:
+        FileNotFoundError: `path` 指向的文件不存在时抛出。
+    """
     return Config.load_config(path)
 
 

@@ -7,7 +7,22 @@ from funlbm.config import Boundary, BoundaryCondition
 from funlbm.flow import FlowBase, FlowConfig
 
 
-def cul_u(y, z, a, b, size=100):
+def cul_u(y, z, a, b, size=100) -> float:
+    """按矩形管道层流解析解计算 (y, z) 处的无量纲轴向速度分量。
+
+    使用傅里叶级数展开近似矩形截面管道层流的解析速度分布，
+    用于构造 `init_u` 的入口/出口非平衡速度边界条件。
+
+    Args:
+        y: 截面内第一个方向的坐标，坐标原点在截面中心。
+        z: 截面内第二个方向的坐标，坐标原点在截面中心。
+        a: 截面在 y 方向的半宽。
+        b: 截面在 z 方向的半宽。
+        size: 级数展开的项数，越大越精确但计算越慢。
+
+    Returns:
+        (y, z) 处的无量纲速度，保留 6 位小数。
+    """
     # 预计算常量以提高性能
     n = np.arange(size)
     pi = np.pi
@@ -26,7 +41,20 @@ def cul_u(y, z, a, b, size=100):
 
 
 @cache
-def init_u(a, b, u_max=0.01, n_max=100):
+def init_u(a, b, u_max=0.01, n_max=100) -> torch.Tensor:
+    """生成矩形截面 (a x b) 上的层流速度分布，用于非平衡边界初始化。
+
+    结果带缓存（`farcache`），相同 (a, b, u_max, n_max) 组合只计算一次。
+
+    Args:
+        a: 截面在第一个方向上的网格点数。
+        b: 截面在第二个方向上的网格点数。
+        u_max: 截面中心的最大速度。
+        n_max: 传给 `cul_u` 的级数展开项数。
+
+    Returns:
+        形状为 (a, b) 的速度分布张量。
+    """
     # 使用 meshgrid 创建坐标网格
     y = np.linspace(-(a - 1) / 2, (a - 1) / 2, a)
     z = np.linspace(-(b - 1) / 2, (b - 1) / 2, b)

@@ -732,7 +732,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "farcache", specifier = ">=0.1.0" },
+    { name = "farcache", specifier = ">=2.0.3" },
     { name = "farlog", specifier = ">=1.1.7" },
     { name = "funshell", specifier = ">=1.0.23" },
     { name = "funtable", specifier = ">=1.0.25" },

@@ -174,7 +174,12 @@ class FlowBase(Worker):
         """返回流场对象的字符串表示"""
         return f"{self.__class__.__name__}(size={tuple(self.config.size)}, Re={self.config.Re}, mu={self.config.mu})"
 
-    def track(self):
+    def track(self) -> dict:
+        """汇总流场 f/u/rho 的 (最小值, 均值, 最大值)，用于日志与跟踪数据库。
+
+        Returns:
+            形如 `{"f": [min, mean, max], "u": [...], "rho": [...]}` 的字典。
+        """
         return {
             "f": tensor_format(
                 [
