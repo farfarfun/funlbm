@@ -1,13 +1,13 @@
 import numpy as np
 import torch
-from funutil import run_timer
 from farcache import cache
+from funutil import run_timer
 
 from funlbm.config import Boundary, BoundaryCondition
 from funlbm.flow import FlowBase, FlowConfig
 
 
-def cul_u(y, z, a, b, size=100) -> float:
+def cul_u(y: float, z: float, a: float, b: float, size: int = 100) -> float:
     """按矩形管道层流解析解计算 (y, z) 处的无量纲轴向速度分量。
 
     使用傅里叶级数展开近似矩形截面管道层流的解析速度分布，
@@ -41,7 +41,7 @@ def cul_u(y, z, a, b, size=100) -> float:
 
 
 @cache
-def init_u(a, b, u_max=0.01, n_max=100) -> torch.Tensor:
+def init_u(a: int, b: int, u_max: float = 0.01, n_max: int = 100) -> torch.Tensor:
     """生成矩形截面 (a x b) 上的层流速度分布，用于非平衡边界初始化。
 
     结果带缓存（`farcache`），相同 (a, b, u_max, n_max) 组合只计算一次。
@@ -65,14 +65,15 @@ def init_u(a, b, u_max=0.01, n_max=100) -> torch.Tensor:
     return torch.from_numpy(res)
 
 
-def tran3d(direction, total):
-    """
-    计算流场边界索引
+def tran3d(direction: int, total: int) -> tuple[int, int, int, int]:
+    """计算流场边界索引。
+
     Args:
         direction: 方向 (-1, 0, 1)
         total: 总长度
+
     Returns:
-        start1, end1, start2, end2: 边界索引
+        两组起止索引 ``(start1, end1, start2, end2)``。
     """
     if direction == 1:
         return 1, total, 0, total - 1
@@ -97,7 +98,7 @@ class FlowD3(FlowBase):
     def __init__(self, config: FlowConfig, *args, **kwargs):
         super().__init__(config=config, *args, **kwargs)
 
-    def init(self, *args, **kwargs):
+    def init(self, *args: object, **kwargs: object) -> None:
         """初始化3D流场
 
         初始化网格坐标和物理量,包括:
@@ -130,7 +131,12 @@ class FlowD3(FlowBase):
         self.update_u_rou()
 
     @run_timer
-    def cul_equ2(self):
+    def cul_equ2(self) -> None:
+        """计算并叠加浸没边界力导致的第二平衡态修正。
+
+        Returns:
+            无返回值，计算结果直接写入 ``self.f``。
+        """
         # 预计算一些常量
         cs2 = self.param.cs**2
         cs4 = cs2**2
@@ -143,7 +149,16 @@ class FlowD3(FlowBase):
             self.f[:, :, :, alpha] += t4[:, :, :, 0]
 
     @run_timer
-    def update_u_rou(self, *args, **kwargs):
+    def update_u_rou(self, *args: object, **kwargs: object) -> None:
+        """由分布函数更新密度、压力和速度场。
+
+        Args:
+            *args: 预留的扩展位置参数。
+            **kwargs: 预留的扩展关键字参数。
+
+        Returns:
+            无返回值，结果写入流场属性。
+        """
         self.rou = torch.sum(self.f, dim=-1, keepdim=True)
         self.p = self.rou / 3.0
         self.u = (torch.matmul(self.f, self.param.e) + self.FOL / 2.0) / self.rou
@@ -175,7 +190,17 @@ class FlowD3(FlowBase):
             self.u[-1, :, :, :] = self.u[-2, :, :, :]
 
     @run_timer
-    def cul_equ(self, step=0, *args, **kwargs):
+    def cul_equ(self, step: int = 0, *args: object, **kwargs: object) -> None:
+        """计算 BGK 碰撞后的平衡态分布函数。
+
+        Args:
+            step: 当前模拟步数，保留给扩展实现。
+            *args: 预留的扩展位置参数。
+            **kwargs: 预留的扩展关键字参数。
+
+        Returns:
+            无返回值，计算结果写入 ``self.f`` 和 ``self.feq``。
+        """
         tmp = torch.matmul(self.u, self.param.eT()) / (self.param.cs**2)
         u2 = (
             torch.linalg.norm(self.u, dim=-1, keepdim=True) ** 2
@@ -186,7 +211,12 @@ class FlowD3(FlowBase):
         self.f = self.f - (self.f - self.feq) / self.tau
 
     @run_timer
-    def f_stream(self):
+    def f_stream(self) -> None:
+        """沿离散速度方向迁移分布函数，并应用边界条件。
+
+        Returns:
+            无返回值，迁移结果写入 ``self.f``。
+        """
         fcopy = self.f.clone()
 
         # 跳过静止粒子(e1=e2=e3=0)

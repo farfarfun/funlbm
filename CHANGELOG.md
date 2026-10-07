@@ -30,9 +30,9 @@
 - 仓库 GitHub topics 由 9 个精简为 7 个，去掉与 `lattice-boltzmann-method` 重复的泛化标签 `3d`/`lbm`，符合 SPEC.md §11 的 5-8 个数量要求。
 - `tests/test_smoke.py`：不再仅记录已知 bug 并跳过测试，替换为真实覆盖 `funlbm.server` 导入、CLI `--help`、以及极小网格（6x6x6）端到端单步模拟的回归测试。
 
-### 新增
+### 构建
 
-- 提交 `uv.lock` 以保证可复现构建。
+- 不提交 `uv.lock`；使用 uv 管理本地开发环境，避免将本机解析结果作为仓库状态。
 - README 补充一句话简介、安装命令、最小可运行示例、CLI 用法，并附加组织统一的"关于 farfarfun"区块。
 
 ## [1.2.88] 及更早版本

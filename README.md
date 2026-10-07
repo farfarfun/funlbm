@@ -11,16 +11,34 @@ pip install funlbm
 
 ## 最小可运行示例
 
-准备一份 `config.json`（网格大小、边界条件、颗粒参数等），然后：
+在空目录创建 `config.json`：
 
-```python
-from funlbm.lbm import create_lbm
-
-lbm = create_lbm("./config.json")
-lbm.run(max_steps=1000)
+```json
+{
+  "max_step": 1,
+  "flow": {
+    "size": [6, 6, 6]
+  },
+  "file": {
+    "cache_dir": "./data",
+    "custom": {
+      "per_step": 1
+    },
+    "checkpoint": {
+      "per_step": 1
+    }
+  },
+  "particles": []
+}
 ```
 
-更完整的配置示例见仓库内 [`example/`](example) 目录（`freefall`、`poiseuille` 等场景）。
+然后运行一次单步模拟：
+
+```bash
+funlbm run --config ./config.json
+```
+
+运行后会在 `./data/` 生成跟踪数据库、`constant.h5` 和检查点文件。更完整的配置示例见仓库内 [`example/`](example) 目录（`freefall`、`poiseuille` 等场景）。
 
 ## 命令行用法
 
