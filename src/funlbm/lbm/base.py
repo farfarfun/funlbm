@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from typing import Any
 
 import h5py
 from funtable.kv import BaseKVTable
@@ -20,17 +21,31 @@ set_cpu()
 class Config(BaseConfig):
     def __init__(
         self,
-        config_path=None,
-        dx=1.0,
-        dt=1.0,
-        max_step=10000,
+        config_path: str | None = None,
+        dx: float = 1.0,
+        dt: float = 1.0,
+        max_step: int = 10000,
         device: str = "auto",
-        file=None,
-        flow=None,
-        particles=None,
-        *args,
-        **kwargs,
-    ):
+        file: dict[str, Any] | None = None,
+        flow: dict[str, Any] | None = None,
+        particles: list[dict[str, Any]] | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> None:
+        """构造 LBM 运行配置。
+
+        Args:
+            config_path: 配置文件路径；未指定时使用 ``./config.json``。
+            dx: 格点空间步长。
+            dt: 时间步长。
+            max_step: 模拟允许执行的最大步数。
+            device: PyTorch 计算设备名称。
+            file: 文件输出配置。
+            flow: 流场配置。
+            particles: 粒子配置列表。
+            *args: 传递给配置基类的位置参数。
+            **kwargs: 未识别的扩展配置。
+        """
         super().__init__(*args, **kwargs)
         self.dt: float = dt
         self.dx: float = dx
@@ -59,7 +74,7 @@ class Config(BaseConfig):
             return Config(**kwargs)
 
 
-def create_lbm_config(path="./config.json") -> Config:
+def create_lbm_config(path: str = "./config.json") -> Config:
     """从 JSON 配置文件创建 `Config` 对象。
 
     Args:
@@ -195,18 +210,71 @@ class LBMBase(Worker):
         self.particle_swarm.update(dt=self.config.dt)
 
     def init(self, *args, **kwargs) -> None:
+        """初始化流场、粒子和求解器状态。
+
+        Args:
+            *args: 传递给具体求解器初始化实现的位置参数。
+            **kwargs: 传递给具体求解器初始化实现的关键字参数。
+
+        Returns:
+            无返回值。
+        """
         self._init()
 
     def _init(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def flow_to_lagrange(self, n=2, h=1, *args, **kwargs):
+    def flow_to_lagrange(
+        self, n: int = 2, h: float = 1, *args: object, **kwargs: object
+    ) -> None:
+        """将欧拉流场量插值到拉格朗日粒子点。
+
+        Args:
+            n: 插值核的半宽。
+            h: 插值核的格点间距。
+            *args: 子类扩展的位置参数。
+            **kwargs: 子类扩展的关键字参数。
+
+        Returns:
+            无返回值。
+
+        Raises:
+            NotImplementedError: 子类未实现耦合计算时抛出。
+        """
         raise NotImplementedError()
 
-    def lagrange_to_flow(self, n=2, h=1, *args, **kwargs):
+    def lagrange_to_flow(
+        self, n: int = 2, h: float = 1, *args: object, **kwargs: object
+    ) -> None:
+        """将粒子作用力扩散回欧拉流场。
+
+        Args:
+            n: 扩散核的半宽。
+            h: 扩散核的格点间距。
+            *args: 子类扩展的位置参数。
+            **kwargs: 子类扩展的关键字参数。
+
+        Returns:
+            无返回值。
+
+        Raises:
+            NotImplementedError: 子类未实现耦合计算时抛出。
+        """
         raise NotImplementedError()
 
-    def particle_to_wall(self, *args, **kwargs):
+    def particle_to_wall(self, *args: object, **kwargs: object) -> None:
+        """计算粒子边界对流场的作用。
+
+        Args:
+            *args: 子类扩展的位置参数。
+            **kwargs: 子类扩展的关键字参数。
+
+        Returns:
+            无返回值。
+
+        Raises:
+            NotImplementedError: 子类未实现边界耦合时抛出。
+        """
         raise NotImplementedError()
 
     def track(self, flow_track: BaseKVTable, *args, **kwargs) -> dict:
@@ -215,7 +283,16 @@ class LBMBase(Worker):
         return _track
 
     @run_timer
-    def save(self, *args, **kwargs):
+    def save(self, *args: object, **kwargs: object) -> None:
+        """按输出配置保存跟踪数据和检查点。
+
+        Args:
+            *args: 传递给序列化实现的位置参数。
+            **kwargs: 传递给序列化实现的关键字参数。
+
+        Returns:
+            无返回值。
+        """
         self._log_step_info(
             self.track(self.file_wrap.track_flow),
             self.particle_swarm.track(self.step, self.file_wrap.track_particle),
@@ -243,7 +320,19 @@ class LBMBase(Worker):
                 **kwargs,
             )
 
-    def load_checkpoint(self, checkpoint_dir="./data", *args, **kwargs):
+    def load_checkpoint(
+        self, checkpoint_dir: str = "./data", *args: object, **kwargs: object
+    ) -> None:
+        """从目录中的最新检查点恢复流场和粒子状态。
+
+        Args:
+            checkpoint_dir: 包含 ``constant.h5`` 和检查点目录的输出目录。
+            *args: 传递给加载实现的位置参数。
+            **kwargs: 传递给加载实现的关键字参数。
+
+        Returns:
+            无返回值；目录不存在时仅记录错误日志。
+        """
         if checkpoint_dir is None or not os.path.exists(checkpoint_dir):
             logger.error(f"checkpoint dir {checkpoint_dir} not exists")
             return
@@ -256,7 +345,24 @@ class LBMBase(Worker):
             file_path=file_wrap.lasted_checkpoint_path(),
         )
 
-    def dump_file(self, param: SaveVal = None, checkpoint_path=None, *args, **kwargs):
+    def dump_file(
+        self,
+        param: SaveVal | None = None,
+        checkpoint_path: str | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> None:
+        """将当前求解器状态写入 HDF5 文件。
+
+        Args:
+            param: 要写入字段及频率的配置。
+            checkpoint_path: 目标 HDF5 文件路径。
+            *args: 传递给流场和粒子序列化的位置参数。
+            **kwargs: 传递给流场和粒子序列化的关键字参数。
+
+        Returns:
+            无返回值；保存频率未到或参数不完整时直接跳过。
+        """
         if param is None or checkpoint_path is None:
             return
 
@@ -278,7 +384,24 @@ class LBMBase(Worker):
             f"save checkpoint success, step={self.step},path={checkpoint_path}"
         )
 
-    def load_file(self, param: SaveVal = None, file_path=None, *args, **kwargs):
+    def load_file(
+        self,
+        param: SaveVal | None = None,
+        file_path: str | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> None:
+        """从 HDF5 文件加载流场和粒子状态。
+
+        Args:
+            param: 要读取字段的配置。
+            file_path: 来源 HDF5 文件路径。
+            *args: 传递给流场和粒子反序列化的位置参数。
+            **kwargs: 传递给流场和粒子反序列化的关键字参数。
+
+        Returns:
+            无返回值；参数不完整或文件不存在时仅记录错误日志。
+        """
         if param is None or file_path is None:
             logger.error("load failed, param and checkpoint_path cannot be both None.")
             return

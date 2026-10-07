@@ -85,7 +85,15 @@ class BaseConfig:
         return self
 
     def exists(self, key: str) -> bool:
-        return key in self.expand.keys()
+        """判断配置中是否存在指定键。
+
+        Args:
+            key: 要查询的配置键。
+
+        Returns:
+            键存在时返回 ``True``，否则返回 ``False``。
+        """
+        return key in self.expand
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值

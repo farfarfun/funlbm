@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from funtable.kv import SQLiteKKVTable
@@ -41,14 +43,30 @@ def trans(track: dict, particle_id: str = "1") -> pd.DataFrame:
             "centery": track[step][particle_id]["coord"]["center"][1],
             "centerz": track[step][particle_id]["coord"]["center"][2],
         }
-        for step in track.keys()
+        for step in track
     ]
     df = pd.DataFrame(res)
     df["u"] = np.sqrt(df["ux"] ** 2 + df["uy"] ** 2 + df["uz"] ** 2)
     return df
 
 
-def plt_u(df, keys, title="折线图", total=None):
+def plt_u(
+    df: pd.DataFrame,
+    keys: list[str],
+    title: str = "折线图",
+    total: int | None = None,
+) -> Any:
+    """根据跟踪数据创建速度、位置等指标的折线图。
+
+    Args:
+        df: 包含 ``step`` 和待绘制数值列的数据表。
+        keys: 要绘制的列名列表。
+        title: 图表标题。
+        total: 保留的最大数据量，当前由调用方负责切片。
+
+    Returns:
+        NiceGUI 创建的 ECharts 图表对象。
+    """
     chart = ui.echart(
         {
             "title": {"text": title},
@@ -73,12 +91,24 @@ def plt_u(df, keys, title="折线图", total=None):
 
 
 def plt_job(
-    job_id="13546157",
-    title=None,
-    total=None,
-    step=100,
-    home="/Users/bingtao/data/scnet",
-):
+    job_id: str = "13546157",
+    title: str | None = None,
+    total: int | None = None,
+    step: int = 100,
+    home: str = "/Users/bingtao/data/scnet",
+) -> None:
+    """从任务目录读取跟踪数据库并渲染颗粒状态图表。
+
+    Args:
+        job_id: 任务目录名称。
+        title: 页面标题；未指定时使用任务编号。
+        total: 最多展示的记录数量。
+        step: 绘图时的记录采样间隔。
+        home: 保存所有任务目录的根路径。
+
+    Returns:
+        无返回值，图表直接添加到当前 NiceGUI 页面。
+    """
     path = f"{home}/{job_id}"
     track_path = f"{path}/data/track.db"
     particle_table = SQLiteKKVTable(db_path=track_path, table_name="particle")

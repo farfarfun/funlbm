@@ -1,5 +1,7 @@
 import math
+from collections.abc import Callable
 from itertools import product
+from typing import Any
 
 import numpy as np
 import torch
@@ -12,11 +14,20 @@ from funlbm.particle.base.base import Particle, ParticleConfig
 logger = getLogger("funlbm")
 
 
-def find_intersection(point1, point2, cul_value):
-    """
-    找到线段与椭球表面的交点。
-    point1: 线段起点 (在椭球内部)。
-    point2: 线段终点 (在椭球外部)。
+def find_intersection(
+    point1: np.ndarray,
+    point2: np.ndarray,
+    cul_value: Callable[[float, float, float], float],
+) -> np.ndarray:
+    """计算线段与隐式椭球表面的交点。
+
+    Args:
+        point1: 位于椭球内部的线段起点。
+        point2: 位于椭球外部的线段终点。
+        cul_value: 椭球隐式方程，表面处返回零。
+
+    Returns:
+        形状为 ``(3,)`` 的交点坐标数组。
     """
 
     def ellipsoid_equation(t):
@@ -34,19 +45,33 @@ def find_intersection(point1, point2, cul_value):
 
 
 def generate_uniform_points_on_ellipsoid(
-    xl, yl, zl, xr, yr, zr, cul_value, dx=0.5, *args, **kwargs
-):
-    """
-    在椭球表面上生成均匀分布的点。
+    xl: float,
+    yl: float,
+    zl: float,
+    xr: float,
+    yr: float,
+    zr: float,
+    cul_value: Callable[[float, float, float], float],
+    dx: float = 0.5,
+    *args: object,
+    **kwargs: object,
+) -> np.ndarray:
+    """在椭球表面生成近似均匀分布的拉格朗日点。
 
-    参数:
-        a (float): 椭球的x轴半轴长度。
-        b (float): 椭球的y轴半轴长度。
-        c (float): 椭球的z轴半轴长度。
-        h (float): 空间细分的步长（方块的边长）。
+    Args:
+        xl: 包围盒 x 方向下界。
+        yl: 包围盒 y 方向下界。
+        zl: 包围盒 z 方向下界。
+        xr: 包围盒 x 方向上界。
+        yr: 包围盒 y 方向上界。
+        zr: 包围盒 z 方向上界。
+        cul_value: 椭球隐式方程，表面处返回零。
+        dx: 包围盒的空间细分步长。
+        *args: 预留的扩展位置参数。
+        **kwargs: 预留的扩展关键字参数。
 
-    返回:
-        np.ndarray: 椭球表面上的均匀分布点，形状为 (N, 3)。
+    Returns:
+        形状为 ``(N, 3)`` 的表面点坐标数组。
     """
     # 定义椭球的包围盒范围
     x_range = np.arange(xl, xr, dx)
@@ -126,7 +151,24 @@ def generate_uniform_points_on_ellipsoid(
 
 
 class Ellipsoid(Particle):
-    def __init__(self, ra=None, rb=None, rc=None, *args, **kwargs):
+    """椭球粒子基类，负责生成表面点和惯性参数。
+
+    Args:
+        ra: x 轴半径；未指定时从粒子配置读取。
+        rb: y 轴半径；未指定时从粒子配置读取。
+        rc: z 轴半径；未指定时从粒子配置读取。
+        *args: 传递给 ``Particle`` 的位置参数。
+        **kwargs: 传递给 ``Particle`` 的关键字参数。
+    """
+
+    def __init__(
+        self,
+        ra: float | None = None,
+        rb: float | None = None,
+        rc: float | None = None,
+        *args: object,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.ra = ra or self.config.get("a") or 20
         self.rb = rb or self.config.get("b") or 10
@@ -181,7 +223,15 @@ class Ellipsoid(Particle):
             self.compute_vector(), device=self.device, dtype=torch.float32
         )
 
-    def compute_vector(self) -> np.array:
+    def compute_vector(self) -> np.ndarray:
+        """计算椭球表面点的局部速度方向。
+
+        Returns:
+            与表面点一一对应的三维向量数组。
+
+        Raises:
+            NotImplementedError: 子类未提供具体形状的向量计算时抛出。
+        """
         raise NotImplementedError
 
 
