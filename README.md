@@ -5,8 +5,21 @@
 
 ## 安装
 
+需要 Python 3.10 或更高版本。核心计算依赖 PyTorch；使用 `funlbm.plot` 绘图时还需要可用的
+Matplotlib 图形后端（当前实现使用 TkAgg）。
+
 ```bash
 pip install funlbm
+```
+
+## 开发验证
+
+项目使用 pytest 与 Ruff 进行测试和代码检查：
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run ruff format .
 ```
 
 ## 最小可运行示例
