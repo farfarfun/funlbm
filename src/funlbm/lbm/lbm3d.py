@@ -63,7 +63,16 @@ class LBMD3(LBMBase):
         return w
 
     @run_timer
-    def flow_to_lagrange(self, *args, **kwargs):
+    def flow_to_lagrange(self, *args: object, **kwargs: object) -> None:
+        """将流场速度和密度插值到粒子的拉格朗日点。
+
+        Args:
+            *args: 为接口兼容保留的位置参数。
+            **kwargs: 为接口兼容保留的关键字参数。
+
+        Returns:
+            无返回值。
+        """
         for particle in self.particle_swarm.particles:
             rl, rr = self._calculate_region_bounds(particle)
             lu = torch.zeros_like(particle.lu, device=self.device)
@@ -100,7 +109,16 @@ class LBMD3(LBMBase):
             particle.lF = 2 * lrou * (particle.lu - lu) / self.config.dt
 
     @run_timer
-    def lagrange_to_flow(self, *args, **kwargs):
+    def lagrange_to_flow(self, *args: object, **kwargs: object) -> None:
+        """将粒子拉格朗日力扩散到欧拉流场。
+
+        Args:
+            *args: 为接口兼容保留的位置参数。
+            **kwargs: 为接口兼容保留的关键字参数。
+
+        Returns:
+            无返回值。
+        """
         self.flow.FOL[:, :, :, :] = 0
 
         for particle in self.particle_swarm.particles:
@@ -119,9 +137,15 @@ class LBMD3(LBMBase):
                 )
 
     @run_timer
-    def particle_to_wall(self, *args, **kwargs):
-        """
-        Handle particle-wall collisions using a spring force model.
+    def particle_to_wall(self, *args: object, **kwargs: object) -> None:
+        """使用弹簧力模型处理粒子与壁面的碰撞。
+
+        Args:
+            *args: 为接口兼容保留的位置参数。
+            **kwargs: 为接口兼容保留的关键字参数。
+
+        Returns:
+            无返回值。
         """
         k0 = 300  # Spring constant
         wall_normals = torch.tensor(

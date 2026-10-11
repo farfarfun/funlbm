@@ -43,7 +43,7 @@ class Param(Worker):
         return self.e.t()
 
     @cache
-    def vertex_index(self, axis, value):
+    def vertex_index(self, axis: int, value: float) -> list[int]:
         """获取指定方向和值的速度索引
 
         Args:
@@ -55,7 +55,7 @@ class Param(Worker):
         """
         return [i for i, e in enumerate(self.e) if e[axis] == value]
 
-    def index_reverse(self, index):
+    def index_reverse(self, index: int | list[int]) -> int | list[int]:
         """获取速度方向的反向索引
 
         Args:
@@ -69,7 +69,7 @@ class Param(Worker):
         return [self.vertex_reverse[i] for i in index]
 
     @property
-    def e_dim(self):
+    def e_dim(self) -> int:
         """离散速度的维度"""
         return self.e.shape[0]
 
@@ -204,7 +204,24 @@ class FlowBase(Worker):
             ),
         }
 
-    def dump_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+    def dump_file(
+        self,
+        group: h5py.Group | None = None,
+        vals: list[str] | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> None:
+        """将流场张量保存到 HDF5 分组。
+
+        Args:
+            group: 目标 HDF5 分组；为 ``None`` 时不执行写入。
+            vals: 要保存的字段名；省略时保存全部流场字段。
+            *args: 为子类保留的位置参数。
+            **kwargs: 为子类保留的关键字参数。
+
+        Returns:
+            无返回值。
+        """
         if group is None:
             return
         vals = vals or ["x", "f", "p", "u", "rou", "gama", "FOL", "tau", "feq"]
@@ -227,7 +244,24 @@ class FlowBase(Worker):
         if "feq" in vals:
             self.dump_dataset(group, "feq", self.feq)
 
-    def load_file(self, group: h5py.Group = None, vals=None, *args, **kwargs):
+    def load_file(
+        self,
+        group: h5py.Group | None = None,
+        vals: list[str] | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> None:
+        """从 HDF5 分组加载流场张量。
+
+        Args:
+            group: 源 HDF5 分组；为 ``None`` 时不执行读取。
+            vals: 要加载的字段名；省略时加载分组内的全部字段。
+            *args: 为子类保留的位置参数。
+            **kwargs: 为子类保留的关键字参数。
+
+        Returns:
+            无返回值。
+        """
         if group is None:
             return
         vals = vals or group.keys()
