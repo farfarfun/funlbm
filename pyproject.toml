@@ -3,7 +3,7 @@ name = "funlbm"
 version = "1.2.88"
 description = "基于 PyTorch 的三维格子玻尔兹曼方法（LBM）数值模拟库，支持流固耦合粒子仿真"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [ "funtable>=1.0.25", "funtecplot>=1.0.1", "funutil>=1.0.14", "funvtk>=1.0.9", "farcache>=2.0.3", "h5py>=3.13.0", "matplotlib>=3.8.0", "nicegui>=2.15.0", "numpy>=1.23.5", "pandas>=2.2.3", "scipy>=1.13.1", "torch>=2.2.0", "transforms3d>=0.4.2", "typer>=0.15.2", "funshell>=1.0.23", "tqdm>=4.65.0", "farlog>=1.1.7",]
@@ -35,7 +35,7 @@ build-backend = "hatchling.build"
 dev = [ "pytest>=8.0.0", "ruff>=0.12.0",]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]

@@ -5,7 +5,7 @@
 
 ## 安装
 
-需要 Python 3.10 或更高版本。核心计算依赖 PyTorch；使用 `funlbm.plot` 绘图时还需要可用的
+需要 Python 3.12 或更高版本。核心计算依赖 PyTorch；使用 `funlbm.plot` 绘图时还需要可用的
 Matplotlib 图形后端（当前实现使用 TkAgg）。
 
 ```bash
